@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
+<!DOCTYPE html><html lang="zh-TW"><head><meta name="x-poe-datastore-behavior" content="local_only"><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cisco Packet Tracer | 網絡模擬器</title>
@@ -234,6 +232,57 @@
             font-size: 0.7rem;
             font-weight: 500;
         }
+
+        .card-tip {
+            margin-top: 1rem;
+            padding: 0.5rem 0.8rem;
+            background: rgba(0, 180, 216, 0.08);
+            border-left: 3px solid var(--interface-blue);
+            border-radius: 0 6px 6px 0;
+            font-size: 0.8rem;
+            color: var(--interface-blue);
+        }
+
+        .card-tip em {
+            font-style: normal;
+            color: var(--cyber-gray);
+        }
+
+        /* 工作區提示橫幅 */
+        .workspace-banner {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(0, 102, 204, 0.9), rgba(0, 180, 216, 0.9));
+            padding: 0.6rem 1.5rem;
+            border-radius: 25px;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 400;
+            z-index: 15;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .workspace-banner i {
+            font-size: 1rem;
+        }
+
+        .workspace-banner .close-banner {
+            margin-left: 0.5rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .workspace-banner .close-banner:hover {
+            opacity: 1;
+        }
         
         .simulator-interface {
             display: none;
@@ -384,6 +433,210 @@
             font-size: 0.6rem;
             padding: 1px 4px;
             border-radius: 3px;
+        }
+
+        /* 設備類型切換器 */
+        .device-type-switcher {
+            display: flex;
+            gap: 0.3rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .device-type-btn {
+            padding: 0.4rem 0.6rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: var(--cyber-gray);
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .device-type-btn:hover {
+            background: rgba(0, 180, 216, 0.1);
+            border-color: var(--interface-blue);
+            color: var(--interface-blue);
+        }
+
+        .device-type-btn.active {
+            background: var(--primary-gradient);
+            border-color: var(--interface-blue);
+            color: white;
+        }
+
+        /* 模式切換標籤 */
+        .mode-tabs {
+            display: flex;
+            gap: 0.4rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+        }
+
+        .mode-tab {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            color: var(--cyber-gray);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .mode-tab:hover {
+            background: rgba(0, 180, 216, 0.1);
+            color: var(--interface-blue);
+        }
+
+        .mode-tab.active {
+            background: linear-gradient(135deg, rgba(0, 102, 204, 0.3), rgba(0, 180, 216, 0.3));
+            border-color: var(--interface-blue);
+            color: var(--interface-blue);
+        }
+
+        /* 快捷工具欄 */
+        .quick-toolbar {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(15, 20, 35, 0.9);
+            border-radius: 8px;
+            border: 1px solid var(--neon-border);
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 15;
+        }
+
+        .quick-tool-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: var(--cyber-gray);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-tool-btn:hover {
+            background: rgba(0, 180, 216, 0.15);
+            border-color: var(--interface-blue);
+            color: var(--interface-blue);
+        }
+
+        .quick-tool-btn.danger:hover {
+            background: rgba(255, 71, 87, 0.15);
+            border-color: var(--offline);
+            color: var(--offline);
+        }
+
+        /* 連接線動畫 */
+        .connection-line {
+            transition: stroke-width 0.2s ease;
+        }
+
+        .connection-line:hover {
+            stroke-width: 5 !important;
+            filter: drop-shadow(0 0 4px currentColor);
+        }
+
+        /* 右鍵菜單樣式 */
+        .context-menu {
+            position: fixed;
+            background: rgba(15, 20, 35, 0.98);
+            border: 1px solid var(--neon-border);
+            border-radius: 8px;
+            padding: 0.5rem;
+            min-width: 160px;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .context-menu-header {
+            padding: 0.4rem 0.8rem;
+            color: var(--interface-blue);
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 0.3rem;
+        }
+
+        .context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.8rem;
+            background: transparent;
+            border: none;
+            color: var(--hologram-text);
+            font-size: 0.85rem;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            border-radius: 4px;
+            transition: all 0.15s ease;
+        }
+
+        .context-menu-item:hover {
+            background: rgba(0, 180, 216, 0.15);
+            color: var(--interface-blue);
+        }
+
+        .context-menu-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        /* 狀態指示器 */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--cyber-gray);
+        }
+
+        .status-indicator .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--online);
+            animation: pulse 2s infinite;
+        }
+
+        /* 拖曳提示線 */
+        .drag-guide-line {
+            position: absolute;
+            border: 1px dashed rgba(77, 195, 255, 0.5);
+            pointer-events: none;
+            z-index: 8;
+        }
+
+        .drag-guide-line.horizontal {
+            width: 100%;
+            height: 0;
+        }
+
+        .drag-guide-line.vertical {
+            width: 0;
+            height: 100%;
         }
         
         .main-workspace {
@@ -1934,107 +2187,116 @@
         
         <section class="cyber-features">
             <h2 class="section-title-cyber">功能模組</h2>
+            <p style="text-align: center; color: var(--cyber-gray); margin-bottom: 2rem; font-size: 0.95rem;">
+                點擊任意模組進入對應的模擬環境，每個模組提供專屬的設備和工具
+            </p>
             <div class="cyber-grid">
-                <div class="cyber-card" onclick="showSimulator('core')">
+                <div class="cyber-card" onclick="showSimulator('core')" data-category="core">
                     <div class="card-badge">核心</div>
                     <div class="card-icon-cyber">
                         <i class="fas fa-microchip"></i>
                     </div>
                     <h3 class="card-title-cyber">核心模擬引擎</h3>
                     <p class="card-desc-cyber">
-                        完整的網絡模擬核心，支援多層次封包處理、路由協定模擬及網絡狀態監控。
+                        <strong>基礎網絡設計</strong> - 拖放路由器、交換器和終端設備，建立標準企業網絡拓撲。
                     </p>
                     <ul class="card-features">
-                        <li>即時模式與模擬模式</li>
-                        <li>邏輯與實體工作區</li>
-                        <li>封包分析工具</li>
-                        <li>網絡拓撲設計</li>
+                        <li>基本拓撲：路由器 + 交換器 + PC</li>
+                        <li>即時模式觀察封包傳輸</li>
+                        <li>模擬模式逐步分析</li>
+                        <li>拖放操作簡單易用</li>
                     </ul>
+                    <div class="card-tip">💡 <em>新手推薦從這裡開始</em></div>
                 </div>
-                
-                <div class="cyber-card" onclick="showSimulator('devices')">
+
+                <div class="cyber-card" onclick="showSimulator('devices')" data-category="devices">
                     <div class="card-badge">設備</div>
                     <div class="card-icon-cyber">
                         <i class="fas fa-server"></i>
                     </div>
-                    <h3 class="card-title-cyber">網絡設備模擬</h3>
+                    <h3 class="card-title-cyber">網絡設備管理</h3>
                     <p class="card-desc-cyber">
-                        完整的 Cisco 設備模擬，支援各種路由器、交換器、防火牆及無線設備。
+                        <strong>完整設備庫</strong> - 瀏覽和配置所有可用的 Cisco 網絡設備，了解各型號規格。
                     </p>
                     <ul class="card-features">
-                        <li>Cisco 路由器系列</li>
-                        <li>多層交換器</li>
-                        <li>無線網絡設備</li>
-                        <li>安全設備</li>
+                        <li>路由器：1941 / 2911 / 4321</li>
+                        <li>交換器：2960 / 3650 / 3850</li>
+                        <li>無線設備：AP / WLC</li>
+                        <li>安全設備：防火牆 / IPS</li>
                     </ul>
+                    <div class="card-tip">📦 <em>包含 15+ 種設備類型</em></div>
                 </div>
-                
-                <div class="cyber-card" onclick="showSimulator('protocols')">
+
+                <div class="cyber-card" onclick="showSimulator('protocols')" data-category="protocols">
                     <div class="card-badge">協議</div>
                     <div class="card-icon-cyber">
                         <i class="fas fa-code-branch"></i>
                     </div>
-                    <h3 class="card-title-cyber">網絡協議模擬</h3>
+                    <h3 class="card-title-cyber">路由協議配置</h3>
                     <p class="card-desc-cyber">
-                        完整的 TCP/IP 協議堆疊模擬，支援各種網絡協議配置與分析。
+                        <strong>進階路由</strong> - 學習和配置 OSPF、EIGRP、BGP 等企業級路由協議。
                     </p>
                     <ul class="card-features">
-                        <li>路由協議 (OSPF, EIGRP)</li>
-                        <li>交換協議 (STP, VLAN)</li>
-                        <li>安全協議 (IPsec, SSL)</li>
-                        <li>應用層協議</li>
+                        <li>OSPF 區域配置與鄰居建立</li>
+                        <li>EIGRP 自治系統設定</li>
+                        <li>BGP 邊界路由器配置</li>
+                        <li>STP 生成樹協議</li>
                     </ul>
+                    <div class="card-tip">📡 <em>適合 CCNA/CCNP 學習者</em></div>
                 </div>
-                
-                <div class="cyber-card" onclick="showSimulator('security')">
+
+                <div class="cyber-card" onclick="showSimulator('security')" data-category="security">
                     <div class="card-badge">安全</div>
                     <div class="card-icon-cyber">
                         <i class="fas fa-shield-alt"></i>
                     </div>
                     <h3 class="card-title-cyber">安全實驗室</h3>
                     <p class="card-desc-cyber">
-                        完整的網絡安全實驗環境，支援防火牆配置、入侵檢測及安全策略實作。
+                        <strong>網絡安全</strong> - 部署防火牆、配置 VPN 隧道、實作入侵檢測與安全策略。
                     </p>
                     <ul class="card-features">
-                        <li>防火牆規則配置</li>
-                        <li>VPN 隧道建立</li>
-                        <li>入侵檢測系統</li>
-                        <li>安全審計</li>
+                        <li>ASA 防火牆 ACL 配置</li>
+                        <li>Site-to-Site VPN 建立</li>
+                        <li>IPS 入侵防禦系統</li>
+                        <li>NAC 網絡准入控制</li>
                     </ul>
+                    <div class="card-tip">🔒 <em>企業安全架構實踐</em></div>
                 </div>
-                
-                <div class="cyber-card" onclick="showSimulator('automation')">
+
+                <div class="cyber-card" onclick="showSimulator('automation')" data-category="automation">
                     <div class="card-badge">自動化</div>
                     <div class="card-icon-cyber">
                         <i class="fas fa-robot"></i>
                     </div>
                     <h3 class="card-title-cyber">網絡自動化</h3>
                     <p class="card-desc-cyber">
-                        網絡自動化與編程環境，支援 Python、Ansible 及 REST API 整合。
+                        <strong>DevOps 環境</strong> - 使用 Ansible、Terraform、Python 實現網絡自動化管理。
                     </p>
                     <ul class="card-features">
-                        <li>Python 網絡自動化</li>
-                        <li>Ansible Playbook</li>
-                        <li>REST API 配置</li>
-                        <li>自動化監控</li>
+                        <li>Ansible 控制節點配置</li>
+                        <li>Terraform 基礎設施即代碼</li>
+                        <li>Docker 容器化部署</li>
+                        <li>CI/CD 自動化流程</li>
                     </ul>
+                    <div class="card-tip">🤖 <em>現代網絡運維技能</em></div>
                 </div>
-                
-                <div class="cyber-card" onclick="showSimulator('iot')">
+
+                <div class="cyber-card" onclick="showSimulator('iot')" data-category="iot">
                     <div class="card-badge">IoT</div>
                     <div class="card-icon-cyber">
                         <i class="fas fa-satellite-dish"></i>
                     </div>
                     <h3 class="card-title-cyber">物聯網模擬</h3>
                     <p class="card-desc-cyber">
-                        完整的物聯網生態系統模擬，支援各種感測器、致動器及智慧設備。
+                        <strong>智慧環境</strong> - 部署 IoT 感測器、攝像頭、智慧設備，模擬智慧家居場景。
                     </p>
                     <ul class="card-features">
-                        <li>環境感測器</li>
-                        <li>安全感測器</li>
-                        <li>智慧設備控制</li>
-                        <li>微控制器程式</li>
+                        <li>溫度/濕度/動作感測器</li>
+                        <li>IP 攝像頭與監控</li>
+                        <li>智慧燈具與門鎖</li>
+                        <li>IoT 閘道器連接管理</li>
                     </ul>
+                    <div class="card-tip">🌐 <em>智慧家居與工業 IoT</em></div>
                 </div>
             </div>
         </section>
@@ -2097,10 +2359,38 @@
                     <i class="fas fa-chevron-left"></i>
                 </button>
                 
+                <!-- 模式快速切換 -->
+                <div class="tool-category" style="margin-bottom: 0.8rem;">
+                    <h3 class="tool-category-title">
+                        <i class="fas fa-exchange-alt"></i>
+                        切換模式
+                    </h3>
+                    <div class="device-type-switcher" id="modeSwitcher">
+                        <button class="device-type-btn active" onclick="switchSimulatorMode('core')" data-mode="core">
+                            <i class="fas fa-microchip"></i> 核心
+                        </button>
+                        <button class="device-type-btn" onclick="switchSimulatorMode('devices')" data-mode="devices">
+                            <i class="fas fa-server"></i> 設備
+                        </button>
+                        <button class="device-type-btn" onclick="switchSimulatorMode('protocols')" data-mode="protocols">
+                            <i class="fas fa-code-branch"></i> 協議
+                        </button>
+                        <button class="device-type-btn" onclick="switchSimulatorMode('security')" data-mode="security">
+                            <i class="fas fa-shield-alt"></i> 安全
+                        </button>
+                        <button class="device-type-btn" onclick="switchSimulatorMode('automation')" data-mode="automation">
+                            <i class="fas fa-robot"></i> 自動化
+                        </button>
+                        <button class="device-type-btn" onclick="switchSimulatorMode('iot')" data-mode="iot">
+                            <i class="fas fa-satellite-dish"></i> IoT
+                        </button>
+                    </div>
+                </div>
+
                 <div class="tool-category">
                     <h3 class="tool-category-title">
                         <i class="fas fa-layer-group"></i>
-                        設備庫
+                        設備庫 <span id="deviceCount" style="font-size: 0.7rem; color: var(--cyber-gray); margin-left: 0.5rem;"></span>
                     </h3>
                     <div class="tool-grid" id="deviceLibrary"></div>
                 </div>
@@ -2220,7 +2510,32 @@
             
             <div class="main-workspace">
                 <div class="workspace-canvas" id="workspaceCanvas"></div>
-                
+
+                <!-- 快捷工具欄 -->
+                <div class="quick-toolbar" id="quickToolbar">
+                    <button class="quick-tool-btn" onclick="zoomIn()" title="放大">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="quick-tool-btn" onclick="zoomOut()" title="縮小">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="quick-tool-btn" onclick="fitToScreen()" title="適應畫面">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <button class="quick-tool-btn" onclick="selectAllDevices()" title="全選">
+                        <i class="fas fa-object-group"></i>
+                    </button>
+                    <button class="quick-tool-btn danger" onclick="clearAllDevices()" title="清除全部">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <button class="quick-tool-btn" onclick="exportTopology()" title="匯出拓撲">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="quick-tool-btn" onclick="autoArrange()" title="自動排列">
+                        <i class="fas fa-th"></i>
+                    </button>
+                </div>
+
                 <div class="mode-switcher">
                     <button class="mode-btn active" onclick="switchMode('realtime')" data-tooltip="即時模式 (R)">
                         <i class="fas fa-play"></i> 即時模式
@@ -2423,78 +2738,122 @@ Router&gt;
     </div>
     
     <div id="guideOverlay" class="guide-overlay" style="display: none;">
-        <div class="guide-window">
+        <div class="guide-window" style="max-width: 1000px;">
             <div class="guide-header">
-                <h2><i class="fas fa-book-open"></i> 模擬器操作說明指南</h2>
+                <h2><i class="fas fa-book-open"></i> 模擬器操作說明指南 v2.0</h2>
                 <button class="modal-close" onclick="closeGuide()"><i class="fas fa-times"></i></button>
             </div>
             <div class="guide-body">
                 <div class="guide-intro">
-                    <h3><i class="fas fa-info-circle"></i> 關於此模擬器</h3>
-                    <p>Cisco Packet Tracer 網絡模擬器是一個專業級的網絡學習工具，讓您能夠設計、配置和測試虛擬網絡環境。通過這個平台，您可以學習路由器、交換器、防火牆等網絡設備的配置，以及各種網絡協議的運作原理。</p>
+                    <h3><i class="fas fa-info-circle"></i> 關於 Cisco Packet Tracer 網絡模擬器</h3>
+                    <p>這是一個專業級網絡學習平台，提供六大模組：<strong>核心模擬</strong>（基礎拓撲設計）、<strong>設備管理</strong>（完整設備庫）、<strong>協議配置</strong>（OSPF/EIGRP/BGP）、<strong>安全實驗室</strong>（防火牆/VPN）、<strong>網絡自動化</strong>（Ansible/Terraform）及<strong>物聯網</strong>（IoT 感測器）。每個模組提供專屬的設備和工具，幫助您從入門到進階全面掌握網絡技術。</p>
                 </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="background: rgba(0, 180, 216, 0.08); border: 1px solid var(--neon-border); border-radius: 8px; padding: 1rem;">
+                        <h4 style="color: var(--interface-blue); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-mouse-pointer"></i> 界面佈局
+                        </h4>
+                        <ul style="font-size: 0.85rem; color: var(--hologram-text); margin-left: 1rem;">
+                            <li><strong>左側面板</strong>：設備庫和連線工具</li>
+                            <li><strong>中央區域</strong>：工作區畫布</li>
+                            <li><strong>右側面板</strong>：設備配置表單</li>
+                            <li><strong>底部欄</strong>：模式切換器</li>
+                            <li><strong>頂部欄</strong>：進度指示和控制</li>
+                        </ul>
+                    </div>
+                    <div style="background: rgba(0, 204, 102, 0.08); border: 1px solid rgba(0, 204, 102, 0.3); border-radius: 8px; padding: 1rem;">
+                        <h4 style="color: var(--success-color); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-keyboard"></i> 快捷鍵參考
+                        </h4>
+                        <ul style="font-size: 0.85rem; color: var(--hologram-text); margin-left: 1rem;">
+                            <li><kbd>A</kbd> 自動連線 | <kbd>S</kbd> 直通線</li>
+                            <li><kbd>X</kbd> 交叉線 | <kbd>C</kbd> Console</li>
+                            <li><kbd>F</kbd> 光纖 | <kbd>R</kbd> 串列線</li>
+                            <li><kbd>P</kbd> 封包分析 | <kbd>L</kbd> CLI終端</li>
+                            <li><kbd>Del</kbd> 刪除 | <kbd>Esc</kbd> 返回</li>
+                        </ul>
+                    </div>
+                </div>
+
                 <div class="guide-sections">
                     <div class="guide-section">
-                        <h4><i class="fas fa-plus-circle"></i> 1. 添加設備</h4>
+                        <h4><i class="fas fa-plus-circle"></i> 步驟一：添加設備</h4>
                         <div class="guide-content">
-                            <p><strong>操作步驟：</strong></p>
+                            <p><strong>兩種方式添加設備：</strong></p>
                             <ol>
-                                <li>在左側工具面板中選擇設備類別</li>
-                                <li>點擊或拖放設備到工作區</li>
-                                <li>設備會自動獲得預設 IP 配置</li>
+                                <li><strong>拖放方式</strong>：從左側設備庫拖曳設備到工作區指定位置</li>
+                                <li><strong>點擊方式</strong>：直接點擊設備圖標，自動添加到預設位置</li>
                             </ol>
-                            <p><strong>注意事項：</strong>設備可在工作區內自由拖動調整位置</p>
-                        </div>
-                    </div>
-                    <div class="guide-section">
-                        <h4><i class="fas fa-link"></i> 2. 連接設備</h4>
-                        <div class="guide-content">
-                            <p><strong>操作步驟：</strong></p>
-                            <ol>
-                                <li>選擇合適的連線類型（自動/直通線/交叉線等）</li>
-                                <li>點擊第一個設備選擇連接端口</li>
-                                <li>點擊第二個設備完成連線</li>
-                            </ol>
-                            <p><strong>線纜類型說明：</strong></p>
+                            <p style="margin-top: 0.5rem;"><strong>設備類型說明：</strong></p>
                             <ul>
-                                <li>自動連線：系統自動選擇合適線纜</li>
-                                <li>直通線：連接不同類型設備（PC-Switch）</li>
-                                <li>交叉線：連接相同類型設備（Switch-Switch）</li>
-                                <li>Console線：用於設備管理配置</li>
+                                <li>🔀 <strong>路由器</strong>：1941 / 2911 / 4321 - 網絡層轉發</li>
+                                <li>🔗 <strong>交換器</strong>：2960 / 3650 / 3850 - 數據鏈路層交換</li>
+                                <li>💻 <strong>終端</strong>：PC / Laptop / Server / IP Phone</li>
+                                <li>🛡️ <strong>安全</strong>：ASA 防火牆 / IPS / VPN Gateway</li>
+                                <li>📡 <strong>無線</strong>：AP / WLC 無線控制器</li>
                             </ul>
                         </div>
                     </div>
                     <div class="guide-section">
-                        <h4><i class="fas fa-cog"></i> 3. 配置設備</h4>
+                        <h4><i class="fas fa-link"></i> 步驟二：連接設備</h4>
                         <div class="guide-content">
-                            <p><strong>操作步驟：</strong></p>
+                            <p><strong>連線流程（三步驟）：</strong></p>
                             <ol>
-                                <li>點擊選中設備</li>
-                                <li>在右側配置面板輸入參數</li>
-                                <li>設定 IP 位址、子網路遮罩、預設閘道</li>
-                                <li>點擊「套用配置」保存設定</li>
+                                <li>在「連線工具」區選擇線纜類型</li>
+                                <li>點擊<strong>第一個設備</strong>（設備會亮起綠色光暈）</li>
+                                <li>點擊<strong>第二個設備</strong>完成連線</li>
                             </ol>
-                            <p><strong>CLI 配置：</strong>點擊「CLI終端」按鈕可開啟命令列介面</p>
+                            <p style="margin-top: 0.5rem;"><strong>線纜類型選擇指南：</strong></p>
+                            <table style="width: 100%; font-size: 0.85rem; margin-top: 0.5rem;">
+                                <tbody><tr style="background: rgba(0, 180, 216, 0.1);"><td style="padding: 0.3rem;">⚡ 自動連線</td><td>系統自動判斷，推薦新手使用</td></tr>
+                                <tr><td style="padding: 0.3rem;">🟢 直通線</td><td>不同類型設備（PC ↔ Switch）</td></tr>
+                                <tr style="background: rgba(0, 180, 216, 0.05);"><td style="padding: 0.3rem;">🟠 交叉線</td><td>相同類型設備（Switch ↔ Switch）</td></tr>
+                                <tr><td style="padding: 0.3rem;">🟣 Console</td><td>管理連接（PC ↔ Router Console）</td></tr>
+                                <tr style="background: rgba(0, 180, 216, 0.05);"><td style="padding: 0.3rem;">🔴 光纖</td><td>高速長距離連接</td></tr>
+                            </tbody></table>
                         </div>
                     </div>
                     <div class="guide-section">
-                        <h4><i class="fas fa-play"></i> 4. 模擬模式</h4>
+                        <h4><i class="fas fa-cog"></i> 步驟三：配置���備</h4>
                         <div class="guide-content">
-                            <p><strong>即時模式：</strong>封包即時傳送，觀察網絡運作</p>
-                            <p><strong>模擬模式：</strong>逐步觀察封包傳遞過程，分析 OSI 各層</p>
-                            <p><strong>邏輯視圖：</strong>設計網絡拓撲結構</p>
-                            <p><strong>實體視圖：</strong>模擬設備實體擺放</p>
+                            <p><strong>基本配置流程：</strong></p>
+                            <ol>
+                                <li>點擊選中目標設備（設備邊框變藍）</li>
+                                <li>在右側配置面板填寫參數：IP 位址、子網路遮罩、預設閘道</li>
+                                <li>點擊「<strong>套用配置</strong>」按鈕保存設定</li>
+                            </ol>
+                            <p style="margin-top: 0.5rem;"><strong>進階配置（CLI 終端）：</strong></p>
+                            <ul>
+                                <li>點擊「CLI終端」打開命令列介面</li>
+                                <li>輸入 <code>enable</code> 進入特權模式</li>
+                                <li>輸入 <code>configure terminal</code> 進入配置模式</li>
+                                <li>常用命令：<code>show ip interface brief</code>、<code>show running-config</code></li>
+                            </ul>
                         </div>
                     </div>
                     <div class="guide-section">
-                        <h4><i class="fas fa-vial"></i> 5. 測試網絡</h4>
+                        <h4><i class="fas fa-play"></i> 步驟四：切換模式</h4>
+                        <div class="guide-content">
+                            <p><strong>四種工作模式（底部切換）：</strong></p>
+                            <ul>
+                                <li>▶️ <strong>即時模式</strong>：封包自動傳輸，觀察網絡實時運作</li>
+                                <li>⏯️ <strong>模擬模式</strong>：逐步分析封包，查看 OSI 各層詳情</li>
+                                <li>📐 <strong>邏輯視圖</strong>：專注於網絡拓撲邏輯設計</li>
+                                <li>🏢 <strong>實體視圖</strong>：模擬設備實際物理擺放位置</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="guide-section">
+                        <h4><i class="fas fa-vial"></i> 步驟五：測試驗證</h4>
                         <div class="guide-content">
                             <p><strong>可用測試工具：</strong></p>
                             <ul>
-                                <li>Ping 測試：測試設備間連通性</li>
-                                <li>路徑追蹤：查看封包傳輸路徑</li>
-                                <li>封包分析器：查看 OSI 各層封包詳情</li>
-                                <li>流量生成器：模擬網絡流量</li>
+                                <li>🔍 <strong>Ping 測試</strong>：驗證設備間連通性，顯示延遲和封包丟失率</li>
+                                <li>🛤️ <strong>路徑追蹤</strong>：查看封包經過的每一個跳點</li>
+                                <li>📊 <strong>封包分析器</strong>：深入分析 OSI 七層模型的封包詳情</li>
+                                <li>📈 <strong>效能監控</strong>：查看 CPU/記憶體/流量狀態</li>
+                                <li>🔧 <strong>診斷工具</strong>：自動檢測網絡問題並提供建議</li>
                             </ul>
                         </div>
                     </div>
@@ -2506,54 +2865,91 @@ Router&gt;
     <div id="flowchartOverlay" class="flowchart-overlay" style="display: none;">
         <div class="flowchart-window">
             <div class="flowchart-header">
-                <h2><i class="fas fa-sitemap"></i> 模擬器流程示範圖</h2>
+                <h2><i class="fas fa-sitemap"></i> 網絡模擬器操作流程圖 v2.0</h2>
                 <button class="modal-close" onclick="closeFlowchart()"><i class="fas fa-times"></i></button>
             </div>
             <div class="flowchart-body">
                 <div class="flowchart-container">
-                    <div class="flow-title">網絡模擬器操作流程</div>
+                    <div class="flow-title">Cisco Packet Tracer 完整操作流程</div>
                     <div class="flow-diagram">
                         <div class="flow-step start">
                             <div class="flow-icon"><i class="fas fa-play-circle"></i></div>
-                            <div class="flow-text">開始</div>
+                            <div class="flow-text">開始模擬</div>
+                            <div class="flow-desc">選擇模組類型進入</div>
+                        </div>
+                        <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                        <div class="flow-step">
+                            <div class="flow-icon"><i class="fas fa-th-large"></i></div>
+                            <div class="flow-text">1. 選擇模擬模組</div>
+                            <div class="flow-desc">核心/設備/協議/安全/自動化/IoT</div>
                         </div>
                         <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
                         <div class="flow-step">
                             <div class="flow-icon"><i class="fas fa-plus"></i></div>
-                            <div class="flow-text">1. 添加設備</div>
-                            <div class="flow-desc">從設備庫拖放路由器、交換器、PC等</div>
+                            <div class="flow-text">2. 添加設備</div>
+                            <div class="flow-desc">從左側設備庫拖放或點擊添加</div>
                         </div>
                         <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
                         <div class="flow-step">
                             <div class="flow-icon"><i class="fas fa-link"></i></div>
-                            <div class="flow-text">2. 連接設備</div>
-                            <div class="flow-desc">選擇線纜類型，連接設備端口</div>
+                            <div class="flow-text">3. 連接設備</div>
+                            <div class="flow-desc">選擇線纜類型 → 點擊設備A → 點擊設備B</div>
                         </div>
                         <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
                         <div class="flow-step">
                             <div class="flow-icon"><i class="fas fa-cog"></i></div>
-                            <div class="flow-text">3. 配置參數</div>
-                            <div class="flow-desc">設定 IP、子網路、閘道、VLAN等</div>
+                            <div class="flow-text">4. 配置參數</div>
+                            <div class="flow-desc">右側面板設定 IP/子網/閘道/VLAN</div>
                         </div>
                         <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
                         <div class="flow-decision">
                             <div class="flow-icon"><i class="fas fa-question"></i></div>
-                            <div class="flow-text">需要協議配置？</div>
+                            <div class="flow-text">需要進階配置？</div>
                         </div>
                         <div class="flow-branch">
                             <div class="flow-yes">
                                 <span>是</span>
                                 <div class="flow-step small">
-                                    <div class="flow-text">配置 OSPF/EIGRP/STP 等</div>
+                                    <div class="flow-text">CLI 終端配置</div>
+                                </div>
+                                <div class="flow-arrow" style="padding: 0.2rem;"><i class="fas fa-arrow-down"></i></div>
+                                <div class="flow-step small">
+                                    <div class="flow-text">OSPF/EIGRP/ACL</div>
                                 </div>
                             </div>
                             <div class="flow-no"><span>否</span></div>
                         </div>
                         <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
                         <div class="flow-step">
+                            <div class="flow-icon"><i class="fas fa-exchange-alt"></i></div>
+                            <div class="flow-text">5. 切換模式</div>
+                            <div class="flow-desc">即時模式/模擬模式/邏輯區/實體區</div>
+                        </div>
+                        <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                        <div class="flow-step">
                             <div class="flow-icon"><i class="fas fa-vial"></i></div>
-                            <div class="flow-text">4. 測試連通性</div>
-                            <div class="flow-desc">Ping測試、路徑追蹤、封包分析</div>
+                            <div class="flow-text">6. 測試驗證</div>
+                            <div class="flow-desc">Ping測試 / 路徑追蹤 / 封包分析</div>
+                        </div>
+                        <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                        <div class="flow-decision">
+                            <div class="flow-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="flow-text">測試通過？</div>
+                        </div>
+                        <div class="flow-branch">
+                            <div class="flow-yes">
+                                <span>通過</span>
+                                <div class="flow-step small end" style="border-color: var(--success-color);">
+                                    <div class="flow-text" style="color: var(--success-color);">✓ 匯出拓撲</div>
+                                </div>
+                            </div>
+                            <div class="flow-no">
+                                <span>失敗</span>
+                                <div class="flow-step small error">
+                                    <div class="flow-text">診斷修復</div>
+                                </div>
+                                <div class="flow-loop">↺ 返回步驟4</div>
+                            </div>
                         </div>
                         <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
                         <div class="flow-step end">
@@ -2570,15 +2966,38 @@ Router&gt;
                         <div class="legend-item"><div class="legend-icon start"></div><span>開始/結束</span></div>
                     </div>
                 </div>
-                <div class="flowchart-tips">
-                    <h4><i class="fas fa-lightbulb"></i> 重要提示</h4>
-                    <ul>
-                        <li>每次修改配置後記得點擊「套用配置」</li>
-                        <li>使用模擬模式可逐步觀察封包傳遞</li>
-                        <li>定期匯出配置以防止數據丟失</li>
-                        <li>善用 CLI 終端進行進階配置</li>
-                        <li>使用封包分析器了解 OSI 各層運作</li>
-                    </ul>
+                <div class="flowchart-tips" style="margin-top: 1.5rem; padding: 1.2rem; background: rgba(20, 30, 50, 0.6); border-radius: 8px;">
+                    <h4 style="color: var(--interface-blue); margin-bottom: 1rem;"><i class="fas fa-lightbulb"></i> 操作提示與快捷鍵</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div>
+                            <h5 style="color: var(--warning); margin-bottom: 0.5rem; font-size: 0.9rem;">⌨️ 快捷鍵</h5>
+                            <ul style="font-size: 0.85rem; color: var(--hologram-text);">
+                                <li><kbd>A</kbd> 自動連線</li>
+                                <li><kbd>S</kbd> 直通線</li>
+                                <li><kbd>X</kbd> 交叉線</li>
+                                <li><kbd>Del</kbd> 刪除設備</li>
+                                <li><kbd>Esc</kbd> 返回主頁</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 style="color: var(--success-color); margin-bottom: 0.5rem; font-size: 0.9rem;">✓ 最佳實踐</h5>
+                            <ul style="font-size: 0.85rem; color: var(--hologram-text);">
+                                <li>修改後點擊「套用配置」</li>
+                                <li>使用模擬模式觀察封包</li>
+                                <li>定期匯出拓撲存檔</li>
+                                <li>善用CLI進階配置</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 style="color: var(--interface-blue); margin-bottom: 0.5rem; font-size: 0.9rem;">🔧 工具說明</h5>
+                            <ul style="font-size: 0.85rem; color: var(--hologram-text);">
+                                <li>封包分析器查看OSI層</li>
+                                <li>CLI終端執行IOS命令</li>
+                                <li>診斷工具檢查網絡</li>
+                                <li>效能監控查看狀態</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2601,27 +3020,82 @@ Router&gt;
             capturedPackets: []
         };
 
-        // 設備數據庫
+        // 設備數據庫 - 按模式分類
         const deviceLibrary = {
+            // 核心模式 - 通用設備
             routers: [
-                { id: 'r1941', name: 'Router 1941', type: 'router', icon: 'fa-route', ip: '192.168.1.1/24', ports: 2 },
-                { id: 'r2911', name: 'Router 2911', type: 'router', icon: 'fa-route', ip: '192.168.1.2/24', ports: 4 },
-                { id: 'r4321', name: 'Router 4321', type: 'router', icon: 'fa-route', ip: '192.168.1.3/24', ports: 8 }
+                { id: 'r1941', name: 'Router 1941', type: 'router', icon: 'fa-route', ip: '192.168.1.1/24', ports: 2, model: 'Cisco 1941', desc: '入門級企業路由器' },
+                { id: 'r2911', name: 'Router 2911', type: 'router', icon: 'fa-route', ip: '192.168.1.2/24', ports: 4, model: 'Cisco 2911', desc: '中階整合服務路由器' },
+                { id: 'r4321', name: 'Router 4321', type: 'router', icon: 'fa-route', ip: '192.168.1.3/24', ports: 8, model: 'Cisco 4321', desc: '高階企業路由器' }
             ],
             switches: [
-                { id: 's2960', name: 'Switch 2960', type: 'switch', icon: 'fa-sitemap', ip: '192.168.1.10/24', ports: 24 },
-                { id: 's3650', name: 'Switch 3650', type: 'switch', icon: 'fa-sitemap', ip: '192.168.1.11/24', ports: 48 },
-                { id: 's3850', name: 'Switch 3850', type: 'switch', icon: 'fa-sitemap', ip: '192.168.1.12/24', ports: 48 }
+                { id: 's2960', name: 'Switch 2960', type: 'switch', icon: 'fa-sitemap', ip: '192.168.1.10/24', ports: 24, model: 'Catalyst 2960', desc: '基礎交換器' },
+                { id: 's3650', name: 'Switch 3650', type: 'switch', icon: 'fa-sitemap', ip: '192.168.1.11/24', ports: 48, model: 'Catalyst 3650', desc: '三層交換器' },
+                { id: 's3850', name: 'Switch 3850', type: 'switch', icon: 'fa-sitemap', ip: '192.168.1.12/24', ports: 48, model: 'Catalyst 3850', desc: '高階可堆疊交換器' }
             ],
             endpoints: [
-                { id: 'pc1', name: 'PC', type: 'pc', icon: 'fa-desktop', ip: '192.168.1.100/24', ports: 1 },
-                { id: 'laptop1', name: 'Laptop', type: 'laptop', icon: 'fa-laptop', ip: '192.168.1.103/24', ports: 1 },
-                { id: 'server1', name: 'Server', type: 'server', icon: 'fa-server', ip: '192.168.1.101/24', ports: 2 }
+                { id: 'pc1', name: 'PC', type: 'pc', icon: 'fa-desktop', ip: '192.168.1.100/24', ports: 1, model: 'Generic PC', desc: '桌上型電腦' },
+                { id: 'laptop1', name: 'Laptop', type: 'laptop', icon: 'fa-laptop', ip: '192.168.1.103/24', ports: 1, model: 'Generic Laptop', desc: '筆記型電腦' },
+                { id: 'server1', name: 'Server', type: 'server', icon: 'fa-server', ip: '192.168.1.101/24', ports: 2, model: 'Generic Server', desc: '伺服器' },
+                { id: 'phone1', name: 'IP Phone', type: 'phone', icon: 'fa-phone', ip: '192.168.1.110/24', ports: 1, model: 'Cisco IP Phone', desc: 'VoIP電話' },
+                { id: 'printer1', name: 'Printer', type: 'printer', icon: 'fa-print', ip: '192.168.1.120/24', ports: 1, model: 'Network Printer', desc: '網絡打印機' }
             ],
+            // 安全模式專用
             security: [
-                { id: 'asa5505', name: 'ASA 5505', type: 'firewall', icon: 'fa-shield-alt', ip: '192.168.1.254/24', ports: 8 }
+                { id: 'asa5505', name: 'ASA 5505', type: 'firewall', icon: 'fa-shield-alt', ip: '192.168.1.254/24', ports: 8, model: 'ASA 5505', desc: '入門級防火牆' },
+                { id: 'asa5510', name: 'ASA 5510', type: 'firewall', icon: 'fa-shield-alt', ip: '192.168.1.253/24', ports: 5, model: 'ASA 5510', desc: '中階防火牆' },
+                { id: 'ips1', name: 'IPS 4345', type: 'ips', icon: 'fa-user-shield', ip: '192.168.1.252/24', ports: 4, model: 'IPS 4345', desc: '入侵防禦系統' },
+                { id: 'vpn1', name: 'VPN Gateway', type: 'vpn', icon: 'fa-lock', ip: '192.168.1.251/24', ports: 2, model: 'VPN Concentrator', desc: 'VPN集中器' },
+                { id: 'nac1', name: 'NAC Server', type: 'nac', icon: 'fa-id-card', ip: '192.168.1.250/24', ports: 2, model: 'ISE 3415', desc: '網絡准入控制' }
+            ],
+            // 無線模式專用
+            wireless: [
+                { id: 'ap1', name: 'AP 2802I', type: 'ap', icon: 'fa-wifi', ip: '192.168.1.200/24', ports: 1, model: 'Aironet 2802I', desc: '802.11ac無線AP' },
+                { id: 'ap2', name: 'AP 3800', type: 'ap', icon: 'fa-wifi', ip: '192.168.1.202/24', ports: 1, model: 'Aironet 3800', desc: '802.11ax高速AP' },
+                { id: 'wlc1', name: 'WLC 3504', type: 'wlc', icon: 'fa-broadcast-tower', ip: '192.168.1.201/24', ports: 4, model: 'WLC 3504', desc: '無線控制器' },
+                { id: 'mesh1', name: 'Mesh AP', type: 'mesh', icon: 'fa-project-diagram', ip: '192.168.1.205/24', ports: 1, model: 'Mesh AP', desc: 'Mesh網狀AP' }
+            ],
+            // IoT模式專用
+            iot: [
+                { id: 'sensor1', name: 'Temp Sensor', type: 'sensor', icon: 'fa-thermometer-half', ip: '192.168.10.1/24', ports: 1, model: 'IoT Sensor', desc: '溫度感測器' },
+                { id: 'humidity1', name: 'Humidity Sensor', type: 'sensor', icon: 'fa-tint', ip: '192.168.10.5/24', ports: 1, model: 'Humidity Sensor', desc: '濕度感測器' },
+                { id: 'motion1', name: 'Motion Sensor', type: 'sensor', icon: 'fa-running', ip: '192.168.10.6/24', ports: 1, model: 'PIR Sensor', desc: '動作感測器' },
+                { id: 'camera1', name: 'IP Camera', type: 'camera', icon: 'fa-video', ip: '192.168.10.2/24', ports: 1, model: 'IP Camera', desc: '網絡攝像頭' },
+                { id: 'smart1', name: 'Smart Light', type: 'smart', icon: 'fa-lightbulb', ip: '192.168.10.3/24', ports: 1, model: 'Smart Light', desc: '智慧燈具' },
+                { id: 'smart2', name: 'Smart Lock', type: 'smart', icon: 'fa-door-closed', ip: '192.168.10.7/24', ports: 1, model: 'Smart Lock', desc: '智慧門鎖' },
+                { id: 'mcu1', name: 'MCU Board', type: 'mcu', icon: 'fa-memory', ip: '192.168.10.4/24', ports: 1, model: 'MCU Board', desc: '微控制器開發板' },
+                { id: 'gateway1', name: 'IoT Gateway', type: 'gateway', icon: 'fa-network-wired', ip: '192.168.10.254/24', ports: 4, model: 'IoT Gateway', desc: 'IoT閘道器' }
+            ],
+            // 協議模式專用 - 高階路由設備
+            protocols: [
+                { id: 'r4451', name: 'ISR 4451', type: 'router', icon: 'fa-route', ip: '10.0.0.1/8', ports: 8, model: 'ISR 4451-X', desc: '高階整合服務路由器' },
+                { id: 'nexus1', name: 'Nexus 9300', type: 'switch', icon: 'fa-sitemap', ip: '10.0.0.10/8', ports: 48, model: 'Nexus 9300', desc: '數據中心交換器' },
+                { id: 'asr1', name: 'ASR 1001', type: 'router', icon: 'fa-server', ip: '10.0.0.2/8', ports: 8, model: 'ASR 1001-X', desc: '邊緣路由器' },
+                { id: 'bgprouter', name: 'BGP Router', type: 'router', icon: 'fa-globe', ip: '10.0.0.3/8', ports: 4, model: 'BGP Router', desc: 'BGP邊界路由器' }
+            ],
+            // 自動化模式專用
+            automation: [
+                { id: 'ansible1', name: 'Ansible Server', type: 'server', icon: 'fa-cogs', ip: '192.168.100.10/24', ports: 2, model: 'Ansible Control', desc: 'Ansible控制節點' },
+                { id: 'terraform1', name: 'Terraform Host', type: 'server', icon: 'fa-cube', ip: '192.168.100.11/24', ports: 2, model: 'Terraform Host', desc: 'Terraform管理主機' },
+                { id: 'docker1', name: 'Docker Host', type: 'server', icon: 'fa-docker', ip: '192.168.100.12/24', ports: 2, model: 'Docker Host', desc: 'Docker容器主機' },
+                { id: 'jenkins1', name: 'Jenkins Server', type: 'server', icon: 'fa-sync-alt', ip: '192.168.100.13/24', ports: 2, model: 'CI/CD Server', desc: 'CI/CD伺服器' },
+                { id: 'netbox1', name: 'NetBox DCIM', type: 'server', icon: 'fa-database', ip: '192.168.100.14/24', ports: 2, model: 'NetBox Server', desc: '網絡資產管理' }
             ]
         };
+
+        // 模式對應的設備類別配置
+        const modeDeviceConfig = {
+            core: ['routers', 'switches', 'endpoints'],
+            devices: ['routers', 'switches', 'endpoints', 'security', 'wireless'],
+            protocols: ['protocols', 'routers', 'switches'],
+            security: ['security', 'routers', 'switches', 'endpoints'],
+            automation: ['automation', 'routers', 'switches', 'endpoints'],
+            iot: ['iot', 'routers', 'switches'],
+            quickstart: ['routers', 'switches', 'endpoints']
+        };
+
+        // 當前設備類別
+        let currentDeviceCategory = 'all';
 
         // 初始化函數
         function init() {
@@ -2670,34 +3144,63 @@ Router&gt;
             draw();
         }
 
-        // 渲染設備庫
-        function renderDeviceLibrary() {
+        // 渲染設備庫 - 根據當前模式顯示對應設備
+        function renderDeviceLibrary(mode = 'core') {
             const library = document.getElementById('deviceLibrary');
+            if (!library) return;
             library.innerHTML = '';
-            
-            const allDevices = [
-                ...deviceLibrary.routers,
-                ...deviceLibrary.switches,
-                ...deviceLibrary.endpoints,
-                ...deviceLibrary.security
-            ];
-            
-            allDevices.forEach(device => {
-                const tool = document.createElement('div');
-                tool.className = 'tool-item';
-                tool.draggable = true;
-                tool.dataset.device = JSON.stringify(device);
-                tool.title = `${device.name}`;
-                tool.innerHTML = `
-                    <div class="tool-icon">
-                        <i class="fas ${device.icon}"></i>
-                    </div>
-                    <div class="tool-label">${device.name}</div>
-                `;
-                
-                tool.addEventListener('dragstart', handleDragStart);
-                tool.addEventListener('click', () => addDevice(device));
-                library.appendChild(tool);
+
+            // 獲取當前模式對應的設備類別
+            const categories = modeDeviceConfig[mode] || modeDeviceConfig.core;
+
+            // 收集所有對應類別的設備
+            let allDevices = [];
+            categories.forEach(cat => {
+                if (deviceLibrary[cat]) {
+                    allDevices = allDevices.concat(deviceLibrary[cat]);
+                }
+            });
+
+            // 添加分類標籤
+            const categoryNames = {
+                routers: '路由器',
+                switches: '交換器',
+                endpoints: '終端設備',
+                security: '安全設備',
+                wireless: '無線設備',
+                iot: 'IoT設備',
+                protocols: '協議設備',
+                automation: '自動化工具'
+            };
+
+            // 按類別分組顯示
+            categories.forEach(cat => {
+                if (deviceLibrary[cat] && deviceLibrary[cat].length > 0) {
+                    // 添加分類標題
+                    const categoryHeader = document.createElement('div');
+                    categoryHeader.className = 'device-category-header';
+                    categoryHeader.innerHTML = `<span>${categoryNames[cat] || cat}</span>`;
+                    categoryHeader.style.cssText = 'width: 100%; grid-column: 1 / -1; font-size: 0.7rem; color: var(--cyber-gray); margin: 0.3rem 0; padding: 0.2rem 0; border-bottom: 1px dashed rgba(77, 195, 255, 0.2);';
+                    library.appendChild(categoryHeader);
+
+                    deviceLibrary[cat].forEach(device => {
+                        const tool = document.createElement('div');
+                        tool.className = 'tool-item';
+                        tool.draggable = true;
+                        tool.dataset.device = JSON.stringify(device);
+                        tool.title = `${device.name}\n${device.desc}`;
+                        tool.innerHTML = `
+                            <div class="tool-icon">
+                                <i class="fas ${device.icon}"></i>
+                            </div>
+                            <div class="tool-label">${device.name}</div>
+                        `;
+
+                        tool.addEventListener('dragstart', handleDragStart);
+                        tool.addEventListener('click', () => addDevice(device));
+                        library.appendChild(tool);
+                    });
+                }
             });
         }
 
@@ -3396,22 +3899,129 @@ Router&gt;
         function initWorkspace(mode) {
             const canvas = document.getElementById('workspaceCanvas');
             canvas.innerHTML = '';
-            
+
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.id = 'connectionSvg';
             svg.className = 'connection-svg';
             svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;';
             canvas.appendChild(svg);
-            
+
+            // 添加工作區操作提示橫幅
+            const bannerTexts = {
+                'core': '🔧 核心模擬：拖放設備建立基礎網絡拓撲，選擇連線工具連接設備',
+                'devices': '📦 設備管理：瀏覽所有可用設備，點擊查看詳情和規格',
+                'protocols': '📡 協議配置：配置 OSPF/EIGRP/BGP 等路由協議',
+                'security': '🔒 安全實驗室：部署防火牆、配置 VPN 和入侵檢測',
+                'automation': '🤖 網絡自動化：使用 Ansible/Terraform 實現 DevOps',
+                'iot': '🌐 物聯網：部署感測器和智慧設備，模擬 IoT 場景',
+                'quickstart': '⚡ 快速開始：跟隨步驟學習基礎操作'
+            };
+
+            const banner = document.createElement('div');
+            banner.className = 'workspace-banner';
+            banner.id = 'workspaceBanner';
+            banner.innerHTML = `
+                <i class="fas fa-info-circle"></i>
+                <span>${bannerTexts[mode] || bannerTexts.core}</span>
+                <i class="fas fa-times close-banner" onclick="closeBanner()"></i>
+            `;
+            canvas.appendChild(banner);
+
             simulatorState.activeDevices = [];
             simulatorState.connections = [];
             updateProgress(1);
-            
+
+            // 重新渲染設備庫 - 根據當前模式
+            renderDeviceLibrary(mode);
+
+            // 根據不同模式加載不同的預設設備
             setTimeout(() => {
-                addDevice(deviceLibrary.routers[0], 200, 80);
-                addDevice(deviceLibrary.switches[0], 400, 80);
-                addDevice(deviceLibrary.endpoints[0], 150, 220);
-                addDevice(deviceLibrary.endpoints[1], 450, 220);
+                switch(mode) {
+                    case 'core':
+                        // 核心模擬 - 基本網絡拓撲
+                        addDevice(deviceLibrary.routers[0], 300, 60);
+                        addDevice(deviceLibrary.switches[0], 300, 180);
+                        addDevice(deviceLibrary.endpoints[0], 120, 280);
+                        addDevice(deviceLibrary.endpoints[1], 300, 280);
+                        addDevice(deviceLibrary.endpoints[2], 480, 280);
+                        showHint('核心模擬器', '已載入基本網絡拓撲：\n• 1x 路由器\n• 1x 交換器\n• 3x 終端設備\n\n可自由添加更多設備和連線。');
+                        break;
+
+                    case 'devices':
+                        // 設備管理 - 多種設備展示
+                        addDevice(deviceLibrary.routers[0], 100, 80);
+                        addDevice(deviceLibrary.routers[1], 280, 80);
+                        addDevice(deviceLibrary.routers[2], 460, 80);
+                        addDevice(deviceLibrary.switches[0], 100, 200);
+                        addDevice(deviceLibrary.switches[1], 280, 200);
+                        addDevice(deviceLibrary.switches[2], 460, 200);
+                        addDevice(deviceLibrary.wireless[0], 180, 320);
+                        addDevice(deviceLibrary.security[0], 360, 320);
+                        showHint('設備管理', '已載入多種設備展示：\n• 3x 路由器（1941/2911/4321）\n• 3x 交換器（2960/3650/3850）\n• 1x 無線AP\n• 1x 防火牆\n\n點擊設備查看詳情和配置。');
+                        break;
+
+                    case 'protocols':
+                        // 協議配置 - OSPF/STP/BGP 拓撲
+                        addDevice(deviceLibrary.protocols[0], 150, 50);
+                        addDevice(deviceLibrary.protocols[1], 450, 50);
+                        addDevice(deviceLibrary.protocols[2], 300, 150);
+                        addDevice(deviceLibrary.protocols[3], 300, 50);
+                        addDevice(deviceLibrary.switches[0], 150, 250);
+                        addDevice(deviceLibrary.switches[1], 450, 250);
+                        showHint('協議配置模式', '已載入進階協議拓撲：\n• ISR 4451 (OSPF核心)\n• Nexus 9300 (數據中心)\n• ASR 1001 (邊緣路由)\n• BGP Router (邊界)\n\n適合學習OSPF/EIGRP/BGP/STP協議。');
+                        break;
+
+                    case 'security':
+                        // 安全實驗室 - 完整安全架構
+                        addDevice(deviceLibrary.security[0], 300, 30);
+                        addDevice(deviceLibrary.security[2], 150, 100);
+                        addDevice(deviceLibrary.security[3], 450, 100);
+                        addDevice(deviceLibrary.routers[0], 300, 170);
+                        addDevice(deviceLibrary.switches[0], 300, 260);
+                        addDevice(deviceLibrary.endpoints[0], 150, 340);
+                        addDevice(deviceLibrary.endpoints[2], 450, 340);
+                        addDevice(deviceLibrary.security[4], 300, 340);
+                        showHint('安全實驗室', '已載入完整安全架構：\n• ASA 防火牆\n• IPS 入侵防禦\n• VPN 閘道\n• NAC 准入控制\n\n適合學習企業安全策略。');
+                        break;
+
+                    case 'automation':
+                        // 自動化 - DevOps 環境
+                        addDevice(deviceLibrary.automation[0], 300, 40);
+                        addDevice(deviceLibrary.automation[1], 150, 120);
+                        addDevice(deviceLibrary.automation[2], 450, 120);
+                        addDevice(deviceLibrary.automation[3], 150, 220);
+                        addDevice(deviceLibrary.automation[4], 450, 220);
+                        addDevice(deviceLibrary.routers[0], 300, 150);
+                        addDevice(deviceLibrary.switches[0], 300, 260);
+                        addDevice(deviceLibrary.endpoints[0], 200, 340);
+                        addDevice(deviceLibrary.endpoints[2], 400, 340);
+                        showHint('網絡自動化', '已載入DevOps環境：\n• Ansible 控制節點\n• Terraform 管理\n• Docker 容器\n• Jenkins CI/CD\n• NetBox 資產管理\n\n適合網絡自動化學習。');
+                        break;
+
+                    case 'iot':
+                        // IoT 環境 - 智慧家居/工業
+                        addDevice(deviceLibrary.iot[7], 300, 40);
+                        addDevice(deviceLibrary.routers[0], 300, 130);
+                        addDevice(deviceLibrary.switches[0], 300, 220);
+                        addDevice(deviceLibrary.iot[0], 100, 300);
+                        addDevice(deviceLibrary.iot[1], 180, 300);
+                        addDevice(deviceLibrary.iot[2], 260, 300);
+                        addDevice(deviceLibrary.iot[3], 340, 300);
+                        addDevice(deviceLibrary.iot[4], 420, 300);
+                        addDevice(deviceLibrary.iot[5], 500, 300);
+                        showHint('物聯網模擬', '已載入IoT生態系統：\n• IoT 閘道器\n• 溫度/濕度/動作感測器\n• IP 攝像頭\n• 智慧燈具/門鎖\n\n模擬智慧家居場景。');
+                        break;
+
+                    case 'quickstart':
+                    default:
+                        // 快速開始 - 簡單拓撲
+                        addDevice(deviceLibrary.routers[0], 300, 80);
+                        addDevice(deviceLibrary.switches[0], 300, 200);
+                        addDevice(deviceLibrary.endpoints[0], 180, 300);
+                        addDevice(deviceLibrary.endpoints[1], 420, 300);
+                        showHint('快速開始指南', '歡迎使用模擬器！\n\n步驟1️⃣: 從左側拖放設備\n步驟2️⃣: 選擇連線工具連接\n步驟3️⃣: 右側配置參數\n步驟4️⃣: 測試網絡連通性');
+                        break;
+                }
             }, 100);
         }
 
@@ -3604,7 +4214,7 @@ Router&gt;
         }
 
         function showNetworkDiagnostics() {
-            showHint('網絡診斷', '診斷工具已啟動...\n正在檢查網絡連接...\n所有設備狀態正常。');
+            showHint('網絡診斷', '診斷工具已啟動...\n正在檢查網絡連接...\n���有設備狀態正常。');
         }
 
         function showHelp() {
@@ -4053,8 +4663,361 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
             document.getElementById('osiLayer1').textContent = 'Electrical Signals';
         }
 
+        // 模式切換（保留設備）
+        function switchSimulatorMode(mode) {
+            simulatorState.currentMode = mode;
+
+            // 更新模式切換按鈕狀態
+            document.querySelectorAll('#modeSwitcher .device-type-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.mode === mode) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // 更新標題
+            const titles = {
+                'core': '🔧 核心模擬器',
+                'devices': '📦 設備管理',
+                'protocols': '📡 協議配置',
+                'security': '🔒 安全實驗室',
+                'automation': '🤖 網絡自動化',
+                'iot': '🌐 物聯網'
+            };
+            document.getElementById('simulatorMode').textContent = titles[mode] || '模擬器';
+
+            // 重新渲染設備庫
+            renderDeviceLibrary(mode);
+
+            // 更新設備計數
+            updateDeviceCount();
+
+            showHint('模式切換', `已切換到「${titles[mode]}」模式\n設備庫已更新。`);
+        }
+
+        // 更新設備計數
+        function updateDeviceCount() {
+            const library = document.getElementById('deviceLibrary');
+            const deviceCount = document.getElementById('deviceCount');
+            if (library && deviceCount) {
+                const count = library.querySelectorAll('.tool-item').length;
+                deviceCount.textContent = `(${count} 個設備)`;
+            }
+        }
+
+        // 快捷工具欄功能
+        let canvasZoom = 1;
+
+        function zoomIn() {
+            canvasZoom = Math.min(canvasZoom + 0.1, 2);
+            applyZoom();
+            showHint('縮放', `放大至 ${Math.round(canvasZoom * 100)}%`);
+        }
+
+        function zoomOut() {
+            canvasZoom = Math.max(canvasZoom - 0.1, 0.5);
+            applyZoom();
+            showHint('縮放', `縮小至 ${Math.round(canvasZoom * 100)}%`);
+        }
+
+        function applyZoom() {
+            const canvas = document.getElementById('workspaceCanvas');
+            canvas.style.transform = `scale(${canvasZoom})`;
+            canvas.style.transformOrigin = 'top left';
+        }
+
+        function fitToScreen() {
+            canvasZoom = 1;
+            applyZoom();
+            showHint('適應畫面', '已重置為 100%');
+        }
+
+        function selectAllDevices() {
+            document.querySelectorAll('.network-node').forEach(node => {
+                node.classList.add('selected');
+            });
+            showHint('全選', `已選擇 ${simulatorState.activeDevices.length} 個設備`);
+        }
+
+        function clearAllDevices() {
+            if (simulatorState.activeDevices.length === 0) {
+                showHint('清除', '工作區已經是空的');
+                return;
+            }
+
+            // 顯示確認對話框
+            showConfirmDialog('確定要清除所有設備和連線嗎？', () => {
+                // 刪除所有連線
+                simulatorState.connections.forEach(conn => {
+                    const line = document.getElementById(conn.id);
+                    if (line) line.remove();
+                });
+                simulatorState.connections = [];
+
+                // 刪除所有設備
+                simulatorState.activeDevices.forEach(dev => {
+                    const node = document.getElementById(dev.id);
+                    if (node) node.remove();
+                });
+                simulatorState.activeDevices = [];
+                simulatorState.selectedDevice = null;
+
+                showHint('清除完成', '所有設備和連線已清除');
+            });
+        }
+
+        // 自定義確認對話框
+        function showConfirmDialog(message, onConfirm) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'confirmDialog';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-exclamation-triangle" style="color: var(--warning);"></i> 確認操作</h3>
+                        <button class="close-btn" onclick="closeConfirmDialog()"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="color: var(--hologram-text); margin-bottom: 1rem;">${message}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="action-btn" onclick="closeConfirmDialog()"><i class="fas fa-times"></i> 取消</button>
+                        <button class="action-btn primary" id="confirmBtn"><i class="fas fa-check"></i> 確定</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('confirmBtn').onclick = () => {
+                closeConfirmDialog();
+                onConfirm();
+            };
+        }
+
+        function closeConfirmDialog() {
+            const dialog = document.getElementById('confirmDialog');
+            if (dialog) dialog.remove();
+        }
+
+        function exportTopology() {
+            const topology = {
+                devices: simulatorState.activeDevices.map(d => ({
+                    id: d.id,
+                    name: d.device.name,
+                    type: d.device.type,
+                    ip: d.device.ip,
+                    x: d.x,
+                    y: d.y
+                })),
+                connections: simulatorState.connections.map(c => ({
+                    from: c.from,
+                    to: c.to,
+                    type: c.type
+                }))
+            };
+
+            const dataStr = JSON.stringify(topology, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `topology_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showHint('匯出成功', '網絡拓撲已匯出為 JSON 文件');
+        }
+
+        function autoArrange() {
+            const devices = simulatorState.activeDevices;
+            if (devices.length === 0) {
+                showHint('自動排列', '沒有設備需要排列');
+                return;
+            }
+
+            const canvas = document.getElementById('workspaceCanvas');
+            const canvasWidth = canvas.clientWidth - 150;
+            const canvasHeight = canvas.clientHeight - 160;
+            const cols = Math.ceil(Math.sqrt(devices.length));
+            const rows = Math.ceil(devices.length / cols);
+            const cellWidth = canvasWidth / cols;
+            const cellHeight = canvasHeight / rows;
+
+            devices.forEach((dev, index) => {
+                const col = index % cols;
+                const row = Math.floor(index / cols);
+                const newX = 20 + col * cellWidth + cellWidth / 2 - 60;
+                const newY = 20 + row * cellHeight + cellHeight / 2 - 70;
+
+                dev.x = newX;
+                dev.y = newY;
+
+                const node = document.getElementById(dev.id);
+                if (node) {
+                    node.style.transition = 'left 0.5s ease, top 0.5s ease';
+                    node.style.left = `${newX}px`;
+                    node.style.top = `${newY}px`;
+                    setTimeout(() => {
+                        node.style.transition = '';
+                    }, 500);
+                }
+            });
+
+            updateAllConnections();
+            showHint('自動排列', `已排列 ${devices.length} 個設備`);
+        }
+
+        // 快速連接功能 - 自動連接所選設備
+        function quickConnect() {
+            const selectedNodes = document.querySelectorAll('.network-node.selected');
+            if (selectedNodes.length < 2) {
+                showHint('快速連接', '請先選擇至少兩個設備');
+                return;
+            }
+
+            const nodeIds = Array.from(selectedNodes).map(n => n.id);
+            for (let i = 0; i < nodeIds.length - 1; i++) {
+                createConnection(nodeIds[i], nodeIds[i + 1], 'auto');
+            }
+
+            showHint('快速連接', `已連接 ${nodeIds.length} 個設備`);
+        }
+
+        // 批量操作功能
+        function batchOperation(operation) {
+            const selectedNodes = document.querySelectorAll('.network-node.selected');
+            if (selectedNodes.length === 0) {
+                showHint('批量操作', '請先選擇設備');
+                return;
+            }
+
+            switch(operation) {
+                case 'delete':
+                    selectedNodes.forEach(node => deleteDevice(node.id));
+                    showHint('批量刪除', `已刪除 ${selectedNodes.length} 個設備`);
+                    break;
+                case 'enable':
+                    selectedNodes.forEach(node => {
+                        const status = node.querySelector('.node-status');
+                        if (status) status.style.background = 'var(--online)';
+                    });
+                    showHint('批量啟用', `已啟用 ${selectedNodes.length} 個設備`);
+                    break;
+                case 'disable':
+                    selectedNodes.forEach(node => {
+                        const status = node.querySelector('.node-status');
+                        if (status) status.style.background = 'var(--offline)';
+                    });
+                    showHint('批量禁用', `已禁用 ${selectedNodes.length} 個設備`);
+                    break;
+            }
+        }
+
+        // 流量生成器
+        function startTrafficGenerator() {
+            if (simulatorState.activeDevices.length < 2) {
+                showHint('流量生成器', '需要至少兩個設備');
+                return;
+            }
+
+            showHint('流量生成器', '正在生成隨機網絡流量...');
+
+            let count = 0;
+            const maxPackets = 10;
+            const interval = setInterval(() => {
+                if (count >= maxPackets || simulatorState.activeDevices.length < 2) {
+                    clearInterval(interval);
+                    showHint('流量生成完成', `已發送 ${count} 個封包`);
+                    return;
+                }
+
+                const devices = simulatorState.activeDevices;
+                const from = devices[Math.floor(Math.random() * devices.length)];
+                const to = devices[Math.floor(Math.random() * devices.length)];
+                const types = ['icmp', 'tcp', 'arp', 'dhcp'];
+                const type = types[Math.floor(Math.random() * types.length)];
+
+                if (from !== to) {
+                    createPacket(from, to, type);
+                    count++;
+                }
+            }, 300);
+        }
+
+        // 網絡診斷工具 - 詳細版
+        function showNetworkDiagnosticsPanel() {
+            const devices = simulatorState.activeDevices;
+            const connections = simulatorState.connections;
+
+            let html = `
+                <div class="modal-overlay" id="diagnosticsModal" onclick="if(event.target===this)closeDiagnosticsModal()">
+                    <div class="modal-content" style="max-width: 700px; max-height: 85vh; overflow-y: auto;">
+                        <div class="modal-header">
+                            <h3><i class="fas fa-stethoscope"></i> 網絡診斷報告</h3>
+                            <button class="close-btn" onclick="closeDiagnosticsModal()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="config-section" style="margin-bottom: 1rem;">
+                                <h4 style="color: var(--interface-blue); margin-bottom: 0.8rem;"><i class="fas fa-network-wired"></i> 網絡概覽</h4>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                                    <div style="text-align: center; padding: 1rem; background: rgba(0,180,216,0.1); border-radius: 8px;">
+                                        <div style="font-size: 1.8rem; color: var(--interface-blue);">${devices.length}</div>
+                                        <div style="font-size: 0.8rem; color: var(--cyber-gray);">設備數量</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 1rem; background: rgba(0,204,102,0.1); border-radius: 8px;">
+                                        <div style="font-size: 1.8rem; color: var(--success-color);">${connections.length}</div>
+                                        <div style="font-size: 0.8rem; color: var(--cyber-gray);">連線數量</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 1rem; background: rgba(123,44,191,0.1); border-radius: 8px;">
+                                        <div style="font-size: 1.8rem; color: #7b2cbf;">${devices.filter(d => d.connections.length > 0).length}</div>
+                                        <div style="font-size: 0.8rem; color: var(--cyber-gray);">已連接設備</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="config-section" style="margin-bottom: 1rem;">
+                                <h4 style="color: var(--interface-blue); margin-bottom: 0.8rem;"><i class="fas fa-list"></i> 設備清單</h4>
+                                <div style="max-height: 200px; overflow-y: auto;">
+                                    ${devices.map(d => `
+                                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <i class="fas ${d.device.icon}" style="color: var(--interface-blue);"></i>
+                                                <span>${d.device.name}</span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <span style="font-family: monospace; font-size: 0.8rem; color: var(--cyber-gray);">${d.device.ip}</span>
+                                                <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--online);"></span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="config-section">
+                                <h4 style="color: var(--interface-blue); margin-bottom: 0.8rem;"><i class="fas fa-check-circle"></i> 診斷結果</h4>
+                                <div style="color: var(--success-color); display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fas fa-check"></i> 所有設備運行正常
+                                </div>
+                                <div style="color: var(--success-color); display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                                    <i class="fas fa-check"></i> 網絡連接狀態良好
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="action-btn" onclick="closeDiagnosticsModal()"><i class="fas fa-arrow-left"></i> 關閉</button>
+                            <button class="action-btn primary" onclick="startTrafficGenerator(); closeDiagnosticsModal();"><i class="fas fa-play"></i> 測試流量</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+
+        function closeDiagnosticsModal() {
+            const modal = document.getElementById('diagnosticsModal');
+            if (modal) modal.remove();
+        }
+
         // 初始化
         document.addEventListener('DOMContentLoaded', init);
     </script>
-</body>
-</html>
+
+</body></html>
