@@ -2347,6 +2347,15 @@
                 <button class="control-btn home" onclick="hideSimulator()">
                     <i class="fas fa-home"></i> 主頁
                 </button>
+                <button class="control-btn" onclick="showConfigExportTool()">
+                    <i class="fas fa-download"></i> 配置導出
+                </button>
+                <button class="control-btn" onclick="toggleNetworkTools()">
+                    <i class="fas fa-calculator"></i> 網絡工具
+                </button>
+                <button class="control-btn" onclick="toggleGuideMode()">
+                    <i class="fas fa-lightbulb"></i> 指引助手
+                </button>
                 <button class="control-btn" onclick="showHelp()">
                     <i class="fas fa-question-circle"></i> 幫助
                 </button>
@@ -2383,6 +2392,18 @@
                         </button>
                         <button class="device-type-btn" onclick="switchSimulatorMode('iot')" data-mode="iot">
                             <i class="fas fa-satellite-dish"></i> IoT
+                        </button>
+                        <button class="device-type-btn" onclick="switchSimulatorMode('cloud')" data-mode="cloud">
+                            <i class="fas fa-cloud"></i> 雲網絡
+                        </button>
+                        <button class="device-type-btn" onclick="switchSimulatorMode('wireless')" data-mode="wireless">
+                            <i class="fas fa-wifi"></i> 無線
+                        </button>
+                        <button class="device-type-btn" onclick="switchSimulatorMode('sdwan')" data-mode="sdwan">
+                            <i class="fas fa-project-diagram"></i> SD-WAN
+                        </button>
+                        <button class="device-type-btn" onclick="switchSimulatorMode('5g')" data-mode="5g">
+                            <i class="fas fa-broadcast-tower"></i> 5G
                         </button>
                     </div>
                 </div>
@@ -5018,6 +5039,332 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
 
         // 初始化
         document.addEventListener('DOMContentLoaded', init);
+    
+        // ============ 新增功能：網絡計算工具 ============
+        function toggleNetworkTools() {
+            const panel = document.getElementById('networkToolsPanel');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'flex';
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        function calculateSubnet() {
+            const ip = document.getElementById('subnetIP').value;
+            const mask = parseInt(document.getElementById('subnetMask').value);
+            const resultDiv = document.getElementById('subnetResult');
+
+            if (!ip || isNaN(mask) || mask < 0 || mask > 32) {
+                resultDiv.style.display = 'none';
+                showHint('錯誤', '請輸入有效的 IP 和掩碼位數');
+                return;
+            }
+
+            const hostBits = 32 - mask;
+            const hostCount = Math.pow(2, hostBits) - 2;
+            const subnetMask = ((0xffffffff << hostBits) >>> 0).toString(2).match(/.{1,8}/g).map(b => parseInt(b, 2)).join('.');
+
+            resultDiv.innerHTML = `
+                <strong>子網信息：</strong><br>
+                網絡地址: ${ip}<br>
+                掩碼位數: /${mask}<br>
+                子網掩碼: ${subnetMask}<br>
+                可用主機數: ${hostCount}
+            `;
+            resultDiv.style.display = 'block';
+        }
+
+        function convertIPv4() {
+            const ip = document.getElementById('ipv4Input').value;
+            const resultDiv = document.getElementById('ipv4Result');
+
+            const parts = ip.split('.');
+            if (parts.length !== 4 || !parts.every(p => !isNaN(p) && p >= 0 && p <= 255)) {
+                resultDiv.style.display = 'none';
+                showHint('錯誤', '請輸入有效的 IPv4 地址');
+                return;
+            }
+
+            const binary = parts.map(p => parseInt(p).toString(2).padStart(8, '0')).join('.');
+            const hex = parts.map(p => parseInt(p).toString(16).padStart(2, '0').toUpperCase()).join(':');
+
+            resultDiv.innerHTML = `
+                <strong>IP 轉換結果：</strong><br>
+                十進制: ${ip}<br>
+                二進制: ${binary}<br>
+                十六進制: ${hex}
+            `;
+            resultDiv.style.display = 'block';
+        }
+
+        function calculateBandwidth() {
+            const size = parseFloat(document.getElementById('bandwidthSize').value);
+            const speed = parseFloat(document.getElementById('bandwidthSpeed').value);
+            const resultDiv = document.getElementById('bandwidthResult');
+
+            if (isNaN(size) || isNaN(speed) || size <= 0 || speed <= 0) {
+                resultDiv.style.display = 'none';
+                showHint('錯誤', '請輸入有效的數值');
+                return;
+            }
+
+            const bits = size * 8 * 1024 * 1024;
+            const seconds = bits / (speed * 1000000);
+            const minutes = seconds / 60;
+            const hours = minutes / 60;
+
+            resultDiv.innerHTML = `
+                <strong>傳輸時間：</strong><br>
+                秒: ${seconds.toFixed(2)} s<br>
+                分鐘: ${minutes.toFixed(2)} min<br>
+                小時: ${hours.toFixed(2)} h
+            `;
+            resultDiv.style.display = 'block';
+        }
+
+        function calculateVLSM() {
+            const network = document.getElementById('vlsmNetwork').value;
+            const subnets = parseInt(document.getElementById('vlsmSubnets').value);
+            const resultDiv = document.getElementById('vlsmResult');
+
+            if (!network || isNaN(subnets) || subnets <= 0) {
+                resultDiv.style.display = 'none';
+                showHint('錯誤', '請輸入有效的網絡和子網數量');
+                return;
+            }
+
+            const [ip, mask] = network.split('/');
+            const newMask = parseInt(mask) + Math.ceil(Math.log2(subnets));
+
+            if (newMask > 32) {
+                resultDiv.style.display = 'none';
+                showHint('錯誤', '子網掩碼超出範圍');
+                return;
+            }
+
+            resultDiv.innerHTML = `
+                <strong>VLSM 計算結果：</strong><br>
+                原網絡: ${network}<br>
+                子網數量: ${subnets}<br>
+                新掩碼: /${newMask}<br>
+                每個子網主機數: ${Math.pow(2, 32 - newMask) - 2}
+            `;
+            resultDiv.style.display = 'block';
+        }
+
+        // ============ 新增功能：實時指引助手 ============
+        let guideMode = false;
+
+        function toggleGuideMode() {
+            guideMode = !guideMode;
+            const bubble = document.getElementById('guideBubble');
+
+            if (guideMode) {
+                bubble.style.display = 'block';
+                showHint('指引助手', '已啟用。我將為您提供逐步指導。');
+            } else {
+                bubble.style.display = 'none';
+                showHint('指引助手', '已禁用。');
+            }
+        }
+
+        function closeGuideBubble() {
+            document.getElementById('guideBubble').style.display = 'none';
+            guideMode = false;
+        }
+
+        function updateGuide(title, content) {
+            if (guideMode) {
+                document.getElementById('guideTitle').textContent = title;
+                document.getElementById('guideContent').textContent = content;
+                document.getElementById('guideBubble').style.display = 'block';
+            }
+        }
+
+        // ============ 新增功能：配置導出與比對 ============
+        function showConfigExportTool() {
+            const devices = simulatorState.activeDevices || [];
+            
+            let configText = '=== 網絡配置導出 ===\n';
+            configText += `導出時間: ${new Date().toLocaleString()}\n`;
+            configText += `設備總數: ${devices.length}\n\n`;
+
+            devices.forEach(dev => {
+                if (dev.device) {
+                    configText += `[${dev.device.name}]\n`;
+                    configText += `IP: ${dev.device.ip}\n`;
+                    configText += `類型: ${dev.device.type || 'unknown'}\n`;
+                    configText += `連接數: ${dev.connections ? dev.connections.length : 0}\n\n`;
+                }
+            });
+
+            const html = `
+                <div class="device-details-modal" style="display: flex; flex-direction: column; max-width: 700px; max-height: 80vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h3 style="color: var(--interface-blue); display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-download"></i> 配置導出與比對
+                        </h3>
+                        <button class="modal-close" onclick="this.closest('.device-details-modal').remove()"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div style="padding: 1.5rem; flex: 1; overflow-y: auto;">
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="color: var(--interface-blue); margin-bottom: 0.8rem;">當前配置</h4>
+                            <textarea id="currentConfig" readonly style="width: 100%; height: 150px; padding: 0.8rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(123, 44, 191, 0.2); border-radius: 6px; color: var(--hologram-text); font-family: monospace; font-size: 0.8rem; resize: vertical;">${configText}</textarea>
+                            <button onclick="copyToClipboard('currentConfig')" style="width: 100%; margin-top: 0.5rem; padding: 0.6rem; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85rem;">
+                                <i class="fas fa-copy"></i> 複製配置
+                            </button>
+                        </div>
+
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="color: var(--interface-blue); margin-bottom: 0.8rem;">比對配置</h4>
+                            <textarea id="compareConfig" placeholder="粘貼要比對的配置..." style="width: 100%; height: 150px; padding: 0.8rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(123, 44, 191, 0.2); border-radius: 6px; color: var(--hologram-text); font-family: monospace; font-size: 0.8rem; resize: vertical;"></textarea>
+                            <button onclick="compareConfigs()" style="width: 100%; margin-top: 0.5rem; padding: 0.6rem; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85rem;">
+                                <i class="fas fa-exchange-alt"></i> 開始比對
+                            </button>
+                        </div>
+
+                        <div id="comparisonResult" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(0, 180, 216, 0.05); border-left: 3px solid var(--interface-blue); border-radius: 4px; color: var(--hologram-text); font-size: 0.85rem; font-family: monospace; max-height: 300px; overflow-y: auto;"></div>
+                    </div>
+                    <div style="padding: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 0.8rem; justify-content: flex-end;">
+                        <button onclick="this.closest('.device-details-modal').remove()" style="padding: 0.6rem 1.2rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--hologram-text); cursor: pointer; font-size: 0.9rem;">
+                            <i class="fas fa-arrow-left"></i> 關閉
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(5px);';
+            overlay.onclick = (e) => {
+                if (e.target === overlay) overlay.remove();
+            };
+            overlay.innerHTML = html;
+            document.body.appendChild(overlay);
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            document.execCommand('copy');
+            showHint('複製成功', '配置已複製到剪貼板');
+        }
+
+        function compareConfigs() {
+            const current = document.getElementById('currentConfig').value.split('\n');
+            const compare = document.getElementById('compareConfig').value.split('\n');
+            const resultDiv = document.getElementById('comparisonResult');
+
+            let result = '<strong>配置差異對比：</strong><br>';
+            const maxLen = Math.max(current.length, compare.length);
+
+            for (let i = 0; i < maxLen; i++) {
+                const currLine = current[i] || '';
+                const compLine = compare[i] || '';
+
+                if (currLine === compLine) {
+                    result += `<span style="color: var(--cyber-gray);">${currLine || '(空行)'}</span><br>`;
+                } else {
+                    result += `<span style="color: var(--offline);">- ${currLine || '(空行)'}</span><br>`;
+                    result += `<span style="color: var(--success-color);">+ ${compLine || '(空行)'}</span><br>`;
+                }
+            }
+
+            resultDiv.innerHTML = result;
+            resultDiv.style.display = 'block';
+        }
+
+        // ============ 新增模式：雲網絡、無線、SD-WAN、5G ============
+        const newDeviceLibraries = {
+            cloud: [
+                { name: 'AWS VPC', icon: 'fas fa-cloud', ip: '10.0.0.0/16', type: 'aws' },
+                { name: 'Azure VNet', icon: 'fas fa-cloud', ip: '172.16.0.0/16', type: 'azure' },
+                { name: 'Google Cloud', icon: 'fas fa-cloud', ip: '10.128.0.0/20', type: 'gcp' },
+                { name: 'VPN Gateway', icon: 'fas fa-lock', ip: '192.168.100.1/24', type: 'vpn' }
+            ],
+            wireless: [
+                { name: 'AP', icon: 'fas fa-wifi', ip: '192.168.1.5/24', type: 'ap' },
+                { name: 'Controller', icon: 'fas fa-broadcast-tower', ip: '192.168.1.6/24', type: 'controller' },
+                { name: 'Client', icon: 'fas fa-mobile-alt', ip: '192.168.1.50/24', type: 'client' },
+                { name: 'Mesh', icon: 'fas fa-sitemap', ip: '192.168.1.7/24', type: 'mesh' }
+            ],
+            sdwan: [
+                { name: 'SD-WAN Hub', icon: 'fas fa-project-diagram', ip: '10.0.0.1/24', type: 'sdwan-hub' },
+                { name: 'MPLS Link', icon: 'fas fa-link', ip: '10.0.1.1/24', type: 'mpls' },
+                { name: 'Internet Link', icon: 'fas fa-globe', ip: '10.0.2.1/24', type: 'internet' },
+                { name: 'Branch', icon: 'fas fa-building', ip: '10.0.3.1/24', type: 'branch' }
+            ],
+            '5g': [
+                { name: '5G Base Station', icon: 'fas fa-broadcast-tower', ip: '10.0.0.1/24', type: '5g-bs' },
+                { name: 'UPF', icon: 'fas fa-server', ip: '10.0.0.2/24', type: 'upf' },
+                { name: 'Edge Server', icon: 'fas fa-database', ip: '10.0.0.3/24', type: 'edge' },
+                { name: '5G Device', icon: 'fas fa-mobile-alt', ip: '10.0.0.100/24', type: '5g-device' }
+            ]
+        };
+
+        // 擴展原有的 deviceLibraries（如果存在）
+        if (typeof deviceLibraries !== 'undefined') {
+            Object.assign(deviceLibraries, newDeviceLibraries);
+        }
+    
     </script>
 
+
+        <!-- 網絡工具面板 -->
+        <div id="networkToolsPanel" class="network-tools-panel" style="display: none; position: fixed; right: 0; top: 56px; width: 300px; height: calc(100vh - 56px); background: rgba(15, 20, 35, 0.95); border-left: 1px solid var(--neon-border); flex-direction: column; z-index: 50; overflow-y: auto;">
+            <div style="padding: 1rem; border-bottom: 1px solid rgba(0, 180, 216, 0.2); display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--interface-blue); font-weight: 500;">🔧 網絡計算工具</span>
+                <button style="background: transparent; border: none; color: var(--cyber-gray); cursor: pointer; font-size: 1.2rem;" onclick="toggleNetworkTools()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div style="flex: 1; padding: 1rem; overflow-y: auto;">
+                <!-- 子網計算器 -->
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="color: var(--interface-blue); font-size: 0.9rem; margin-bottom: 0.8rem; font-weight: 500;">📊 子網計算器</div>
+                    <input type="text" id="subnetIP" placeholder="輸入 IP (如: 192.168.1.0)" value="192.168.1.0" style="width: 100%; padding: 0.6rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 180, 216, 0.2); border-radius: 6px; color: var(--hologram-text); margin-bottom: 0.5rem; font-size: 0.85rem;">
+                    <input type="number" id="subnetMask" placeholder="輸入掩碼位數 (0-32)" value="24" min="0" max="32" style="width: 100%; padding: 0.6rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 180, 216, 0.2); border-radius: 6px; color: var(--hologram-text); margin-bottom: 0.5rem; font-size: 0.85rem;">
+                    <button onclick="calculateSubnet()" style="width: 100%; padding: 0.6rem; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85rem;">計算</button>
+                    <div id="subnetResult" style="display: none; margin-top: 0.5rem; padding: 0.8rem; background: rgba(0, 204, 102, 0.1); border-left: 3px solid var(--success-color); border-radius: 4px; color: var(--success-color); font-family: monospace; font-size: 0.8rem;"></div>
+                </div>
+
+                <!-- IPv4 轉換 -->
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="color: var(--interface-blue); font-size: 0.9rem; margin-bottom: 0.8rem; font-weight: 500;">🔄 IPv4 轉換</div>
+                    <input type="text" id="ipv4Input" placeholder="輸入 IPv4 地址" value="192.168.1.1" style="width: 100%; padding: 0.6rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 180, 216, 0.2); border-radius: 6px; color: var(--hologram-text); margin-bottom: 0.5rem; font-size: 0.85rem;">
+                    <button onclick="convertIPv4()" style="width: 100%; padding: 0.6rem; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85rem;">轉換為二進制</button>
+                    <div id="ipv4Result" style="display: none; margin-top: 0.5rem; padding: 0.8rem; background: rgba(0, 204, 102, 0.1); border-left: 3px solid var(--success-color); border-radius: 4px; color: var(--success-color); font-family: monospace; font-size: 0.8rem;"></div>
+                </div>
+
+                <!-- 帶寬計算 -->
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="color: var(--interface-blue); font-size: 0.9rem; margin-bottom: 0.8rem; font-weight: 500;">⚡ 帶寬計算</div>
+                    <input type="number" id="bandwidthSize" placeholder="文件大小 (MB)" value="100" style="width: 100%; padding: 0.6rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 180, 216, 0.2); border-radius: 6px; color: var(--hologram-text); margin-bottom: 0.5rem; font-size: 0.85rem;">
+                    <input type="number" id="bandwidthSpeed" placeholder="速度 (Mbps)" value="100" style="width: 100%; padding: 0.6rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 180, 216, 0.2); border-radius: 6px; color: var(--hologram-text); margin-bottom: 0.5rem; font-size: 0.85rem;">
+                    <button onclick="calculateBandwidth()" style="width: 100%; padding: 0.6rem; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85rem;">計算</button>
+                    <div id="bandwidthResult" style="display: none; margin-top: 0.5rem; padding: 0.8rem; background: rgba(0, 204, 102, 0.1); border-left: 3px solid var(--success-color); border-radius: 4px; color: var(--success-color); font-family: monospace; font-size: 0.8rem;"></div>
+                </div>
+
+                <!-- VLSM 計算 -->
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="color: var(--interface-blue); font-size: 0.9rem; margin-bottom: 0.8rem; font-weight: 500;">🎯 VLSM 計算</div>
+                    <input type="text" id="vlsmNetwork" placeholder="主網絡 (如: 10.0.0.0/22)" value="10.0.0.0/22" style="width: 100%; padding: 0.6rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 180, 216, 0.2); border-radius: 6px; color: var(--hologram-text); margin-bottom: 0.5rem; font-size: 0.85rem;">
+                    <input type="number" id="vlsmSubnets" placeholder="子網數量" value="4" min="1" style="width: 100%; padding: 0.6rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 180, 216, 0.2); border-radius: 6px; color: var(--hologram-text); margin-bottom: 0.5rem; font-size: 0.85rem;">
+                    <button onclick="calculateVLSM()" style="width: 100%; padding: 0.6rem; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85rem;">計算</button>
+                    <div id="vlsmResult" style="display: none; margin-top: 0.5rem; padding: 0.8rem; background: rgba(0, 204, 102, 0.1); border-left: 3px solid var(--success-color); border-radius: 4px; color: var(--success-color); font-family: monospace; font-size: 0.8rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 指引氣泡 -->
+        <div id="guideBubble" style="position: fixed; bottom: 80px; right: 20px; background: rgba(15, 20, 40, 0.98); border: 2px solid var(--interface-blue); border-radius: 12px; padding: 1rem; max-width: 280px; z-index: 2500; backdrop-filter: blur(10px); box-shadow: 0 5px 20px rgba(0, 180, 216, 0.3); display: none;">
+            <button style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; color: var(--cyber-gray); cursor: pointer; font-size: 1rem;" onclick="closeGuideBubble()">×</button>
+            <div style="color: var(--interface-blue); font-weight: 500; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-lightbulb"></i> <span id="guideTitle">指引</span>
+            </div>
+            <div style="color: var(--hologram-text); font-size: 0.85rem; line-height: 1.5;" id="guideContent">
+                點擊左側設備庫中的設備，然後在工作區拖放以添加設備。
+            </div>
+        </div>
+    
 </body></html>
