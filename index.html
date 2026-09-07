@@ -1,8 +1,10 @@
-<!DOCTYPE html><html lang="zh-TW"><head><meta name="x-poe-datastore-behavior" content="local_only"><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+<!DOCTYPE html><html lang="zh-TW"><head><meta name="x-poe-datastore-behavior" content="local_only"><meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cisco Packet Tracer | 網絡模擬器</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
@@ -107,6 +109,17 @@
             background-clip: text;
             color: transparent;
             letter-spacing: 0.5px;
+        }
+
+        .app-version {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.4rem;
+            border: 1px solid rgba(77, 195, 255, 0.45);
+            border-radius: 4px;
+            color: var(--interface-blue);
+            font: 600 0.65rem/1 'Consolas', monospace;
+            letter-spacing: 0.04em;
         }
         
         .hero-cyber {
@@ -438,6 +451,15 @@
             border-radius: 3px;
         }
 
+        .icons-fallback .fas {
+            font-family: 'Segoe UI Symbol', 'Arial Unicode MS', sans-serif;
+            font-style: normal;
+        }
+
+        .icons-fallback .fas::before {
+            content: attr(data-fallback);
+        }
+
         /* 設備類型切換器 */
         .device-type-switcher {
             display: flex;
@@ -655,12 +677,22 @@
             width: 100%;
             height: 100%;
             min-height: 400px;
-            background: rgba(10, 15, 30, 0.3);
+            background-color: rgba(10, 15, 30, 0.3);
+            background-image: radial-gradient(rgba(0, 180, 216, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
             border: 1px solid var(--neon-border);
             border-radius: 8px;
             position: relative;
             overflow: auto;
             box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .workspace-canvas.physical-workspace {
+            background-image:
+                linear-gradient(rgba(255, 170, 0, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 170, 0, 0.08) 1px, transparent 1px),
+                radial-gradient(rgba(255, 170, 0, 0.16) 1px, transparent 1px);
+            background-size: 80px 80px, 80px 80px, 20px 20px;
         }
         
         .mode-switcher {
@@ -788,6 +820,104 @@
             backdrop-filter: blur(3px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
+
+        .port-leds {
+            position: absolute;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .port-led {
+            width: 9px;
+            height: 9px;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            border-radius: 50%;
+            background: #596273;
+            box-shadow: 0 0 0 transparent;
+        }
+
+        .port-led.online {
+            background: #00ff88;
+            box-shadow: 0 0 8px rgba(0, 255, 136, 0.9);
+            animation: ledPulse 1.4s ease-in-out infinite;
+        }
+
+        .port-led.warning {
+            background: #ffaa00;
+            box-shadow: 0 0 8px rgba(255, 170, 0, 0.8);
+            animation: ledPulse 0.8s ease-in-out infinite;
+        }
+
+        .port-led.error {
+            background: #ff4757;
+            box-shadow: 0 0 8px rgba(255, 71, 87, 0.8);
+            animation: ledPulse 0.55s ease-in-out infinite;
+        }
+
+        @keyframes ledPulse {
+            0%, 100% { opacity: 0.65; }
+            50% { opacity: 1; }
+        }
+
+        .mini-map {
+            position: absolute;
+            right: 1.25rem;
+            bottom: 1.25rem;
+            width: 190px;
+            height: 130px;
+            padding: 0.45rem;
+            background: rgba(8, 14, 28, 0.92);
+            border: 1px solid var(--neon-border);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            z-index: 25;
+            pointer-events: auto;
+        }
+
+        .mini-map-title {
+            display: flex;
+            justify-content: space-between;
+            color: var(--interface-blue);
+            font-size: 0.65rem;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.25rem;
+        }
+
+        .mini-map-stage {
+            position: relative;
+            height: calc(100% - 1.1rem);
+            overflow: hidden;
+            border: 1px solid rgba(77, 195, 255, 0.18);
+            background: rgba(10, 15, 30, 0.75);
+            cursor: crosshair;
+        }
+
+        .mini-map-stage svg,
+        .mini-map-nodes {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .mini-map-node {
+            position: absolute;
+            width: 7px;
+            height: 7px;
+            border: 1px solid #dff8ff;
+            border-radius: 2px;
+            background: var(--interface-blue);
+            transform: translate(-50%, -50%);
+        }
+
+        .mini-map-node.selected {
+            background: #00ff88;
+            box-shadow: 0 0 6px #00ff88;
+        }
         
         .network-node:hover {
             border-color: var(--interface-blue);
@@ -864,10 +994,11 @@
             position: absolute;
             width: 24px;
             height: 16px;
-            background: var(--packet-color, var(--interface-blue));
+            background: var(--packet-color, #4dc3ff);
             border-radius: 4px;
             z-index: 20;
             pointer-events: none;
+            -webkit-filter: drop-shadow(0 0 6px var(--packet-color, rgba(0, 180, 216, 0.6)));
             filter: drop-shadow(0 0 6px var(--packet-color, rgba(0, 180, 216, 0.6)));
             display: flex;
             align-items: center;
@@ -882,10 +1013,11 @@
             text-shadow: 0 0 2px rgba(0,0,0,0.5);
         }
         
-        .data-packet.icmp { --packet-color: #00cc66; }
-        .data-packet.arp { --packet-color: #ffaa00; }
-        .data-packet.tcp { --packet-color: #7b2cbf; }
-        .data-packet.dhcp { --packet-color: #00b4d8; }
+        .data-packet.icmp { --packet-color: #00cc66; background: #00cc66; }
+        .data-packet.arp { --packet-color: #ffaa00; background: #ffaa00; }
+        .data-packet.tcp { --packet-color: #7b2cbf; background: #7b2cbf; }
+        .data-packet.udp { --packet-color: #ff6b6b; background: #ff6b6b; }
+        .data-packet.dhcp { --packet-color: #00b4d8; background: #00b4d8; }
         
         @keyframes packetPulse {
             from { transform: scale(1); opacity: 0.9; }
@@ -1234,20 +1366,33 @@
         .panel-collapsed {
             width: 40px !important;
             padding: 0.5rem !important;
+            min-width: 40px;
+            overflow-x: hidden;
         }
         
         .panel-collapsed .tool-category-title,
         .panel-collapsed .tool-label,
-        .panel-collapsed .tool-hotkey {
+        .panel-collapsed .tool-hotkey,
+        .panel-collapsed .device-type-switcher,
+        .panel-collapsed .device-category-header {
             display: none;
+        }
+
+        .panel-collapsed .tool-category {
+            min-width: 0;
         }
         
         .panel-collapsed .tool-grid {
             grid-template-columns: 1fr;
+            width: 100%;
+            min-width: 0;
         }
         
         .panel-collapsed .tool-item {
             padding: 0.6rem 0.3rem;
+            min-width: 0;
+            width: 100%;
+            overflow: hidden;
         }
         
         .topology-view {
@@ -2114,7 +2259,17 @@
             }
             
             .tool-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
+                gap: 0.35rem;
+            }
+
+            .panel-collapsed .tool-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .panel-collapsed .tool-item {
+                width: 100%;
+                min-height: 40px;
             }
             
             .mode-btn {
@@ -2131,6 +2286,59 @@
             .control-input {
                 padding: 0.5rem 0.6rem;
                 font-size: 0.8rem;
+            }
+        }
+
+        /* Keep the simulation responsive on touch devices and low-power GPUs. */
+        @media (max-width: 768px) {
+            .cyber-header,
+            .simulator-header,
+            .mode-switcher,
+            .network-node,
+            .smart-hint,
+            .modal-content,
+            .mini-map {
+                -webkit-backdrop-filter: none;
+                backdrop-filter: none;
+            }
+
+            .workspace-canvas {
+                min-height: 360px;
+                contain: layout paint;
+            }
+
+            .network-node,
+            .data-packet,
+            .packet-trail,
+            .connection-line {
+                contain: layout paint;
+            }
+
+            .mini-map {
+                width: 150px;
+                height: 105px;
+                right: 0.75rem;
+                bottom: 0.75rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: 0.001ms !important;
+            }
+
+            .cyber-header,
+            .simulator-header,
+            .mode-switcher,
+            .network-node,
+            .smart-hint,
+            .modal-content,
+            .mini-map {
+                -webkit-backdrop-filter: none;
+                backdrop-filter: none;
             }
         }
         /* Rack & Wireless visuals */
@@ -2186,11 +2394,7 @@
                 <div class="logo-icon">
                     <i class="fas fa-network-wired"></i>
                 </div>
-             
-            <div class="simulator-controls">
-                <button class="control-btn" onclick="showSimulator('quickstart')">
-                    <i class="fas fa-play"></i> 快速開始
-                </button>
+                <div class="logo-text">PACKET TRACER SIMULATOR <span class="app-version">v2.0.0</span></div>
             </div>
         </header>
         
@@ -2348,6 +2552,7 @@
             <h2 class="simulator-title">
                 <i class="fas fa-network-wired"></i>
                 <span id="simulatorMode">網絡模擬器</span>
+                <span class="app-version">v2.0.0</span>
             </h2>
             <div class="simulator-controls">
                 <div class="progress-indicator">
@@ -2383,6 +2588,9 @@
                 </button>
                 <button class="control-btn" onclick="toggleGuideMode()">
                     <i class="fas fa-lightbulb"></i> 指引助手
+                </button>
+                <button class="control-btn" onclick="showHint('提示', '提示會顯示操作結果；可按右上角 × 關閉。')" title="顯示提示">
+                    <i class="fas fa-info-circle"></i> 提示
                 </button>
                 <button class="control-btn" onclick="showHelp()">
                     <i class="fas fa-question-circle"></i> 幫助
@@ -2559,6 +2767,17 @@
             
             <div class="main-workspace">
                 <div class="workspace-canvas" id="workspaceCanvas"></div>
+
+                <div class="mini-map" id="miniMap" aria-label="拓撲導航微型圖">
+                    <div class="mini-map-title">
+                        <span>拓撲導航</span>
+                        <span id="miniMapCount">0 / 0</span>
+                    </div>
+                    <div class="mini-map-stage" id="miniMapStage">
+                        <svg id="miniMapConnections" aria-hidden="true"></svg>
+                        <div class="mini-map-nodes" id="miniMapNodes"></div>
+                    </div>
+                </div>
 
                 <!-- 快捷工具欄 -->
                 <div class="quick-toolbar" id="quickToolbar">
@@ -2842,6 +3061,12 @@ Router&gt;
                         <div class="osi-layer-name">物理層</div>
                         <div class="osi-layer-data" id="osiLayer1">Bits, Signals</div>
                     </div>
+                </div>
+                <div id="packetDetails" style="display:none; margin-top:1rem; padding:1rem; background:rgba(0,0,0,0.35); border:1px solid rgba(77,195,255,0.2); border-radius:6px; font-family:monospace; font-size:0.78rem; line-height:1.5;">
+                    <div style="color:var(--interface-blue); margin-bottom:0.5rem;">Packet Details</div>
+                    <div><strong>Raw Data</strong><pre id="packetRawData" style="white-space:pre-wrap; margin:0.3rem 0 0.8rem; color:var(--hologram-text);"></pre></div>
+                    <div><strong>Hex Dump</strong><pre id="packetHexDump" style="white-space:pre-wrap; margin:0.3rem 0 0.8rem; color:var(--warning);"></pre></div>
+                    <div><strong>OSI Protocol Tree</strong><pre id="packetProtocolTree" style="white-space:pre-wrap; margin:0.3rem 0 0; color:var(--success-color);"></pre></div>
                 </div>
             </div>
         </div>
@@ -3228,12 +3453,44 @@ Router&gt;
         // 當前設備類別
         let currentDeviceCategory = 'all';
 
+        function enableIconFallback() {
+            const symbols = {
+                'fa-network-wired': '↔', 'fa-play': '▶', 'fa-book-open': '▤',
+                'fa-project-diagram': '⌘', 'fa-cogs': '⚙', 'fa-home': '⌂',
+                'fa-download': '↓', 'fa-calculator': '▦', 'fa-lightbulb': '◇',
+                'fa-question-circle': '?', 'fa-arrow-left': '←', 'fa-chevron-left': '‹',
+                'fa-chevron-right': '›', 'fa-times': '×', 'fa-route': '⇢',
+                'fa-sitemap': '⌘', 'fa-desktop': '▣', 'fa-server': '▤',
+                'fa-laptop': '▱', 'fa-phone': '☎', 'fa-print': '▤',
+                'fa-search': '⌕', 'fa-trash': '⌫', 'fa-stop': '■',
+                'fa-question': '?', 'fa-info-circle': 'ⓘ'
+            };
+
+            const decorate = (root = document) => root.querySelectorAll('.fas').forEach(icon => {
+                const iconClass = [...icon.classList].find(className => className.indexOf('fa-') === 0);
+                icon.dataset.fallback = symbols[iconClass] || '•';
+            });
+
+            document.fonts.ready.then(() => {
+                if (!document.fonts.check('16px "Font Awesome 6 Free"')) {
+                    decorate();
+                    document.documentElement.classList.add('icons-fallback');
+                    new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => {
+                        if (node.nodeType === Node.ELEMENT_NODE) decorate(node);
+                    }))).observe(document.body, { childList: true, subtree: true });
+                }
+            });
+        }
+
         // 初始化函數
         function init() {
             createBackground();
             renderDeviceLibrary();
             setupEventListeners();
             setupTooltips();
+            setupMiniMapNavigation();
+            renderMiniMap();
+            enableIconFallback();
             
             setTimeout(() => {
                 document.getElementById('loadingOverlay').style.display = 'none';
@@ -3423,6 +3680,10 @@ Router&gt;
                         <i class="fas ${device.icon}"></i>
                     </div>
                 </div>
+                <div class="port-leds" aria-label="連接埠狀態">
+                    <span class="port-led" data-port="left"></span>
+                    <span class="port-led" data-port="right"></span>
+                </div>
                 <div class="node-info">
                     <div class="node-name">${device.name}</div>
                     <div class="node-ip">${device.ip}</div>
@@ -3432,6 +3693,7 @@ Router&gt;
             node.addEventListener('click', (e) => {
                 e.stopPropagation();
                 selectDevice(nodeId, device);
+                openDeviceCLI(nodeId);
             });
             
             node.addEventListener('dblclick', () => {
@@ -3455,6 +3717,8 @@ Router&gt;
             });
             
             setupNodeDragging(node);
+            updatePortLeds();
+            renderMiniMap();
             updateProgress(1);
             showHint('設備添加', `${device.name} 已添加到工作區。`);
         }
@@ -3791,6 +4055,92 @@ Router&gt;
             }
         }
 
+        function updatePortLeds() {
+            simulatorState.activeDevices.forEach(device => {
+                const node = document.getElementById(device.id);
+                if (!node) return;
+                const statuses = device.connections.map(connId => {
+                    const connection = simulatorState.connections.find(conn => conn.id === connId);
+                    return connection ? connection.status : 'error';
+                });
+                let state = statuses.includes('error') ? 'error' : statuses.includes('warning') ? 'warning' : statuses.includes('active') ? 'online' : '';
+                if (simulatorState.isConnecting && simulatorState.connectFrom === device.id) state = 'warning';
+                node.querySelectorAll('.port-led').forEach(led => {
+                    led.className = `port-led${state ? ` ${state}` : ''}`;
+                });
+            });
+        }
+
+        function renderMiniMap() {
+            const canvas = document.getElementById('workspaceCanvas');
+            const mapNodes = document.getElementById('miniMapNodes');
+            const mapConnections = document.getElementById('miniMapConnections');
+            const count = document.getElementById('miniMapCount');
+            if (!canvas || !mapNodes || !mapConnections) return;
+
+            const mapWidth = mapNodes.clientWidth || 180;
+            const mapHeight = mapNodes.clientHeight || 100;
+            const worldWidth = Math.max(canvas.clientWidth, ...simulatorState.activeDevices.map(device => device.x + 120), 1);
+            const worldHeight = Math.max(canvas.clientHeight, ...simulatorState.activeDevices.map(device => device.y + 140), 1);
+            const scale = Math.min(mapWidth / worldWidth, mapHeight / worldHeight);
+            const offsetX = (mapWidth - worldWidth * scale) / 2;
+            const offsetY = (mapHeight - worldHeight * scale) / 2;
+
+            mapNodes.innerHTML = '';
+            mapConnections.innerHTML = '';
+            mapConnections.setAttribute('viewBox', `0 0 ${mapWidth} ${mapHeight}`);
+
+            simulatorState.connections.forEach(connection => {
+                const from = simulatorState.activeDevices.find(device => device.id === connection.from);
+                const to = simulatorState.activeDevices.find(device => device.id === connection.to);
+                if (!from || !to) return;
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', offsetX + (from.x + 60) * scale);
+                line.setAttribute('y1', offsetY + (from.y + 70) * scale);
+                line.setAttribute('x2', offsetX + (to.x + 60) * scale);
+                line.setAttribute('y2', offsetY + (to.y + 70) * scale);
+                line.setAttribute('stroke', connection.status === 'error' ? '#ff4757' : connection.status === 'warning' ? '#ffaa00' : '#00ff88');
+                line.setAttribute('stroke-width', '1.5');
+                line.setAttribute('opacity', '0.8');
+                mapConnections.appendChild(line);
+            });
+
+            simulatorState.activeDevices.forEach(device => {
+                const node = document.createElement('div');
+                node.className = `mini-map-node${simulatorState.selectedDevice === device.id ? ' selected' : ''}`;
+                node.style.left = `${offsetX + (device.x + 60) * scale}px`;
+                node.style.top = `${offsetY + (device.y + 70) * scale}px`;
+                node.title = device.device.name;
+                node.addEventListener('click', event => {
+                    event.stopPropagation();
+                    simulatorState.selectedDevice = device.id;
+                    document.getElementById(device.id)?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                    renderMiniMap();
+                });
+                mapNodes.appendChild(node);
+            });
+
+            if (count) count.textContent = `${simulatorState.activeDevices.length} / ${simulatorState.connections.length}`;
+        }
+
+        function setupMiniMapNavigation() {
+            const stage = document.getElementById('miniMapStage');
+            const canvas = document.getElementById('workspaceCanvas');
+            if (!stage || !canvas || stage.dataset.bound) return;
+            stage.dataset.bound = 'true';
+            stage.addEventListener('click', event => {
+                if (event.target.closest('.mini-map-node')) return;
+                const rect = stage.getBoundingClientRect();
+                const x = (event.clientX - rect.left) / rect.width;
+                const y = (event.clientY - rect.top) / rect.height;
+                canvas.scrollTo({
+                    left: Math.max(0, x * canvas.scrollWidth - canvas.clientWidth / 2),
+                    top: Math.max(0, y * canvas.scrollHeight - canvas.clientHeight / 2),
+                    behavior: 'smooth'
+                });
+            });
+        }
+
         // 創建連線
         function createConnection(fromId, toId, cableType) {
             const fromDevice = simulatorState.activeDevices.find(d => d.id === fromId);
@@ -3819,6 +4169,8 @@ Router&gt;
             drawConnection(connection);
             fromDevice.connections.push(connId);
             toDevice.connections.push(connId);
+            updatePortLeds();
+            renderMiniMap();
         }
 
         // 繪製連線
@@ -3874,6 +4226,9 @@ Router&gt;
                 e.stopPropagation();
                 if (simulatorState.selectedTool === 'delete') {
                     deleteConnection(conn.id);
+                } else {
+                    showPacketAnalyzer();
+                    captureConnection(conn);
                 }
             });
 
@@ -3902,6 +4257,8 @@ Router&gt;
             });
             
             simulatorState.connections = simulatorState.connections.filter(c => c.id !== connId);
+            updatePortLeds();
+            renderMiniMap();
             showHint('連線刪除', '連線已成功刪除');
         }
 
@@ -3919,6 +4276,8 @@ Router&gt;
             
             simulatorState.activeDevices = simulatorState.activeDevices.filter(d => d.id !== nodeId);
             simulatorState.selectedDevice = null;
+            updatePortLeds();
+            renderMiniMap();
             showHint('設備刪除', `${device.device.name} 已從工作區移除`);
         }
 
@@ -3956,6 +4315,8 @@ Router&gt;
                     } catch (e) {}
                 }
             });
+            updatePortLeds();
+            renderMiniMap();
         }
 
         // 更新配置面板
@@ -4060,26 +4421,30 @@ Router&gt;
             
             switch(mode) {
                 case 'realtime':
+                    canvas.classList.remove('physical-workspace');
                     canvas.style.borderColor = 'var(--interface-blue)';
-                    canvas.style.background = 'linear-gradient(135deg, rgba(15, 25, 45, 0.9) 0%, rgba(20, 35, 60, 0.8) 100%)';
+                    canvas.style.backgroundColor = 'rgba(15, 25, 45, 0.9)';
                     startPacketAnimation();
                     showHint('即時模式', '數據包正在實時傳輸中...');
                     break;
                 case 'simulation':
+                    canvas.classList.remove('physical-workspace');
                     canvas.style.borderColor = '#7b2cbf';
-                    canvas.style.background = 'linear-gradient(135deg, rgba(25, 15, 45, 0.9) 0%, rgba(40, 20, 60, 0.8) 100%)';
+                    canvas.style.backgroundColor = 'rgba(25, 15, 45, 0.9)';
                     stopPacketAnimation();
                     showHint('模擬模式', '逐步分析模式 - 暫停中');
                     break;
                 case 'logical':
                     canvas.style.borderColor = '#00cc66';
-                    canvas.style.background = 'linear-gradient(135deg, rgba(10, 30, 25, 0.9) 0%, rgba(15, 45, 35, 0.8) 100%)';
+                    canvas.style.backgroundColor = 'rgba(10, 30, 25, 0.9)';
+                    canvas.classList.remove('physical-workspace');
                     stopPacketAnimation();
                     showHint('邏輯工作區', '網絡拓撲設計視圖');
                     break;
                 case 'physical':
                     canvas.style.borderColor = '#ffaa00';
-                    canvas.style.background = 'linear-gradient(135deg, rgba(35, 25, 10, 0.9) 0%, rgba(50, 35, 15, 0.8) 100%)';
+                    canvas.style.backgroundColor = 'rgba(35, 25, 10, 0.9)';
+                    canvas.classList.add('physical-workspace');
                     stopPacketAnimation();
                     showHint('實體工作區', '設備物理佈局視圖');
                     break;
@@ -4106,13 +4471,19 @@ Router&gt;
             }
         }
 
-        function createPacket(from, to, packetType = 'data') {
+        function createPacket(from, to, packetType = 'data', metadata = {}) {
             const canvas = document.getElementById('workspaceCanvas');
+            const activePackets = canvas.querySelectorAll('.data-packet');
+            if (activePackets.length >= 120) {
+                activePackets[0].remove();
+                canvas.querySelector('.packet-trail')?.remove();
+            }
             const packetTypes = {
                 'data': { class: 'data-packet', color: '#4dc3ff', label: 'DATA' },
                 'icmp': { class: 'data-packet icmp', color: '#00cc66', label: 'ICMP' },
                 'arp': { class: 'data-packet arp', color: '#ffaa00', label: 'ARP' },
                 'tcp': { class: 'data-packet tcp', color: '#7b2cbf', label: 'TCP' },
+                'udp': { class: 'data-packet udp', color: '#ff6b6b', label: 'UDP' },
                 'dhcp': { class: 'data-packet dhcp', color: '#00b4d8', label: 'DHCP' }
             };
             
@@ -4121,6 +4492,8 @@ Router&gt;
             packet.className = typeConfig.class;
             packet.innerHTML = `<span class="packet-label">${typeConfig.label}</span>`;
             packet.style.setProperty('--packet-color', typeConfig.color);
+            packet.dataset.payload = metadata.payload || '';
+            packet.dataset.ttl = metadata.ttl || '64';
             packet.style.left = `${from.x + 60}px`;
             packet.style.top = `${from.y + 70}px`;
             canvas.appendChild(packet);
@@ -4794,6 +5167,18 @@ Router&gt;
             
             menu.innerHTML = `
                 <div class="context-menu-header">設備操作</div>
+                <button class="context-menu-item" onclick="openDeviceCLI('${nodeId}'); closeContextMenu()">
+                    <i class="fas fa-terminal"></i>開啟 CLI
+                </button>
+                <button class="context-menu-item" onclick="resetDevice('${nodeId}'); closeContextMenu()">
+                    <i class="fas fa-undo"></i>重置設備
+                </button>
+                <button class="context-menu-item" onclick="showMacAddressTable('${nodeId}'); closeContextMenu()">
+                    <i class="fas fa-table"></i>檢視 MAC 位址表
+                </button>
+                <button class="context-menu-item" onclick="cloneDevice('${nodeId}'); closeContextMenu()">
+                    <i class="fas fa-copy"></i>複製設備
+                </button>
                 <button class="context-menu-item" onclick="showDeviceDetails('${nodeId}'); closeContextMenu()">
                     <i class="fas fa-info-circle"></i>查看詳情
                 </button>
@@ -4809,6 +5194,42 @@ Router&gt;
             }, 10);
         }
 
+        function openDeviceCLI(nodeId) {
+            simulatorState.selectedDevice = nodeId;
+            showCLITerminal();
+        }
+
+        function resetDevice(nodeId) {
+            const entry = simulatorState.activeDevices.find(device => device.id === nodeId);
+            const node = document.getElementById(nodeId);
+            if (!entry || !node) return;
+            entry.config = {};
+            const status = node.querySelector('.node-status');
+            if (status) status.style.background = 'var(--online)';
+            showHint('設備重置', `${entry.device.name} 的模擬配置已重置`);
+        }
+
+        function showMacAddressTable(nodeId) {
+            const entry = simulatorState.activeDevices.find(device => device.id === nodeId);
+            if (!entry) return;
+            const rows = entry.connections.map((connectionId, index) => {
+                const connection = simulatorState.connections.find(item => item.id === connectionId);
+                const peerId = connection && (connection.from === nodeId ? connection.to : connection.from);
+                const peer = simulatorState.activeDevices.find(device => device.id === peerId);
+                const mac = `02:00:${(index + 1).toString(16).padStart(2, '0')}:${nodeId.slice(-4, -2)}:${nodeId.slice(-2)}:${(index + 10).toString(16).padStart(2, '0')}`;
+                return `<tr><td>${mac}</td><td>Gi0/${index}</td><td>${peer?.device.name || '未知設備'}</td><td>${connection?.status || 'unknown'}</td></tr>`;
+            }).join('');
+            const html = `<div class="modal-overlay" id="macTableModal" onclick="if(event.target===this)this.remove()"><div class="modal-content" style="max-width:650px"><div class="modal-header"><h3><i class="fas fa-table"></i> ${entry.device.name} MAC 位址表</h3><button class="close-btn" onclick="this.closest('.modal-overlay').remove()">×</button></div><div class="modal-body"><table class="packet-table"><thead><tr><th>MAC Address</th><th>Port</th><th>Connected Device</th><th>Status</th></tr></thead><tbody>${rows || '<tr><td colspan="4">目前沒有連線記錄</td></tr>'}</tbody></table></div></div></div>`;
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+
+        function cloneDevice(nodeId) {
+            const entry = simulatorState.activeDevices.find(device => device.id === nodeId);
+            if (!entry) return;
+            addDevice({ ...entry.device, name: `${entry.device.name} Copy` }, entry.x + 30, entry.y + 30);
+            showHint('複製設備', `${entry.device.name} 已複製`);
+        }
+
         function closeContextMenu() {
             const menu = document.getElementById('deviceMenu');
             if (menu) menu.remove();
@@ -4820,6 +5241,21 @@ Router&gt;
             if (menu && !menu.contains(e.target)) {
                 closeContextMenu();
             }
+        }
+
+        function clearAllFaults() {
+            simulatorState.faults = [];
+            simulatorState.connections.forEach(connection => {
+                connection.status = 'active';
+                const line = document.getElementById(connection.id);
+                if (line) {
+                    line.setAttribute('stroke-opacity', '1');
+                    line.removeAttribute('stroke-dasharray');
+                }
+            });
+            if (typeof refreshFaultList === 'function') refreshFaultList();
+            updatePortLeds();
+            showHint('故障', '已清除所有故障');
         }
 
         // 設備配置更新
@@ -4854,6 +5290,7 @@ Router&gt;
         let cliHistoryIndex = -1;
         let cliMode = 'user';
         let cliHostname = 'Router';
+        let cliInterface = 'GigabitEthernet0/0';
 
         function showCLITerminal() {
             const cli = document.getElementById('cliTerminal');
@@ -4890,38 +5327,103 @@ Router&gt;
         // CLI 命令處理
         document.addEventListener('DOMContentLoaded', function() {
             const cliInput = document.getElementById('cliInput');
-            if (cliInput) {
-                cliInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') {
-                        executeCLICommand(this.value);
-                        if (this.value && this.value.trim() !== '') {
-                            cliHistory.push(this.value);
-                        }
-                        cliHistoryIndex = cliHistory.length;
-                        this.value = '';
-                    } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        if (cliHistory.length === 0) return;
-                        if (cliHistoryIndex > 0) {
-                            cliHistoryIndex--;
-                        } else {
-                            cliHistoryIndex = 0;
-                        }
-                        this.value = cliHistory[cliHistoryIndex] || '';
-                    } else if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        if (cliHistory.length === 0) return;
-                        if (cliHistoryIndex < cliHistory.length - 1) {
-                            cliHistoryIndex++;
-                            this.value = cliHistory[cliHistoryIndex] || '';
-                        } else {
-                            cliHistoryIndex = cliHistory.length;
-                            this.value = '';
-                        }
-                    }
-                });
-            }
+            if (cliInput) cliInput.addEventListener('keydown', handleCLICommand);
         });
+
+        function handleCLICommand(event) {
+            const input = event.currentTarget || document.getElementById('cliInput');
+            if (!input) return;
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const command = input.value.trim();
+                if (command) cliHistory.push(command);
+                cliHistoryIndex = cliHistory.length;
+                executeCLICommand(command);
+                input.value = '';
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (!cliHistory.length) return;
+                cliHistoryIndex = Math.max(0, cliHistoryIndex - 1);
+                input.value = cliHistory[cliHistoryIndex] || '';
+            } else if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                if (!cliHistory.length) return;
+                cliHistoryIndex = Math.min(cliHistory.length, cliHistoryIndex + 1);
+                input.value = cliHistory[cliHistoryIndex] || '';
+            }
+        }
+
+        function applyCLIConfigCommand(cmd) {
+            const selected = simulatorState.activeDevices.find(device => device.id === simulatorState.selectedDevice);
+            if (!selected) return '% No device selected';
+            selected.config = selected.config || {};
+            const config = selected.config;
+            const trimmed = cmd.trim();
+            const lower = trimmed.toLowerCase();
+            if (lower.startsWith('interface ')) {
+                cliInterface = trimmed.slice(10).trim();
+                config.interfaces = config.interfaces || {};
+                config.interfaces[cliInterface] = config.interfaces[cliInterface] || {};
+                return `Configuring interface ${cliInterface}`;
+            }
+            if (lower.startsWith('ip address ')) {
+                const parts = trimmed.split(/\s+/);
+                config.interfaces = config.interfaces || {};
+                config.interfaces[cliInterface] = { ...(config.interfaces[cliInterface] || {}), ip: parts[2], mask: parts[3] };
+                if (selected.device.ip) selected.device.ip = `${parts[2]}/${parts[3] === '255.255.255.0' ? 24 : selected.device.ip.split('/')[1] || 24}`;
+                return `IP address ${parts[2]} ${parts[3]} assigned to ${cliInterface}`;
+            }
+            if (lower === 'no shutdown' || lower === 'shutdown') {
+                config.interfaces = config.interfaces || {};
+                config.interfaces[cliInterface] = { ...(config.interfaces[cliInterface] || {}), shutdown: lower === 'shutdown' };
+                return lower === 'no shutdown' ? 'Interface enabled' : 'Interface administratively down';
+            }
+            if (lower.startsWith('description ')) {
+                config.interfaces = config.interfaces || {};
+                config.interfaces[cliInterface] = { ...(config.interfaces[cliInterface] || {}), description: trimmed.slice(12) };
+                return 'Interface description updated';
+            }
+            if (lower.startsWith('speed ') || lower.startsWith('duplex ')) {
+                const [key, value] = trimmed.split(/\s+/, 2);
+                config.interfaces = config.interfaces || {};
+                config.interfaces[cliInterface] = { ...(config.interfaces[cliInterface] || {}), [key.toLowerCase()]: value };
+                return `${key} ${value} configured`;
+            }
+            if (lower.startsWith('vlan ')) {
+                const id = trimmed.split(/\s+/)[1];
+                config.vlans = config.vlans || {};
+                config.vlans[id] = config.vlans[id] || { id, name: `VLAN${id}` };
+                return `VLAN ${id} created`;
+            }
+            if (lower.startsWith('switchport mode ') || lower.startsWith('switchport access vlan ') || lower.startsWith('switchport trunk encapsulation ')) {
+                config.interfaces = config.interfaces || {};
+                config.interfaces[cliInterface] = { ...(config.interfaces[cliInterface] || {}), switchport: trimmed.slice(11) };
+                return `${trimmed} configured`;
+            }
+            if (lower.startsWith('router ospf ') || lower.startsWith('router eigrp ') || lower.startsWith('router bgp ')) {
+                const [protocol, id] = trimmed.slice(7).split(/\s+/);
+                config.routing = { protocol: protocol.toLowerCase(), processId: id, neighbors: config.routing?.neighbors || [] };
+                return `${protocol.toUpperCase()} process ${id} started`;
+            }
+            if (lower.startsWith('neighbor ') && lower.includes(' remote-as ')) {
+                const parts = trimmed.split(/\s+/);
+                config.routing = config.routing || { neighbors: [] };
+                config.routing.neighbors = config.routing.neighbors || [];
+                config.routing.neighbors.push({ address: parts[1], remoteAs: parts[3], state: 'Established' });
+                return `Neighbor ${parts[1]} remote-as ${parts[3]} Established`;
+            }
+            if (lower.startsWith('access-list ')) {
+                config.acl = config.acl || [];
+                config.acl.push(trimmed);
+                return `ACL entry ${config.acl.length} added`;
+            }
+            if (lower.startsWith('ip nat inside source ')) {
+                config.nat = config.nat || [];
+                config.nat.push(trimmed);
+                return 'NAT/PAT rule added';
+            }
+            return `% Invalid input detected at '^' marker.`;
+        }
 
         function executeCLICommand(cmd) {
             const output = document.getElementById('cliOutput');
@@ -4953,6 +5455,8 @@ Router&gt;
             } else if (cmdLower === 'end') {
                 cliMode = 'privileged';
                 updateCLIPrompt();
+            } else if (cmdLower.startsWith('interface ') || cmdLower.startsWith('ip address ') || cmdLower === 'no shutdown' || cmdLower === 'shutdown' || cmdLower.startsWith('description ') || cmdLower.startsWith('speed ') || cmdLower.startsWith('duplex ') || cmdLower.startsWith('vlan ') || cmdLower.startsWith('switchport ') || cmdLower.startsWith('router ospf ') || cmdLower.startsWith('router eigrp ') || cmdLower.startsWith('router bgp ') || cmdLower.startsWith('neighbor ') || cmdLower.startsWith('access-list ') || cmdLower.startsWith('ip nat inside source ')) {
+                response = cliMode === 'config' ? applyCLIConfigCommand(cmd) : '% Configuration commands must be entered in configuration mode';
             } else if (cmdLower === 'show ip interface brief' || cmdLower === 'sh ip int br') {
                 response = `Interface              IP-Address      OK? Method Status                Protocol
 GigabitEthernet0/0     192.168.1.1     YES manual up                    up
@@ -5012,6 +5516,41 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
             document.getElementById('packetAnalyzer').style.display = 'none';
         }
 
+        function stringToHex(value) {
+            return Array.from(value || '').map(char => char.charCodeAt(0).toString(16).padStart(2, '0')).join(' ').match(/.{1,47}(?:\s|$)/g)?.join('\n') || '';
+        }
+
+        function showPacketDetails(packet) {
+            const details = document.getElementById('packetDetails');
+            if (!details || !packet) return;
+            const payload = packet.payload || `${packet.protocol} payload`;
+            document.getElementById('packetRawData').textContent = packet.rawData || payload;
+            document.getElementById('packetHexDump').textContent = packet.hexDump || stringToHex(payload);
+            document.getElementById('packetProtocolTree').textContent = packet.osiTree || `Ethernet II\n└─ IPv4 ${packet.source} -> ${packet.destination}\n   └─ ${packet.protocol}\n      └─ ${payload}`;
+            details.style.display = 'block';
+            updateOSILayers(packet);
+        }
+
+        function captureConnection(conn) {
+            const from = simulatorState.activeDevices.find(device => device.id === conn.from);
+            const to = simulatorState.activeDevices.find(device => device.id === conn.to);
+            if (!from || !to) return;
+            const protocol = conn.type === 'console' ? 'TCP' : conn.type === 'serial' ? 'UDP' : 'ETHERNET';
+            const payload = `capture on ${conn.type} link`;
+            const packet = {
+                id: Date.now(), time: new Date().toLocaleTimeString(),
+                source: from.device.ip.split('/')[0], destination: to.device.ip.split('/')[0],
+                protocol, length: payload.length + 54,
+                info: `${protocol} capture from ${from.device.name} to ${to.device.name}`,
+                payload, rawData: `Ethernet II | ${protocol} | ${payload}`,
+                hexDump: stringToHex(payload),
+                osiTree: `Ethernet II\n├─ IPv4 ${from.device.ip.split('/')[0]} -> ${to.device.ip.split('/')[0]}\n└─ ${protocol}\n   └─ ${payload}`
+            };
+            simulatorState.capturedPackets.push(packet);
+            updatePacketList();
+            showPacketDetails(packet);
+        }
+
         function capturePacket() {
             const devices = simulatorState.activeDevices;
             if (devices.length < 2) {
@@ -5026,6 +5565,7 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
                 const packetTypes = ['icmp', 'tcp', 'udp', 'arp'];
                 const type = packetTypes[Math.floor(Math.random() * packetTypes.length)];
                 
+                const payload = `simulated ${type} payload`;
                 const packet = {
                     id: Date.now(),
                     time: new Date().toLocaleTimeString(),
@@ -5033,10 +5573,13 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
                     destination: to.device.ip.split('/')[0],
                     protocol: type.toUpperCase(),
                     length: Math.floor(Math.random() * 1000) + 64,
-                    info: `${type.toUpperCase()} packet from ${from.device.name} to ${to.device.name}`
+                    info: `${type.toUpperCase()} packet from ${from.device.name} to ${to.device.name}`,
+                    payload,
+                    rawData: `Ethernet II | IPv4 | ${type.toUpperCase()} | ${payload}`,
+                    hexDump: stringToHex(payload),
+                    osiTree: `Ethernet II\n├─ IPv4 ${from.device.ip.split('/')[0]} -> ${to.device.ip.split('/')[0]}\n└─ ${type.toUpperCase()}\n   └─ ${payload}`
                 };
                 
-                simulatorState.capturedPackets.push(packet);
                 simulatorState.capturedPackets.push(packet);
                 // update lightweight metrics
                 try {
@@ -5045,7 +5588,7 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
                     simulatorState.metrics.lastSample.loss = Math.min(0.2, (simulatorState.metrics.lastSample.loss || 0) + (Math.random() * 0.01));
                 } catch (e) {}
                 updatePacketList();
-                updateOSILayers(packet);
+                showPacketDetails(packet);
                 createPacket(from, to, type);
             }
         }
@@ -5346,6 +5889,8 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
                     <td>${packet.length}</td>
                     <td>${packet.info}</td>
                 `;
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', () => showPacketDetails(packet));
                 list.appendChild(row);
             }
 
@@ -5662,6 +6207,54 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
         }
 
         // 流量生成器
+        let packetInjectorState = { timer: null, sent: 0 };
+
+        function showPacketInjector() {
+            const devices = simulatorState.activeDevices || [];
+            if (devices.length < 2) return showHint('封包注入器', '需要至少兩個設備');
+            const options = devices.map(device => `<option value="${device.id}">${device.device.name} (${device.device.ip})</option>`).join('');
+            const html = `<div class="modal-overlay" id="packetInjectorModal" onclick="if(event.target===this)closePacketInjector()"><div class="modal-content" style="max-width:560px"><div class="modal-header"><h3><i class="fas fa-syringe"></i> 封包注入器</h3><button class="close-btn" onclick="closePacketInjector()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div style="display:grid; gap:0.7rem"><label class="form-label">來源設備<select id="injectSource" class="control-select">${options}</select></label><label class="form-label">目標設備<select id="injectTarget" class="control-select">${options}</select></label><label class="form-label">封包類型<select id="injectType" class="control-select"><option value="data">DATA</option><option value="icmp">ICMP</option><option value="tcp">TCP</option><option value="udp">UDP</option><option value="arp">ARP</option><option value="dhcp">DHCP</option></select></label><label class="form-label">Payload<textarea id="injectPayload" class="control-input" rows="3" maxlength="512">training-payload</textarea></label><div style="display:grid; grid-template-columns:1fr 1fr; gap:0.7rem"><label class="form-label">Payload 大小 (bytes)<input id="injectPayloadSize" class="control-input" type="number" min="1" max="65507" value="64"></label><label class="form-label">發送速率 (PPS)<input id="injectPPS" class="control-input" type="number" min="0.1" max="1000" step="0.1" value="2"></label></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:0.7rem"><label class="form-label">TTL<input id="injectTTL" class="control-input" type="number" min="1" max="255" value="64"></label><label class="form-label">DSCP<input id="injectDSCP" class="control-input" type="number" min="0" max="63" value="0"></label></div><label class="form-label">封包數量 (0 = 持續)<input id="injectCount" class="control-input" type="number" min="0" max="5000" value="10"></label><div id="injectStatus" style="color:var(--cyber-gray); font-family:monospace">尚未開始</div></div></div><div class="modal-footer"><button class="action-btn primary" onclick="startPacketInjector()"><i class="fas fa-play"></i> 開始注入</button><button class="action-btn" onclick="stopPacketInjector()"><i class="fas fa-stop"></i> 停止</button><button class="action-btn" onclick="closePacketInjector()">關閉</button></div></div></div>`;
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+
+        function closePacketInjector() {
+            stopPacketInjector();
+            document.getElementById('packetInjectorModal')?.remove();
+        }
+
+        function startPacketInjector() {
+            stopPacketInjector();
+            const source = simulatorState.activeDevices.find(device => device.id === document.getElementById('injectSource')?.value);
+            const target = simulatorState.activeDevices.find(device => device.id === document.getElementById('injectTarget')?.value);
+            const type = document.getElementById('injectType')?.value || 'data';
+            const payload = document.getElementById('injectPayload')?.value || '';
+            const pps = Math.max(0.1, Math.min(1000, parseFloat(document.getElementById('injectPPS')?.value) || 2));
+            const interval = Math.max(1, Math.round(1000 / pps));
+            const ttl = Math.max(1, Math.min(255, parseInt(document.getElementById('injectTTL')?.value, 10) || 64));
+            const dscp = Math.max(0, Math.min(63, parseInt(document.getElementById('injectDSCP')?.value, 10) || 0));
+            const payloadSize = Math.max(1, Math.min(65507, parseInt(document.getElementById('injectPayloadSize')?.value, 10) || 64));
+            const limit = Math.max(0, Math.min(5000, parseInt(document.getElementById('injectCount')?.value, 10) || 0));
+            if (!source || !target || source.id === target.id) return showHint('封包注入器', '來源與目標必須是不同設備');
+            packetInjectorState.sent = 0;
+            const send = () => {
+                const sizedPayload = payload.repeat(Math.ceil(payloadSize / Math.max(1, payload.length))).slice(0, payloadSize);
+                createPacket(source, target, type, { payload: sizedPayload, ttl, dscp, payloadSize });
+                packetInjectorState.sent += 1;
+                const status = document.getElementById('injectStatus');
+                if (status) status.textContent = `已發送 ${packetInjectorState.sent} 個封包 | ${pps} PPS | TTL ${ttl} | DSCP ${dscp} | Payload ${payloadSize} bytes`;
+                if (limit > 0 && packetInjectorState.sent >= limit) stopPacketInjector();
+            };
+            send();
+            if (limit > 0 && packetInjectorState.sent >= limit) return;
+            packetInjectorState.timer = setInterval(send, interval);
+            showHint('封包注入器', `已啟動 ${type.toUpperCase()} 流量注入`);
+        }
+
+        function stopPacketInjector() {
+            if (packetInjectorState.timer) clearInterval(packetInjectorState.timer);
+            packetInjectorState.timer = null;
+        }
+
         function startTrafficGenerator() {
             if (simulatorState.activeDevices.length < 2) {
                 showHint('流量生成器', '需要至少兩個設備');
@@ -5792,28 +6385,42 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
             }
         }
 
-        function calculateSubnet() {
-            const ip = document.getElementById('subnetIP').value;
-            const mask = parseInt(document.getElementById('subnetMask').value);
-            const resultDiv = document.getElementById('subnetResult');
+        function ipv4ToInt(ip) {
+            const parts = ip.trim().split('.').map(Number);
+            if (parts.length !== 4 || parts.some(part => !Number.isInteger(part) || part < 0 || part > 255)) return null;
+            return (((parts[0] << 24) >>> 0) + (parts[1] << 16) + (parts[2] << 8) + parts[3]) >>> 0;
+        }
 
-            if (!ip || isNaN(mask) || mask < 0 || mask > 32) {
+        function intToIPv4(value) {
+            return [value >>> 24, (value >>> 16) & 255, (value >>> 8) & 255, value & 255].join('.');
+        }
+
+        function cidrMask(mask) {
+            if (mask === 0) return 0;
+            return (0xffffffff << (32 - mask)) >>> 0;
+        }
+
+        function calculateSubnet() {
+            const ipText = document.getElementById('subnetIP').value;
+            const mask = parseInt(document.getElementById('subnetMask').value, 10);
+            const resultDiv = document.getElementById('subnetResult');
+            const ipValue = ipv4ToInt(ipText);
+
+            if (ipValue === null || isNaN(mask) || mask < 0 || mask > 32) {
                 resultDiv.style.display = 'none';
-                showHint('錯誤', '請輸入有效的 IP 和掩碼位數');
+                showHint('錯誤', '請輸入有效的 IPv4 與 CIDR 掩碼');
                 return;
             }
 
-            const hostBits = 32 - mask;
-            const hostCount = Math.pow(2, hostBits) - 2;
-            const subnetMask = ((0xffffffff << hostBits) >>> 0).toString(2).match(/.{1,8}/g).map(b => parseInt(b, 2)).join('.');
+            const network = (ipValue & cidrMask(mask)) >>> 0;
+            const broadcast = (network | (~cidrMask(mask))) >>> 0;
+            const totalHosts = 2 ** (32 - mask);
+            const usableHosts = mask >= 31 ? (mask === 31 ? 2 : 1) : Math.max(0, totalHosts - 2);
+            const firstHost = mask >= 31 ? network : network + 1;
+            const lastHost = mask >= 31 ? broadcast : broadcast - 1;
+            const maskText = intToIPv4(cidrMask(mask));
 
-            resultDiv.innerHTML = `
-                <strong>子網信息：</strong><br>
-                網絡地址: ${ip}<br>
-                掩碼位數: /${mask}<br>
-                子網掩碼: ${subnetMask}<br>
-                可用主機數: ${hostCount}
-            `;
+            resultDiv.innerHTML = `<strong>子網計算結果</strong><br>網絡地址: ${intToIPv4(network)}<br>廣播地址: ${intToIPv4(broadcast)}<br>子網掩碼: ${maskText} (/${mask})<br>可用範圍: ${intToIPv4(firstHost)} - ${intToIPv4(lastHost)}<br>可用主機數: ${usableHosts}`;
             resultDiv.style.display = 'block';
         }
 
@@ -5895,6 +6502,27 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
             resultDiv.style.display = 'block';
         }
 
+        function allocateSelectedSubnet() {
+            const selected = simulatorState.activeDevices.find(device => device.id === simulatorState.selectedDevice);
+            const networkText = document.getElementById('vlsmNetwork')?.value || '';
+            const subnetCount = parseInt(document.getElementById('vlsmSubnets')?.value, 10);
+            const [networkIp, networkMaskText] = networkText.split('/');
+            const baseIp = ipv4ToInt(networkIp);
+            const baseMask = parseInt(networkMaskText, 10);
+            if (!selected || baseIp === null || isNaN(baseMask) || isNaN(subnetCount) || subnetCount < 1) {
+                return showHint('VLSM', '請先選擇設備並輸入有效的網絡與子網數量');
+            }
+            const newMask = baseMask + Math.ceil(Math.log2(subnetCount));
+            if (newMask > 30) return showHint('VLSM', '子網需要至少保留兩個可用主機地址');
+            const subnetSize = 2 ** (32 - newMask);
+            const address = (baseIp & cidrMask(baseMask)) >>> 0;
+            const firstHost = address + 1;
+            selected.device.ip = `${intToIPv4(firstHost)}/${newMask}`;
+            const node = document.getElementById(selected.id);
+            if (node) node.querySelector('.node-ip').textContent = selected.device.ip;
+            showHint('VLSM', `${selected.device.name} 已套用 ${selected.device.ip}（子網大小 ${subnetSize}）`);
+        }
+
         // ============ 新增功能：實時指引助手 ============
         let guideMode = false;
 
@@ -5925,21 +6553,49 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
         }
 
         // ============ 新增功能：配置導出與比對 ============
+        function generateRunningConfig() {
+            const devices = simulatorState.activeDevices || [];
+            const lines = ['! Cisco Packet Tracer Simulator v2.0.0', `! Exported: ${new Date().toLocaleString()}`, ''];
+            devices.forEach((entry, index) => {
+                const device = entry.device || {};
+                const ip = (device.ip || '').split('/')[0];
+                const mask = device.ip && device.ip.includes('/') ? intToIPv4(cidrMask(parseInt(device.ip.split('/')[1], 10))) : '255.255.255.0';
+                lines.push(`! ===== ${device.name || `Device${index + 1}`} =====`);
+                lines.push('enable', 'configure terminal', `hostname ${String(device.name || `Device${index + 1}`).replace(/\s+/g, '-')}`);
+                if (ip && ipv4ToInt(ip) !== null) {
+                    lines.push('interface GigabitEthernet0/0', ` ip address ${ip} ${mask}`, ' no shutdown', ' exit');
+                }
+                lines.push('end', 'write memory', '');
+            });
+            return lines.join('\n');
+        }
+
+        function downloadRunningConfig() {
+            const blob = new Blob([generateRunningConfig()], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `running-config_${Date.now()}.cfg`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showHint('匯出成功', 'Cisco IOS Running-Config 已下載');
+        }
+
+        function importRunningConfig(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                const target = document.getElementById('compareConfig');
+                if (target) target.value = reader.result;
+                showHint('匯入成功', `${file.name} 已載入，可在配置視窗中比對`);
+            };
+            reader.readAsText(file);
+        }
+
         function showConfigExportTool() {
             const devices = simulatorState.activeDevices || [];
-            
-            let configText = '=== 網絡配置導出 ===\n';
-            configText += `導出時間: ${new Date().toLocaleString()}\n`;
-            configText += `設備總數: ${devices.length}\n\n`;
-
-            devices.forEach(dev => {
-                if (dev.device) {
-                    configText += `[${dev.device.name}]\n`;
-                    configText += `IP: ${dev.device.ip}\n`;
-                    configText += `類型: ${dev.device.type || 'unknown'}\n`;
-                    configText += `連接數: ${dev.connections ? dev.connections.length : 0}\n\n`;
-                }
-            });
+            const configText = generateRunningConfig();
 
             const html = `
                 <div class="device-details-modal" style="display: flex; flex-direction: column; max-width: 700px; max-height: 80vh; overflow-y: auto;">
@@ -5953,6 +6609,10 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
                         <div style="margin-bottom: 1.5rem;">
                             <h4 style="color: var(--interface-blue); margin-bottom: 0.8rem;">當前配置</h4>
                             <textarea id="currentConfig" readonly style="width: 100%; height: 150px; padding: 0.8rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(123, 44, 191, 0.2); border-radius: 6px; color: var(--hologram-text); font-family: monospace; font-size: 0.8rem; resize: vertical;">${configText}</textarea>
+                            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                <button onclick="downloadRunningConfig()" style="flex: 1; padding: 0.6rem; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85rem;"><i class="fas fa-file-export"></i> 下載 .cfg</button>
+                                <label style="flex: 1; padding: 0.6rem; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; cursor: pointer; text-align: center; font-size: 0.85rem;"><i class="fas fa-file-import"></i> 匯入 .cfg<input type="file" accept=".cfg,.txt,text/plain" onchange="importRunningConfig(event)" style="display: none;"></label>
+                            </div>
                             <button onclick="copyToClipboard('currentConfig')" style="width: 100%; margin-top: 0.5rem; padding: 0.6rem; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85rem;">
                                 <i class="fas fa-copy"></i> 複製配置
                             </button>
@@ -6443,7 +7103,18 @@ Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`;
                     <input type="text" id="vlsmNetwork" placeholder="主網絡 (如: 10.0.0.0/22)" value="10.0.0.0/22" style="width: 100%; padding: 0.6rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 180, 216, 0.2); border-radius: 6px; color: var(--hologram-text); margin-bottom: 0.5rem; font-size: 0.85rem;">
                     <input type="number" id="vlsmSubnets" placeholder="子網數量" value="4" min="1" style="width: 100%; padding: 0.6rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 180, 216, 0.2); border-radius: 6px; color: var(--hologram-text); margin-bottom: 0.5rem; font-size: 0.85rem;">
                     <button onclick="calculateVLSM()" style="width: 100%; padding: 0.6rem; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85rem;">計算</button>
+                    <button onclick="allocateSelectedSubnet()" style="width: 100%; margin-top: 0.5rem; padding: 0.6rem; background: rgba(0, 204, 102, 0.18); border: 1px solid var(--success-color); border-radius: 6px; color: var(--success-color); cursor: pointer; font-size: 0.85rem;">套用到選定設備</button>
                     <div id="vlsmResult" style="display: none; margin-top: 0.5rem; padding: 0.8rem; background: rgba(0, 204, 102, 0.1); border-left: 3px solid var(--success-color); border-radius: 4px; color: var(--success-color); font-family: monospace; font-size: 0.8rem;"></div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="color: var(--interface-blue); font-size: 0.9rem; margin-bottom: 0.8rem; font-weight: 500;">📦 封包注入器</div>
+                    <button onclick="showPacketInjector()" style="width: 100%; padding: 0.6rem; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85rem;">自訂 Payload / TTL</button>
+                </div>
+
+                <div>
+                    <div style="color: var(--interface-blue); font-size: 0.9rem; margin-bottom: 0.8rem; font-weight: 500;">🧾 IOS 配置</div>
+                    <button onclick="showConfigExportTool()" style="width: 100%; padding: 0.6rem; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85rem;">匯出 / 匯入 Running-Config</button>
                 </div>
             </div>
         </div>
