@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="zh-TW"><head><meta name="x-poe-datastore-behavior" content="local_only"><meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com ws: wss:; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests; block-all-mixed-content;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Packet Tracer | SIMULATOR Beta 3.0 (2026)</title>
+    <title>CCNA Network SIMULATOR  (2026)</title>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
@@ -2689,7 +2689,7 @@
         
         <section class="hero-cyber">
             <h1 class="main-title-cyber">Network Packet Tracer</h1>
-            <div class="hero-version">SIMULATOR Beta 3.0 (2026)</div>
+            <div class="hero-version">CCNA Network</div>
             <p class="subtitle-cyber">
                 專業級網絡模擬器，提供真實的網絡設備配置、封包傳輸模擬及故障排除環境。
                 支援從基礎到進階的網絡技術實作，為網絡工程師及學習者提供接近實境的練習平台。
@@ -3885,31 +3885,25 @@ Router&gt;
 
         function updateNetworkTables() {
             const tables = simulatorState.networkTables;
-            tables.arp = {};
-            tables.mac = {};
+            tables.arp = Object.fromEntries(simulatorState.activeDevices.map(entry => [entry.id, tables.arp?.[entry.id] || {}]));
+            tables.mac = Object.fromEntries(simulatorState.activeDevices.map(entry => [entry.id, tables.mac?.[entry.id] || {}]));
             tables.routes = {};
             simulatorState.activeDevices.forEach(entry => {
-                const interfaces = Object.entries(entry.device.interfaces || {});
-                if (!interfaces.length) interfaces.push(['Gi0/0', entry.device.ip]);
-                interfaces.forEach(([interfaceName, value]) => {
-                    const address = typeof value === 'string' ? value : value?.ip;
-                    if (!address) return;
-                    const ip = address.split('/')[0];
-                    tables.arp[ip] = { ip, mac: `02:00:${entry.id.slice(-8, -6)}:${entry.id.slice(-6, -4)}:${entry.id.slice(-4, -2)}:${entry.id.slice(-2)}`, device: entry.device.name, interface: interfaceName, updated: Date.now() };
-                });
-                tables.mac[entry.id] = {};
-                tables.routes[entry.id] = interfaces.filter(([, value]) => value).map(([interfaceName, value]) => ({ destination: typeof value === 'string' ? value : value.ip, nextHop: 'direct', interface: interfaceName, metric: 0 }));
-            });
-            simulatorState.connections.filter(connection => connection.status === 'active').forEach(connection => {
-                const from = simulatorState.activeDevices.find(entry => entry.id === connection.from);
-                const to = simulatorState.activeDevices.find(entry => entry.id === connection.to);
-                if (!from || !to) return;
-                const toIp = to.device.ip?.split('/')[0] || 'unassigned';
-                const fromIp = from.device.ip?.split('/')[0] || 'unassigned';
-                tables.mac[from.id][toIp] = { port: 'Gi0/0', device: to.device.name, status: 'active' };
-                tables.mac[to.id][fromIp] = { port: 'Gi0/0', device: from.device.name, status: 'active' };
-                tables.routes[from.id].push({ destination: to.device.ip || 'connected', nextHop: toIp, interface: 'Gi0/0', metric: 1 });
-                tables.routes[to.id].push({ destination: from.device.ip || 'connected', nextHop: fromIp, interface: 'Gi0/0', metric: 1 });
+                const directRoutes = getDeviceAddressRecords(entry).map(record => ({
+                    destination: record.prefix,
+                    nextHop: 'connected',
+                    interface: record.interface,
+                    metric: 0,
+                    protocol: 'C'
+                }));
+                const learnedRoutes = entry.config?.routing?.learnedRoutes || [];
+                const staticRoutes = entry.config?.routing?.staticRoutes || [];
+                tables.routes[entry.id] = directRoutes.concat(staticRoutes.map(route => ({ ...route, protocol: 'S' })), learnedRoutes
+                    .filter(route => !directRoutes.some(direct => direct.destination === route.destination))
+                    .map(route => {
+                        const nextHop = simulatorState.activeDevices.find(device => device.id === route.nextHopId);
+                        return { ...route, nextHop: nextHop ? getPrimaryAddress(nextHop) : route.nextHop, protocol: route.protocol || 'R' };
+                    }));
             });
         }
 
@@ -3917,14 +3911,378 @@ Router&gt;
             if (simulatorState.networkTicker) return;
             simulatorState.networkTicker = setInterval(() => {
                 if (document.hidden) return;
+                runRoutingProtocolTick();
+                runVtpProtocolTick();
+                runDeviceDiscoveryTick();
                 updateNetworkTables();
                 updatePortLeds();
-                if (simulatorState.simulationMode === 'realtime' && simulatorState.activeDevices.length > 1) {
-                    const source = simulatorState.activeDevices[Math.floor(Math.random() * simulatorState.activeDevices.length)];
-                    const target = simulatorState.activeDevices.find(entry => entry.id !== source.id);
-                    if (target) createPacket(source, target, 'arp', { payload: 'ARP refresh', ttl: 64 });
-                }
             }, 1000);
+        }
+
+        function getRoutingRouters(protocol) {
+            return simulatorState.activeDevices.filter(entry =>
+                ['router', 'firewall'].includes(entry.device.type) && entry.config?.routing?.protocol === protocol
+            );
+        }
+
+        function getConnectedPrefixes(router) {
+            const records = getDeviceAddressRecords(router);
+            const networks = router.config.routing.networks || [];
+            const advertised = networks.length ? records.filter(record => networks.some(network => networkStatementMatches(record.ip, network))) : [];
+            const prefixes = advertised.map(record => record.prefix);
+            if (router.config.routing.defaultInformation && router.config.routing.staticRoutes?.some(route => route.destination === '0.0.0.0/0')) prefixes.push('0.0.0.0/0');
+            return [...new Set(prefixes)];
+        }
+
+        function networkStatementMatches(address, network) {
+            const addressDetails = ipv4Details(address);
+            const networkDetails = ipv4Details(network.address);
+            if (!addressDetails || !networkDetails) return false;
+            if (network.wildcard) {
+                const octets = network.wildcard.split('.').map(Number);
+                if (octets.length !== 4 || octets.some(value => !Number.isInteger(value) || value < 0 || value > 255)) return false;
+                const wildcard = octets.reduce((value, octet) => value * 256 + octet, 0) >>> 0;
+                return ((addressDetails.numeric & (~wildcard >>> 0)) >>> 0) === ((networkDetails.numeric & (~wildcard >>> 0)) >>> 0);
+            }
+            const firstOctet = Number(networkDetails.ip.split('.')[0]);
+            const classfulPrefix = firstOctet < 128 ? 8 : firstOctet < 192 ? 16 : 24;
+            const mask = (0xffffffff << (32 - classfulPrefix)) >>> 0;
+            return ((addressDetails.numeric & mask) >>> 0) === ((networkDetails.numeric & mask) >>> 0);
+        }
+
+        function getRoutingPathInterface(router, path) {
+            const firstIndex = path.nodes.indexOf(router.id);
+            if (firstIndex === 0) return getConnectionInterface(router, path.connections[0]);
+            if (firstIndex === path.nodes.length - 1) return getConnectionInterface(router, path.connections[path.connections.length - 1]);
+            return null;
+        }
+
+        function routingAdjacencyAllowed(first, second, path) {
+            return [first, second].every(router => {
+                const routing = router.config.routing;
+                const interfaceName = getRoutingPathInterface(router, path);
+                if (!interfaceName || (routing.passiveInterfaces || []).includes(interfaceName)) return false;
+                const interfaceRecords = getDeviceAddressRecords(router).filter(record => record.interface === interfaceName || record.interface.startsWith(`${interfaceName}.`));
+                return interfaceRecords.some(record => (routing.networks || []).some(network => networkStatementMatches(record.ip, network)));
+            });
+        }
+
+        function findProtocolPath(sourceId, targetId, adjacency) {
+            const queue = [sourceId];
+            const previous = new Map([[sourceId, null]]);
+            while (queue.length) {
+                const currentId = queue.shift();
+                if (currentId === targetId) break;
+                (adjacency.get(currentId) || []).forEach(nextId => {
+                    if (previous.has(nextId)) return;
+                    previous.set(nextId, currentId);
+                    queue.push(nextId);
+                });
+            }
+            if (!previous.has(targetId)) return null;
+            const path = [targetId];
+            let currentId = targetId;
+            while (currentId !== sourceId) {
+                currentId = previous.get(currentId);
+                path.unshift(currentId);
+            }
+            return path;
+        }
+
+        function advertiseProtocolRoutes(routers, adjacency, protocol) {
+            routers.forEach(router => {
+                const routing = router.config.routing;
+                routing.learnedRoutes = routing.learnedRoutes || [];
+                routers.forEach(origin => {
+                    if (origin.id === router.id) return;
+                    const path = findProtocolPath(router.id, origin.id, adjacency);
+                    if (!path || path.length < 2) return;
+                    const asPath = path.slice(1).reverse().map(routerId => {
+                        const peer = routers.find(entry => entry.id === routerId);
+                        return String(peer?.config?.routing?.processId || '');
+                    }).filter(Boolean);
+                    if (protocol === 'B' && asPath.includes(String(routing.processId))) return;
+                    getConnectedPrefixes(origin).forEach(destination => {
+                        if (getConnectedPrefixes(router).includes(destination)) return;
+                        const route = {
+                            destination,
+                            nextHopId: path[1],
+                            metric: ['O', 'R'].includes(protocol) ? path.length - 1 : asPath.length,
+                            protocol,
+                            asPath
+                        };
+                        const existing = routing.learnedRoutes.findIndex(entry => entry.destination === destination && entry.protocol === protocol);
+                        if (existing < 0) routing.learnedRoutes.push(route);
+                        else if (route.metric < routing.learnedRoutes[existing].metric) routing.learnedRoutes[existing] = route;
+                    });
+                });
+            });
+        }
+
+        function runOspfProtocolTick() {
+            const routers = getRoutingRouters('ospf');
+            const adjacency = new Map(routers.map(router => [router.id, []]));
+            const fullEdges = [];
+            const now = Date.now();
+            routers.forEach(router => {
+                const routing = router.config.routing;
+                routing.helloCounters = routing.helloCounters || {};
+                routing.helloSentAt = routing.helloSentAt || {};
+                routing.adjacencies = {};
+            });
+
+            for (let firstIndex = 0; firstIndex < routers.length; firstIndex++) {
+                for (let secondIndex = firstIndex + 1; secondIndex < routers.length; secondIndex++) {
+                    const first = routers[firstIndex];
+                    const second = routers[secondIndex];
+                    const firstRouting = first.config.routing;
+                    const secondRouting = second.config.routing;
+                    if (String(firstRouting.area || '0') !== String(secondRouting.area || '0')) continue;
+                    if (!getAddressPair(first, second)) continue;
+                    const path = findLayer2Path(first.id, second.id);
+                    if (!path || !routingAdjacencyAllowed(first, second, path)) continue;
+
+                    const firstCount = firstRouting.helloCounters[second.id] = (firstRouting.helloCounters[second.id] || 0) + 1;
+                    const secondCount = secondRouting.helloCounters[first.id] = (secondRouting.helloCounters[first.id] || 0) + 1;
+                    const state = firstCount >= 2 && secondCount >= 2 ? 'FULL' : 'INIT';
+                    firstRouting.adjacencies[second.id] = { protocol: 'OSPF', state, area: firstRouting.area || '0', lastHello: now };
+                    secondRouting.adjacencies[first.id] = { protocol: 'OSPF', state, area: secondRouting.area || '0', lastHello: now };
+
+                    if (now - (firstRouting.helloSentAt[second.id] || 0) >= 1000) {
+                        animateNetworkPath(path, 'ospf', `Hello ${getPrimaryAddress(first)}`);
+                        animateNetworkPath(path, 'ospf', `Hello ${getPrimaryAddress(second)}`);
+                        firstRouting.helloSentAt[second.id] = now;
+                        secondRouting.helloSentAt[first.id] = now;
+                    }
+                    if (state === 'FULL') {
+                        adjacency.get(first.id).push(second.id);
+                        adjacency.get(second.id).push(first.id);
+                        fullEdges.push({ first, second, path });
+                    }
+                }
+            }
+
+            fullEdges.forEach(edge => {
+                if (now - Math.min(edge.first.config.routing.lastLsaAt || 0, edge.second.config.routing.lastLsaAt || 0) >= 5000) {
+                    animateNetworkPath(edge.path, 'ospf', 'LSA update');
+                    edge.first.config.routing.lastLsaAt = now;
+                    edge.second.config.routing.lastLsaAt = now;
+                }
+            });
+            advertiseProtocolRoutes(routers, adjacency, 'O');
+            routers.forEach(router => {
+                const component = routers.filter(origin => findProtocolPath(router.id, origin.id, adjacency));
+                router.config.routing.lsdb = component.flatMap(origin => getConnectedPrefixes(origin).map(network => ({
+                    routerId: getPrimaryAddress(origin),
+                    network,
+                    sequence: Math.max(1, Math.floor(now / 1000))
+                })));
+            });
+        }
+
+        function runRipProtocolTick() {
+            const routers = getRoutingRouters('rip');
+            const adjacency = new Map(routers.map(router => [router.id, []]));
+            const now = Date.now();
+            routers.forEach(router => {
+                const routing = router.config.routing;
+                routing.helloCounters = routing.helloCounters || {};
+                routing.helloSentAt = routing.helloSentAt || {};
+                routing.adjacencies = {};
+            });
+
+            for (let firstIndex = 0; firstIndex < routers.length; firstIndex++) {
+                for (let secondIndex = firstIndex + 1; secondIndex < routers.length; secondIndex++) {
+                    const first = routers[firstIndex];
+                    const second = routers[secondIndex];
+                    if (String(first.config.routing.processId) !== String(second.config.routing.processId)) continue;
+                    const path = findLayer2Path(first.id, second.id);
+                    if (!path || !getAddressPair(first, second) || !routingAdjacencyAllowed(first, second, path)) continue;
+                    const firstRouting = first.config.routing;
+                    const secondRouting = second.config.routing;
+                    const firstCount = firstRouting.helloCounters[second.id] = (firstRouting.helloCounters[second.id] || 0) + 1;
+                    const secondCount = secondRouting.helloCounters[first.id] = (secondRouting.helloCounters[first.id] || 0) + 1;
+                    const state = firstCount >= 2 && secondCount >= 2 ? 'UP' : 'INIT';
+                    firstRouting.adjacencies[second.id] = { protocol: 'RIP', state, version: firstRouting.version || '1', lastUpdate: now };
+                    secondRouting.adjacencies[first.id] = { protocol: 'RIP', state, version: secondRouting.version || '1', lastUpdate: now };
+                    if (now - (firstRouting.helloSentAt[second.id] || 0) >= 5000) {
+                        animateNetworkPath(path, 'rip', `RIPv${firstRouting.version || '1'} update`);
+                        animateNetworkPath(path, 'rip', `RIPv${secondRouting.version || '1'} update`);
+                        firstRouting.helloSentAt[second.id] = now;
+                        secondRouting.helloSentAt[first.id] = now;
+                    }
+                    if (state === 'UP') {
+                        adjacency.get(first.id).push(second.id);
+                        adjacency.get(second.id).push(first.id);
+                    }
+                }
+            }
+            advertiseProtocolRoutes(routers, adjacency, 'R');
+        }
+
+        function runEigrpProtocolTick() {
+            const routers = getRoutingRouters('eigrp');
+            const adjacency = new Map(routers.map(router => [router.id, []]));
+            const now = Date.now();
+            routers.forEach(router => {
+                const routing = router.config.routing;
+                routing.helloCounters = routing.helloCounters || {};
+                routing.helloSentAt = routing.helloSentAt || {};
+                routing.adjacencies = {};
+            });
+
+            for (let firstIndex = 0; firstIndex < routers.length; firstIndex++) {
+                for (let secondIndex = firstIndex + 1; secondIndex < routers.length; secondIndex++) {
+                    const first = routers[firstIndex];
+                    const second = routers[secondIndex];
+                    const path = findLayer2Path(first.id, second.id);
+                    if (!path || !getAddressPair(first, second) || !routingAdjacencyAllowed(first, second, path)) continue;
+                    const firstRouting = first.config.routing;
+                    const secondRouting = second.config.routing;
+                    const firstCount = firstRouting.helloCounters[second.id] = (firstRouting.helloCounters[second.id] || 0) + 1;
+                    const secondCount = secondRouting.helloCounters[first.id] = (secondRouting.helloCounters[first.id] || 0) + 1;
+                    if (String(firstRouting.processId) !== String(secondRouting.processId)) continue;
+                    const state = firstCount >= 2 && secondCount >= 2 ? 'FULL' : 'INIT';
+                    firstRouting.adjacencies[second.id] = { protocol: 'EIGRP', state, as: firstRouting.processId, lastHello: now };
+                    secondRouting.adjacencies[first.id] = { protocol: 'EIGRP', state, as: secondRouting.processId, lastHello: now };
+                    if (now - (firstRouting.helloSentAt[second.id] || 0) >= 1000) {
+                        animateNetworkPath(path, 'eigrp', `Hello AS ${firstRouting.processId}`);
+                        animateNetworkPath(path, 'eigrp', `Hello AS ${secondRouting.processId}`);
+                        firstRouting.helloSentAt[second.id] = now;
+                        secondRouting.helloSentAt[first.id] = now;
+                    }
+                    if (state === 'FULL') {
+                        adjacency.get(first.id).push(second.id);
+                        adjacency.get(second.id).push(first.id);
+                        if (now - Math.min(firstRouting.lastUpdateAt || 0, secondRouting.lastUpdateAt || 0) >= 5000) {
+                            animateNetworkPath(path, 'eigrp', 'Reliable route update');
+                            firstRouting.lastUpdateAt = now;
+                            secondRouting.lastUpdateAt = now;
+                        }
+                    }
+                }
+            }
+            advertiseProtocolRoutes(routers, adjacency, 'D');
+        }
+
+        function hasBgpPeer(localRouter, remoteRouter) {
+            const localRouting = localRouter.config?.routing;
+            const remoteRouting = remoteRouter.config?.routing;
+            if (!localRouting || !remoteRouting) return false;
+            const remoteAddresses = new Set(deviceAddresses(remoteRouter).map(address => address.split('/')[0]));
+            const localAddresses = new Set(deviceAddresses(localRouter).map(address => address.split('/')[0]));
+            const localNeighbor = (localRouting.neighbors || []).find(neighbor => remoteAddresses.has(neighbor.address.split('/')[0]));
+            const remoteNeighbor = (remoteRouting.neighbors || []).find(neighbor => localAddresses.has(neighbor.address.split('/')[0]));
+            return Boolean(localNeighbor && remoteNeighbor
+                && String(localNeighbor.remoteAs) === String(remoteRouting.processId)
+                && String(remoteNeighbor.remoteAs) === String(localRouting.processId));
+        }
+
+        function runBgpProtocolTick() {
+            const routers = getRoutingRouters('bgp');
+            const adjacency = new Map(routers.map(router => [router.id, []]));
+            const now = Date.now();
+            const previousAdjacencies = new Map(routers.map(router => [router.id, router.config.routing.adjacencies || {}]));
+            routers.forEach(router => { router.config.routing.adjacencies = {}; });
+
+            for (let firstIndex = 0; firstIndex < routers.length; firstIndex++) {
+                for (let secondIndex = firstIndex + 1; secondIndex < routers.length; secondIndex++) {
+                    const first = routers[firstIndex];
+                    const second = routers[secondIndex];
+                    if (!hasBgpPeer(first, second)) continue;
+                    if (!getAddressPair(first, second)) continue;
+                    const path = findLayer2Path(first.id, second.id);
+                    if (!path) continue;
+                    const firstRouting = first.config.routing;
+                    const secondRouting = second.config.routing;
+                    const wasEstablished = previousAdjacencies.get(first.id)?.[second.id]?.state === 'Established';
+                    firstRouting.adjacencies[second.id] = { protocol: 'BGP', state: 'Established', lastUpdate: now };
+                    secondRouting.adjacencies[first.id] = { protocol: 'BGP', state: 'Established', lastUpdate: now };
+                    firstRouting.neighbors.forEach(neighbor => {
+                        if (deviceAddresses(second).some(address => neighbor.address.split('/')[0] === address.split('/')[0])) neighbor.state = 'Established';
+                    });
+                    secondRouting.neighbors.forEach(neighbor => {
+                        if (deviceAddresses(first).some(address => neighbor.address.split('/')[0] === address.split('/')[0])) neighbor.state = 'Established';
+                    });
+                    adjacency.get(first.id).push(second.id);
+                    adjacency.get(second.id).push(first.id);
+                    if (!wasEstablished || now - (firstRouting.lastUpdateAt || 0) >= 5000) {
+                        animateNetworkPath(path, 'bgp', wasEstablished ? 'UPDATE / KEEPALIVE' : 'OPEN / KEEPALIVE');
+                        firstRouting.lastUpdateAt = now;
+                        secondRouting.lastUpdateAt = now;
+                    }
+                }
+            }
+            routers.forEach(router => router.config.routing.neighbors.forEach(neighbor => {
+                const peer = routers.find(entry => deviceAddresses(entry).some(address => address.split('/')[0] === neighbor.address.split('/')[0]));
+                if (!peer || !adjacency.get(router.id).includes(peer.id)) neighbor.state = 'Idle';
+            }));
+            advertiseProtocolRoutes(routers, adjacency, 'B');
+        }
+
+        function runRoutingProtocolTick() {
+            simulatorState.activeDevices.forEach(entry => {
+                if (entry.config?.routing) entry.config.routing.learnedRoutes = [];
+            });
+            runRipProtocolTick();
+            runOspfProtocolTick();
+            runEigrpProtocolTick();
+            runBgpProtocolTick();
+        }
+
+        function runVtpProtocolTick() {
+            const switches = simulatorState.activeDevices.filter(entry => entry.device.type === 'switch');
+            const servers = switches.filter(entry => entry.config?.vtp?.mode === 'server' && entry.config?.vtp?.domain);
+            servers.forEach(server => {
+                const queue = [server];
+                const visited = new Set([server.id]);
+                while (queue.length) {
+                    const current = queue.shift();
+                    simulatorState.connections.filter(isConnectionOperational).forEach(connection => {
+                        if (connection.type === 'console' || (connection.from !== current.id && connection.to !== current.id)) return;
+                        const nextId = connection.from === current.id ? connection.to : connection.from;
+                        const peer = switches.find(entry => entry.id === nextId);
+                        if (!peer || visited.has(peer.id)) return;
+                        const sourceVtp = current.config.vtp || {};
+                        const peerVtp = peer.config.vtp || {};
+                        if (peerVtp.mode === 'transparent' || peerVtp.domain !== sourceVtp.domain) return;
+                        if (sourceVtp.password && peerVtp.password && sourceVtp.password !== peerVtp.password) return;
+                        visited.add(peer.id);
+                        queue.push(peer);
+                        if (peerVtp.mode === 'client' && sourceVtp.revision >= (peerVtp.revision || 0)) {
+                            peer.config.vlans = JSON.parse(JSON.stringify(current.config.vlans || {}));
+                            peerVtp.revision = sourceVtp.revision || 0;
+                        }
+                    });
+                }
+            });
+        }
+
+        function runDeviceDiscoveryTick() {
+            simulatorState.activeDevices.forEach(entry => { entry.config.discoveryNeighbors = { cdp: [], lldp: [] }; });
+            simulatorState.connections.filter(isConnectionOperational).forEach(connection => {
+                if (connection.type === 'console') return;
+                const from = simulatorState.activeDevices.find(entry => entry.id === connection.from);
+                const to = simulatorState.activeDevices.find(entry => entry.id === connection.to);
+                if (!from || !to) return;
+                const fromInterface = getConnectionInterface(from, connection);
+                const toInterface = getConnectionInterface(to, connection);
+                const fromPort = from.config.interfaces?.[fromInterface]?.discovery || {};
+                const toPort = to.config.interfaces?.[toInterface]?.discovery || {};
+                const fromDiscovery = from.config.discovery || {};
+                const toDiscovery = to.config.discovery || {};
+                const cdpEnabled = (fromDiscovery.cdp || fromPort.cdp) && (toDiscovery.cdp || toPort.cdp);
+                if (cdpEnabled) {
+                    from.config.discoveryNeighbors.cdp.push({ device: to.device.name, interface: toInterface, localInterface: fromInterface });
+                    to.config.discoveryNeighbors.cdp.push({ device: from.device.name, interface: fromInterface, localInterface: toInterface });
+                }
+                const fromTx = fromDiscovery.lldp || fromPort.lldpTransmit;
+                const fromRx = fromDiscovery.lldp || fromPort.lldpReceive;
+                const toTx = toDiscovery.lldp || toPort.lldpTransmit;
+                const toRx = toDiscovery.lldp || toPort.lldpReceive;
+                if (fromTx && toRx) from.config.discoveryNeighbors.lldp.push({ device: to.device.name, interface: toInterface, localInterface: fromInterface });
+                if (toTx && fromRx) to.config.discoveryNeighbors.lldp.push({ device: from.device.name, interface: fromInterface, localInterface: toInterface });
+            });
         }
 
         // 背景動畫
@@ -4932,6 +5290,10 @@ Router&gt;
                 'data': { class: 'data-packet', color: '#4dc3ff', label: 'DATA' },
                 'icmp': { class: 'data-packet icmp', color: '#00cc66', label: 'ICMP' },
                 'arp': { class: 'data-packet arp', color: '#ffaa00', label: 'ARP' },
+                'ospf': { class: 'data-packet ospf', color: '#00b4d8', label: 'OSPF' },
+                'rip': { class: 'data-packet rip', color: '#f59e0b', label: 'RIP' },
+                'eigrp': { class: 'data-packet eigrp', color: '#a3e635', label: 'EIGRP' },
+                'bgp': { class: 'data-packet bgp', color: '#ff6b6b', label: 'BGP' },
                 'tcp': { class: 'data-packet tcp', color: '#7b2cbf', label: 'TCP' },
                 'udp': { class: 'data-packet udp', color: '#ff6b6b', label: 'UDP' },
                 'dhcp': { class: 'data-packet dhcp', color: '#00b4d8', label: 'DHCP' }
@@ -5413,40 +5775,559 @@ Router&gt;
         }
 
         function deviceAddresses(entry) {
-            const values = Object.values(entry?.device?.interfaces || {}).map(value => typeof value === 'string' ? value : value?.ip).filter(Boolean);
-            if (entry?.device?.ip) values.push(entry.device.ip);
-            return Array.from(new Set(values));
+            return getDeviceAddressRecords(entry).map(record => record.address);
+        }
+
+        function ipv4Details(address) {
+            const [ip, rawPrefix] = String(address || '').split('/');
+            const octets = ip.split('.').map(Number);
+            if (octets.length !== 4 || octets.some(value => !Number.isInteger(value) || value < 0 || value > 255)) return null;
+            const prefix = rawPrefix === undefined ? 24 : Number(rawPrefix);
+            if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) return null;
+            const numeric = octets.reduce((value, octet) => value * 256 + octet, 0) >>> 0;
+            const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0;
+            const network = (numeric & mask) >>> 0;
+            const networkAddress = [24, 16, 8, 0].map(shift => (network >>> shift) & 255).join('.');
+            return { ip, prefix, numeric, network, networkAddress, key: `${networkAddress}/${prefix}` };
         }
 
         function ipPrefix(address) {
-            const parts = String(address || '').split('/');
-            return parts[1] ? `${parts[0].split('.').slice(0, 3).join('.')}/${parts[1]}` : parts[0].split('.').slice(0, 3).join('.') + '/24';
+            return ipv4Details(address)?.key || '';
         }
 
-        function hasActivePath(sourceId, predicate) {
+        function getDeviceAddressRecords(entry) {
+            if (!entry?.device) return [];
+            let interfaces = Object.entries(entry.device.interfaces || {});
+            if (!interfaces.length && entry.device.ip) interfaces = [['GigabitEthernet0/0/0', entry.device.ip]];
+            return interfaces.map(([name, value]) => {
+                const address = typeof value === 'string' ? value : value?.ip;
+                const configured = entry.config?.interfaces?.[name] || {};
+                const status = typeof value === 'object' && value ? value.status : configured.shutdown ? 'administratively down' : 'up';
+                const parsed = ipv4Details(address);
+                return parsed && !configured.shutdown && status !== 'administratively down' && status !== 'down'
+                    ? { interface: name, address: `${parsed.ip}/${parsed.prefix}`, ip: parsed.ip, prefix: parsed.key, prefixLength: parsed.prefix }
+                    : null;
+            }).filter(Boolean);
+        }
+
+        function setInterfaceAddress(entry, interfaceName, ip, mask) {
+            const prefix = maskToPrefix(mask);
+            const parsed = prefix === null ? null : ipv4Details(`${ip}/${prefix}`);
+            if (!parsed) return '% Invalid IP address or subnet mask';
+            const conflict = simulatorState.activeDevices.some(device => getDeviceAddressRecords(device).some(record =>
+                record.ip === parsed.ip && !(device.id === entry.id && record.interface === interfaceName)
+            ));
+            if (conflict) return `% IP address ${parsed.ip} conflicts with another interface`;
+
+            entry.device.interfaces = entry.device.interfaces || {};
+            entry.config = entry.config || {};
+            entry.config.interfaces = entry.config.interfaces || {};
+            const existing = entry.device.interfaces[interfaceName];
+            const existingValue = typeof existing === 'object' && existing ? existing : {};
+            entry.device.interfaces[interfaceName] = { ...existingValue, ip: `${parsed.ip}/${parsed.prefix}`, status: existingValue.status === 'administratively down' ? existingValue.status : 'up' };
+            entry.config.interfaces[interfaceName] = { ...(entry.config.interfaces[interfaceName] || {}), ip: parsed.ip, mask, shutdown: false };
+            if (!entry.device.ip || entry.device.ip === (typeof existing === 'string' ? existing : existingValue.ip) || Object.keys(entry.device.interfaces)[0] === interfaceName) {
+                entry.device.ip = `${parsed.ip}/${parsed.prefix}`;
+            }
+            entry.config.routing = entry.config.routing || {};
+            entry.config.routing.learnedRoutes = [];
+            entry.config.routing.connectedRoutes = getDeviceAddressRecords(entry).map(record => ({ destination: record.prefix, interface: record.interface, protocol: 'C', metric: 0 }));
+            invalidateNetworkCaches();
+            const node = document.getElementById(entry.id);
+            if (node) {
+                const ipLabel = node.querySelector('.node-ip');
+                if (ipLabel && entry.device.ip) ipLabel.textContent = entry.device.ip;
+            }
+            return `IP address ${parsed.ip} ${mask} assigned to ${interfaceName}`;
+        }
+
+        function ipv4String(value) {
+            return [24, 16, 8, 0].map(shift => (value >>> shift) & 255).join('.');
+        }
+
+        function subnetMaskToWildcard(mask) {
+            const prefix = maskToPrefix(mask);
+            if (prefix === null) return null;
+            const numericMask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0;
+            return ipv4String(~numericMask >>> 0);
+        }
+
+        function requestDHCPLease(entry, interfaceName) {
+            for (const server of simulatorState.activeDevices) {
+                const dhcp = server.config?.dhcp;
+                for (const pool of Object.values(dhcp?.pools || {})) {
+                    const prefix = maskToPrefix(pool.mask);
+                    const network = prefix === null ? null : ipv4Details(`${pool.network}/${prefix}`);
+                    if (!network) continue;
+                    let clientPath = findLayer2Path(entry.id, server.id);
+                    let relayPath = null;
+                    if (!clientPath) {
+                        for (const relay of simulatorState.activeDevices.filter(device => ['router', 'firewall'].includes(device.device.type))) {
+                            const pathToRelay = findLayer2Path(entry.id, relay.id);
+                            const helper = Object.values(relay.config?.interfaces || {}).some(interfaceConfig =>
+                                interfaceConfig.helperAddress && deviceAddresses(server).some(address => address.split('/')[0] === interfaceConfig.helperAddress)
+                            );
+                            const pathToServer = findLayer2Path(relay.id, server.id);
+                            if (pathToRelay && helper && pathToServer) {
+                                clientPath = pathToRelay;
+                                relayPath = pathToServer;
+                                break;
+                            }
+                        }
+                    }
+                    if (!clientPath) continue;
+                    const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0;
+                    const broadcast = (network.network | (~mask >>> 0)) >>> 0;
+                    const excluded = (dhcp.excluded || []).map(range => range.map(ipv4Details)).filter(range => range[0]);
+                    const used = new Set(simulatorState.activeDevices.flatMap(device => getDeviceAddressRecords(device).map(record => record.ip)));
+                    let leaseAddress = null;
+                    for (let candidate = network.network + 1; candidate < broadcast; candidate++) {
+                        const address = ipv4String(candidate >>> 0);
+                        const isExcluded = excluded.some(([start, end]) => {
+                            const first = start.numeric;
+                            const last = end?.numeric ?? first;
+                            return candidate >= first && candidate <= last;
+                        });
+                        if (!isExcluded && !used.has(address)) { leaseAddress = address; break; }
+                    }
+                    if (!leaseAddress) continue;
+                    const result = setInterfaceAddress(entry, interfaceName, leaseAddress, pool.mask);
+                    if (result.startsWith('%')) return result;
+                    if (pool.defaultRouter?.length) entry.device.gateway = pool.defaultRouter[0];
+                    if (pool.dnsServers?.length) entry.config.dnsServers = pool.dnsServers.slice();
+                    dhcp.bindings = dhcp.bindings || {};
+                    dhcp.bindings[leaseAddress] = { ip: leaseAddress, client: entry.device.name, pool: pool.name };
+                    if (relayPath) {
+                        animateNetworkPath(clientPath, 'dhcp', 'DHCP DISCOVER / relay');
+                        animateNetworkPath(relayPath, 'dhcp', `DHCP relay to ${getPrimaryAddress(server)}`, 150);
+                        animateNetworkPath(reverseNetworkPath(relayPath), 'dhcp', `DHCP OFFER ${leaseAddress}`, 300);
+                        animateNetworkPath(reverseNetworkPath(clientPath), 'dhcp', `DHCP relay offer ${leaseAddress}`, 450);
+                    } else {
+                        animateNetworkPath(clientPath, 'dhcp', 'DHCP DISCOVER / REQUEST');
+                        animateNetworkPath(reverseNetworkPath(clientPath), 'dhcp', `DHCP OFFER ${leaseAddress}`, 150);
+                    }
+                    return `DHCP lease ${leaseAddress}/${prefix} acquired from ${pool.name}`;
+                }
+            }
+            return '% DHCP server or matching pool not reachable';
+        }
+
+        function invalidateNetworkCaches() {
+            simulatorState.networkTables.arp = {};
+            simulatorState.networkTables.mac = {};
+            simulatorState.activeDevices.forEach(entry => {
+                if (entry.config?.routing) entry.config.routing.learnedRoutes = [];
+            });
+            updateNetworkTables();
+            updatePortLeds();
+        }
+
+        function getConnectionInterface(entry, connection) {
+            const explicit = connection.from === entry.id ? connection.fromInterface : connection.toInterface;
+            if (explicit) return explicit;
+            const attached = simulatorState.connections.filter(item => item.from === entry.id || item.to === entry.id);
+            const linkIndex = attached.indexOf(connection);
+            const interfaces = Object.keys(entry.device.interfaces || {}).filter(name => !name.includes('.') && !/^vlan/i.test(name));
+            return interfaces[Math.min(Math.max(linkIndex, 0), interfaces.length - 1)] || null;
+        }
+
+        function isConnectionOperational(connection) {
+            if (connection.status !== 'active') return false;
+            return [connection.from, connection.to].every(deviceId => {
+                const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
+                if (!entry) return false;
+                const interfaceName = getConnectionInterface(entry, connection);
+                if (!interfaceName) return true;
+                const value = entry.device.interfaces?.[interfaceName];
+                const configured = entry.config?.interfaces?.[interfaceName] || {};
+                const status = typeof value === 'object' && value ? value.status : 'up';
+                return !configured.shutdown && status !== 'administratively down' && status !== 'down';
+            });
+        }
+
+        function getPrimaryAddress(entry) {
+            const parsed = ipv4Details(entry?.device?.ip);
+            return parsed?.ip || getDeviceAddressRecords(entry)[0]?.ip || '';
+        }
+
+        function addressMatchesPrefix(address, prefix) {
+            const addressDetails = ipv4Details(address);
+            const prefixDetails = ipv4Details(prefix);
+            if (!addressDetails || !prefixDetails) return false;
+            const mask = prefixDetails.prefix === 0 ? 0 : (0xffffffff << (32 - prefixDetails.prefix)) >>> 0;
+            return ((addressDetails.numeric & mask) >>> 0) === prefixDetails.network;
+        }
+
+        function getAddressPair(first, second) {
+            for (const firstAddress of getDeviceAddressRecords(first)) {
+                for (const secondAddress of getDeviceAddressRecords(second)) {
+                    if (addressMatchesPrefix(firstAddress.ip, secondAddress.address) && addressMatchesPrefix(secondAddress.ip, firstAddress.address)) {
+                        return { first: firstAddress, second: secondAddress };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getDeviceMac(entry) {
+            const hash = [...String(entry?.id || '')].reduce((value, character) => (value * 31 + character.charCodeAt(0)) >>> 0, 0);
+            const suffix = hash.toString(16).padStart(8, '0').slice(-8);
+            return `02:00:${suffix.slice(0, 2)}:${suffix.slice(2, 4)}:${suffix.slice(4, 6)}:${suffix.slice(6, 8)}`;
+        }
+
+        function isBridgeDevice(entry) {
+            return ['switch', 'bridge', 'hub', 'ap', 'mesh'].includes(entry?.device?.type);
+        }
+
+        function getPortVlanProfile(entry, connection) {
+            const interfaceName = getConnectionInterface(entry, connection);
+            const config = entry.config?.interfaces?.[interfaceName] || {};
+            const mode = config.switchportMode || 'access';
+            return {
+                mode,
+                vlan: String(config.accessVlan || '1'),
+                native: String(config.trunkNativeVlan || '1'),
+                allowed: config.trunkAllowedVlans || null
+            };
+        }
+
+        function canBridgeBetween(entry, incoming, outgoing) {
+            const inputProfile = getPortVlanProfile(entry, incoming);
+            const outputProfile = getPortVlanProfile(entry, outgoing);
+            const candidates = new Set(['1', inputProfile.vlan, outputProfile.vlan, inputProfile.native, outputProfile.native, ...Object.keys(entry.config?.vlans || {})]);
+            (inputProfile.allowed || []).forEach(vlan => candidates.add(String(vlan)));
+            (outputProfile.allowed || []).forEach(vlan => candidates.add(String(vlan)));
+            const carries = (profile, vlan) => profile.mode === 'trunk'
+                ? !profile.allowed || profile.allowed.includes(vlan)
+                : profile.vlan === vlan;
+            return [...candidates].some(vlan => carries(inputProfile, vlan) && carries(outputProfile, vlan));
+        }
+
+        function findLayer2Path(sourceId, targetId) {
+            if (!sourceId || !targetId) return null;
+            if (sourceId === targetId) return { nodes: [sourceId], connections: [] };
+            const queue = [{ id: sourceId, nodes: [sourceId], connections: [], incoming: null }];
             const visited = new Set([sourceId]);
-            const queue = [sourceId];
             while (queue.length) {
                 const current = queue.shift();
-                if (predicate(current)) return true;
-                simulatorState.connections.filter(connection => connection.status === 'active' && (connection.from === current || connection.to === current)).forEach(connection => {
-                    const next = connection.from === current ? connection.to : connection.from;
-                    if (!visited.has(next)) { visited.add(next); queue.push(next); }
-                });
+                const currentEntry = simulatorState.activeDevices.find(entry => entry.id === current.id);
+                for (const connection of simulatorState.connections) {
+                    if (!isConnectionOperational(connection) || connection.type === 'console') continue;
+                    if (connection.from !== current.id && connection.to !== current.id) continue;
+                    if (current.incoming && isBridgeDevice(currentEntry) && !canBridgeBetween(currentEntry, current.incoming, connection)) continue;
+                    const nextId = connection.from === current.id ? connection.to : connection.from;
+                    const nextEntry = simulatorState.activeDevices.find(entry => entry.id === nextId);
+                    if (nextId !== targetId && !isBridgeDevice(nextEntry)) continue;
+                    const profile = isBridgeDevice(nextEntry) ? getPortVlanProfile(nextEntry, connection) : null;
+                    const stateKey = profile ? `${nextId}:${profile.mode}:${profile.vlan}:${profile.native}:${(profile.allowed || []).join(',')}` : nextId;
+                    if (visited.has(stateKey)) continue;
+                    visited.add(stateKey);
+                    const nextPath = { nodes: [...current.nodes, nextId], connections: [...current.connections, connection] };
+                    if (nextId === targetId) return nextPath;
+                    queue.push({ ...nextPath, id: nextId, incoming: connection });
+                }
             }
-            return false;
+            return null;
         }
 
-        function canReachNetwork(source, target) {
-            if (!source || !target) return false;
-            const sourcePrefix = ipPrefix(source.device.ip);
-            const targetPrefix = ipPrefix(target.device.ip);
-            if (sourcePrefix === targetPrefix) return hasActivePath(source.id, id => id === target.id);
+        function getDirectRoute(router, targetAddress) {
+            return getDeviceAddressRecords(router).find(record => addressMatchesPrefix(targetAddress, record.prefix)) || null;
+        }
+
+        function getLearnedRoute(router, targetAddress) {
+            const routes = [...(router?.config?.routing?.staticRoutes || []), ...(router?.config?.routing?.learnedRoutes || [])];
+            return routes
+                .filter(route => addressMatchesPrefix(targetAddress, route.destination))
+                .sort((left, right) => {
+                    const prefixDifference = (ipv4Details(right.destination)?.prefix || 0) - (ipv4Details(left.destination)?.prefix || 0);
+                    if (prefixDifference) return prefixDifference;
+                    const distance = route => route.distance ?? ({ C: 0, S: 1, B: 20, D: 90, O: 110, R: 120 }[route.protocol] ?? 200);
+                    return distance(left) - distance(right) || (left.metric || 0) - (right.metric || 0);
+                })[0] || null;
+        }
+
+        function resolveRouteNextHop(router, route) {
+            if (!route) return null;
+            if (route.nextHopId) return simulatorState.activeDevices.find(entry => entry.id === route.nextHopId) || null;
+            const nextHopIp = ipv4Details(route.nextHop)?.ip;
+            if (nextHopIp) return simulatorState.activeDevices.find(entry => entry.id !== router.id && deviceAddresses(entry).some(address => address.split('/')[0] === nextHopIp)) || null;
+            if (route.interface) {
+                const connection = simulatorState.connections.find(link =>
+                    (link.from === router.id || link.to === router.id)
+                    && isConnectionOperational(link)
+                    && getConnectionInterface(router, link) === normalizeInterfaceName(route.interface, router)
+                );
+                const nextId = connection && (connection.from === router.id ? connection.to : connection.from);
+                return simulatorState.activeDevices.find(entry => entry.id === nextId) || null;
+            }
+            return null;
+        }
+
+        function findPingSegments(source, target) {
+            const sourceAddress = getPrimaryAddress(source);
+            const targetAddress = getPrimaryAddress(target);
+            if (!sourceAddress || !targetAddress) return null;
+            if (getAddressPair(source, target)) {
+                const localPath = findLayer2Path(source.id, target.id);
+                if (localPath) return [localPath];
+            }
+
             const routers = simulatorState.activeDevices.filter(entry => ['router', 'firewall'].includes(entry.device.type));
-            return routers.some(router => {
-                const prefixes = deviceAddresses(router).map(ipPrefix);
-                return prefixes.includes(sourcePrefix) && prefixes.includes(targetPrefix) && hasActivePath(source.id, id => id === router.id) && hasActivePath(target.id, id => id === router.id);
+            const gateway = String(source.device.gateway || '').split('/')[0];
+            const candidates = source.device.type === 'router' || source.device.type === 'firewall'
+                ? [{ router: source, path: null }]
+                : routers.map(router => ({
+                    router,
+                    path: findLayer2Path(source.id, router.id)
+                })).filter(candidate => candidate.path && (gateway
+                    ? deviceAddresses(candidate.router).some(address => address.split('/')[0] === gateway)
+                    : Boolean(getAddressPair(source, candidate.router))));
+
+            candidates.sort((left, right) => Number(Boolean(gateway && deviceAddresses(right.router).some(address => address.split('/')[0] === gateway))) - Number(Boolean(gateway && deviceAddresses(left.router).some(address => address.split('/')[0] === gateway))));
+            for (const candidate of candidates) {
+                const segments = candidate.path ? [candidate.path] : [];
+                let currentRouter = candidate.router;
+                const visitedRouters = new Set();
+                while (currentRouter && !visitedRouters.has(currentRouter.id)) {
+                    visitedRouters.add(currentRouter.id);
+                    if (getDirectRoute(currentRouter, targetAddress)) {
+                        const finalPath = findLayer2Path(currentRouter.id, target.id);
+                        if (finalPath) return [...segments, finalPath];
+                    }
+                    const route = getLearnedRoute(currentRouter, targetAddress);
+                    const nextRouter = resolveRouteNextHop(currentRouter, route);
+                    if (!nextRouter || visitedRouters.has(nextRouter.id)) break;
+                    const nextPath = findLayer2Path(currentRouter.id, nextRouter.id);
+                    if (!nextPath) break;
+                    segments.push(nextPath);
+                    currentRouter = nextRouter;
+                }
+            }
+            return null;
+        }
+
+        function reverseNetworkPath(path) {
+            return { nodes: [...path.nodes].reverse(), connections: [...path.connections].reverse() };
+        }
+
+        function animateNetworkPath(path, packetType, payload, startDelay = 0) {
+            path.connections.forEach((connection, index) => {
+                const from = simulatorState.activeDevices.find(entry => entry.id === path.nodes[index]);
+                const to = simulatorState.activeDevices.find(entry => entry.id === path.nodes[index + 1]);
+                if (from && to) setTimeout(() => createPacket(from, to, packetType, { payload, ttl: Math.max(1, 64 - index) }), startDelay + index * 150);
             });
+            return path.connections.length * 150;
+        }
+
+        function learnMacOnPath(path, entry) {
+            const mac = getDeviceMac(entry);
+            let allowed = true;
+            path.nodes.forEach((nodeId, index) => {
+                const node = simulatorState.activeDevices.find(device => device.id === nodeId);
+                if (!isBridgeDevice(node)) return;
+                const connection = index > 0 ? path.connections[index - 1] : path.connections[index];
+                const port = connection && getConnectionInterface(node, connection);
+                const portConfig = node.config?.interfaces?.[port];
+                const security = portConfig?.portSecurity;
+                if (security?.enabled) {
+                    security.secureMacs = security.secureMacs || [];
+                    if (!security.secureMacs.includes(mac)) {
+                        if (security.secureMacs.length >= security.maximum) {
+                            security.violations = (security.violations || 0) + 1;
+                            if (security.violation === 'shutdown') {
+                                portConfig.shutdown = true;
+                                const value = node.device.interfaces?.[port];
+                                node.device.interfaces[port] = { ...(typeof value === 'object' && value ? value : value ? { ip: value } : {}), status: 'administratively down' };
+                                allowed = false;
+                                invalidateNetworkCaches();
+                            }
+                            return;
+                        }
+                        security.secureMacs.push(mac);
+                    }
+                }
+                simulatorState.networkTables.mac[nodeId] = simulatorState.networkTables.mac[nodeId] || {};
+                simulatorState.networkTables.mac[nodeId][mac] = { port: port || 'unknown', device: entry.device.name, status: 'active' };
+            });
+            return allowed;
+        }
+
+        function broadcastArpRequest(source, target, path) {
+            const addressPair = getAddressPair(source, target);
+            const sourceAddress = addressPair?.first.ip;
+            const targetAddress = addressPair?.second.ip;
+            if (!sourceAddress || !targetAddress) return false;
+            const queue = [{ id: source.id, path: { nodes: [source.id], connections: [] } }];
+            const visited = new Set([source.id]);
+            let targetPath = null;
+            while (queue.length) {
+                const current = queue.shift();
+                for (const connection of simulatorState.connections) {
+                    if (!isConnectionOperational(connection) || connection.type === 'console') continue;
+                    if (connection.from !== current.id && connection.to !== current.id) continue;
+                    const nextId = connection.from === current.id ? connection.to : connection.from;
+                    if (visited.has(nextId)) continue;
+                    visited.add(nextId);
+                    const nextEntry = simulatorState.activeDevices.find(entry => entry.id === nextId);
+                    const nextPath = { nodes: [...current.path.nodes, nextId], connections: [...current.path.connections, connection] };
+                    animateNetworkPath(nextPath, 'arp', `Who has ${targetAddress}? Tell ${sourceAddress}`);
+                    if (!learnMacOnPath({ nodes: current.path.nodes, connections: current.path.connections }, source)) return false;
+                    if (nextId === target.id && deviceAddresses(target).some(address => address.split('/')[0] === targetAddress)) {
+                        targetPath = nextPath;
+                    } else if (isBridgeDevice(nextEntry)) {
+                        queue.push({ id: nextId, path: nextPath });
+                    }
+                }
+            }
+            if (!targetPath || !path) return false;
+
+            const sourceCache = simulatorState.networkTables.arp[source.id] = simulatorState.networkTables.arp[source.id] || {};
+            const targetCache = simulatorState.networkTables.arp[target.id] = simulatorState.networkTables.arp[target.id] || {};
+            sourceCache[targetAddress] = { ip: targetAddress, mac: getDeviceMac(target), device: target.device.name, interface: 'Gi0/0', updated: Date.now() };
+            targetCache[sourceAddress] = { ip: sourceAddress, mac: getDeviceMac(source), device: source.device.name, interface: 'Gi0/0', updated: Date.now() };
+            if (!learnMacOnPath(targetPath, source) || !learnMacOnPath(reverseNetworkPath(targetPath), target)) return false;
+            animateNetworkPath(reverseNetworkPath(targetPath), 'arp', `${targetAddress} is at ${getDeviceMac(target)}`, 150);
+            return true;
+        }
+
+        function resolveArpForSegment(source, target, path) {
+            const targetAddress = getAddressPair(source, target)?.second.ip;
+            if (!targetAddress) return false;
+            const cache = simulatorState.networkTables.arp[source.id] || {};
+            if (cache[targetAddress] && Date.now() - cache[targetAddress].updated < 60000) return true;
+            return broadcastArpRequest(source, target, path);
+        }
+
+        function parseAclAddress(tokens, startIndex) {
+            const token = tokens[startIndex]?.toLowerCase();
+            if (token === 'any') return { nextIndex: startIndex + 1, matches: () => true };
+            if (token === 'host') {
+                const host = tokens[startIndex + 1];
+                return { nextIndex: startIndex + 2, matches: address => address === host };
+            }
+            const network = tokens[startIndex];
+            const wildcardCandidate = tokens[startIndex + 1];
+            const wildcardOctets = wildcardCandidate?.split('.').map(Number);
+            if (wildcardOctets?.length === 4 && wildcardOctets.every(value => Number.isInteger(value) && value >= 0 && value <= 255)) {
+                const wildcard = wildcardOctets.reduce((value, octet) => value * 256 + octet, 0) >>> 0;
+                const networkAddress = ipv4Details(network)?.numeric;
+                return {
+                    nextIndex: startIndex + 2,
+                    matches: address => {
+                        const parsed = ipv4Details(address);
+                        return Boolean(parsed && networkAddress !== undefined && ((parsed.numeric & (~wildcard >>> 0)) >>> 0) === ((networkAddress & (~wildcard >>> 0)) >>> 0));
+                    }
+                };
+            }
+            return { nextIndex: startIndex + 1, matches: address => address === network };
+        }
+
+        function aclRuleMatches(rule, sourceAddress, targetAddress, protocol) {
+            const tokens = (rule.tokens || []).map(token => token.toLowerCase());
+            let index = 0;
+            if (rule.type === 'extended') {
+                const ruleProtocol = tokens[index++];
+                if (ruleProtocol !== 'ip' && ruleProtocol !== protocol) return false;
+            }
+            const source = parseAclAddress(tokens, index);
+            index = source.nextIndex;
+            if (!source.matches(sourceAddress)) return false;
+            if (rule.type === 'standard') return true;
+            const destination = parseAclAddress(tokens, index);
+            return destination.matches(targetAddress);
+        }
+
+        function isTrafficAllowed(source, target, segments, protocol) {
+            const sourceAddress = getPrimaryAddress(source);
+            const targetAddress = getPrimaryAddress(target);
+            for (const segment of segments) {
+                for (let index = 0; index < segment.connections.length; index++) {
+                    const connection = segment.connections[index];
+                    const fromId = segment.nodes[index];
+                    const toId = segment.nodes[index + 1];
+                    for (const endpoint of [{ id: fromId, direction: 'out' }, { id: toId, direction: 'in' }]) {
+                        const entry = simulatorState.activeDevices.find(device => device.id === endpoint.id);
+                        const interfaceName = entry && getConnectionInterface(entry, connection);
+                        const binding = entry?.config?.interfaces?.[interfaceName]?.accessGroup;
+                        if (!binding || binding.direction !== endpoint.direction) continue;
+                        const acl = entry.config.acls?.[binding.name];
+                        if (!acl) return false;
+                        const matched = acl.entries.find(rule => aclRuleMatches(rule, sourceAddress, targetAddress, protocol));
+                        if (!matched || matched.action !== 'permit') return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function applyNatToPing(source, target, segments) {
+            const sourceAddress = getPrimaryAddress(source);
+            const targetAddress = getPrimaryAddress(target);
+            const routers = simulatorState.activeDevices.filter(entry => ['router', 'firewall'].includes(entry.device.type));
+
+            for (let index = 0; index < segments.length - 1; index++) {
+                const insideSegment = segments[index];
+                const outsideSegment = segments[index + 1];
+                const routerId = insideSegment.nodes[insideSegment.nodes.length - 1];
+                if (outsideSegment.nodes[0] !== routerId) continue;
+                const router = routers.find(entry => entry.id === routerId);
+                if (!router) continue;
+                const insideConnection = insideSegment.connections[insideSegment.connections.length - 1];
+                const outsideConnection = outsideSegment.connections[0];
+                const insideInterface = getConnectionInterface(router, insideConnection);
+                const outsideInterface = getConnectionInterface(router, outsideConnection);
+                if (router.config.interfaces?.[insideInterface]?.natZone !== 'inside' || router.config.interfaces?.[outsideInterface]?.natZone !== 'outside') continue;
+                const staticMapping = router.config.natTranslations?.find(translation => translation.static && translation.inside === sourceAddress);
+                if (staticMapping) return staticMapping;
+
+                for (const rule of router.config.nat || []) {
+                    const tokens = rule.tokens || [];
+                    const listIndex = tokens.indexOf('list');
+                    const poolIndex = tokens.indexOf('pool');
+                    if (listIndex < 0 || poolIndex < 0) continue;
+                    const acl = router.config.acls?.[tokens[listIndex + 1]];
+                    const matched = acl?.entries.find(entry => aclRuleMatches(entry, sourceAddress, targetAddress, 'icmp'));
+                    if (!matched || matched.action !== 'permit') continue;
+                    const pool = router.config.natPools?.[tokens[poolIndex + 1]];
+                    const start = ipv4Details(pool?.start);
+                    const end = ipv4Details(pool?.end);
+                    if (!start || !end) continue;
+                    const existing = router.config.natTranslations || (router.config.natTranslations = []);
+                    let outsideAddress = null;
+                    for (let candidate = start.numeric; candidate <= end.numeric; candidate++) {
+                        const address = ipv4String(candidate >>> 0);
+                        if (!existing.some(translation => translation.outside === address)) { outsideAddress = address; break; }
+                    }
+                    if (!outsideAddress) continue;
+                    const translation = { protocol: 'ICMP', inside: sourceAddress, outside: outsideAddress, destination: targetAddress, pool: pool.name, static: false, createdAt: Date.now() };
+                    existing.push(translation);
+                    return translation;
+                }
+            }
+            return null;
+        }
+
+        function simulateNetworkPing(source, target) {
+            if (!source || !target) return { success: false, reason: 'Source or destination does not exist' };
+            const segments = findPingSegments(source, target);
+            if (!segments?.length) return { success: false, reason: 'No active route to host' };
+            updateNetworkTables();
+            for (const segment of segments) {
+                const segmentSource = simulatorState.activeDevices.find(entry => entry.id === segment.nodes[0]);
+                const segmentTarget = simulatorState.activeDevices.find(entry => entry.id === segment.nodes[segment.nodes.length - 1]);
+                if (!resolveArpForSegment(segmentSource, segmentTarget, segment)) return { success: false, reason: 'ARP resolution failed' };
+            }
+            const returnSegments = segments.slice().reverse().map(reverseNetworkPath);
+            if (!isTrafficAllowed(source, target, segments, 'icmp') || !isTrafficAllowed(target, source, returnSegments, 'icmp')) {
+                return { success: false, reason: 'Access list denied ICMP traffic' };
+            }
+            const natTranslation = applyNatToPing(source, target, segments);
+            let delay = 0;
+            const requestPayload = natTranslation ? `Echo request NAT ${natTranslation.inside} -> ${natTranslation.outside}` : 'Echo request';
+            segments.forEach(segment => { delay += animateNetworkPath(segment, 'icmp', requestPayload, delay); });
+            segments.slice().reverse().forEach(segment => { delay += animateNetworkPath(reverseNetworkPath(segment), 'icmp', 'Echo reply', delay); });
+            updateNetworkTables();
+            return { success: true, segments, natTranslation, path: segments.flatMap((segment, index) => index ? segment.nodes.slice(1) : segment.nodes) };
         }
 
         function runPingTest() {
@@ -5454,8 +6335,8 @@ Router&gt;
             const dstId = document.getElementById('pingTarget').value;
             const srcDevice = simulatorState.activeDevices.find(d => d.id === srcId);
             const dstDevice = simulatorState.activeDevices.find(d => d.id === dstId);
-            
-            if (srcId === dstId) {
+
+            if (!srcDevice || !dstDevice || srcId === dstId) {
                 showHint('錯誤', '來源和目標不能是同一設備');
                 return;
             }
@@ -5467,21 +6348,22 @@ Router&gt;
             
             let received = 0;
             const count = 4;
-            const reachable = canReachNetwork(srcDevice, dstDevice);
-            const crossSubnet = ipPrefix(srcDevice.device.ip) !== ipPrefix(dstDevice.device.ip);
             
             for (let i = 0; i < count; i++) {
                 setTimeout(() => {
-                    const success = reachable && !(crossSubnet && i === 0);
-                    const time = Math.floor(Math.random() * 15) + 1;
+                    const result = simulateNetworkPing(srcDevice, dstDevice);
+                    const success = result.success;
+                    const time = success ? Math.max(1, result.path.length * 2) : 0;
                     
                     if (success) {
                         received++;
                         output.innerHTML += `<div style="color: var(--online);">Reply from ${dstDevice.device.ip.split('/')[0]}: bytes=64 time=${time}ms TTL=64</div>`;
-                        createPacket(srcDevice, dstDevice, 'icmp');
-                        setTimeout(() => createPacket(dstDevice, srcDevice, 'icmp'), 300);
+                        if (i === 0) {
+                            const hopNames = result.path.map(id => simulatorState.activeDevices.find(entry => entry.id === id)?.device.name || id);
+                            output.innerHTML += `<div style="color: var(--cyber-gray);">Path: ${hopNames.join(' → ')}</div>`;
+                        }
                     } else {
-                        output.innerHTML += `<div style="color: var(--offline);">Request timed out.</div>`;
+                        output.innerHTML += `<div style="color: var(--offline);">Request timed out. (${result.reason})</div>`;
                     }
                     
                     if (i === count - 1) {
@@ -5915,10 +6797,41 @@ Router&gt;
         // CLI 終端功能
         let cliHistory = [];
         let cliHistoryIndex = -1;
-        let cliMode = 'user';
+        const CLI_MODES = Object.freeze({
+            USER: { key: 'user', prompt: '>' },
+            PRIVILEGED: { key: 'privileged', prompt: '#' },
+            GLOBAL_CONFIG: { key: 'config', prompt: '(config)#' },
+            INTERFACE_CONFIG: { key: 'interface', prompt: '(config-if)#' },
+            SUBINTERFACE_CONFIG: { key: 'subinterface', prompt: '(config-subif)#' },
+            INTERFACE_RANGE_CONFIG: { key: 'interface-range', prompt: '(config-if-range)#' },
+            LINE_CONFIG: { key: 'line', prompt: '(config-line)#' },
+            ROUTER_CONFIG: { key: 'router', prompt: '(config-router)#' },
+            VLAN_CONFIG: { key: 'vlan', prompt: '(config-vlan)#' },
+            DHCP_CONFIG: { key: 'dhcp', prompt: '(dhcp-config)#' },
+            STANDARD_ACL_CONFIG: { key: 'acl-standard', prompt: '(config-std-nacl)#' },
+            EXTENDED_ACL_CONFIG: { key: 'acl-extended', prompt: '(config-ext-nacl)#' }
+        });
+        function createCLIState(deviceId = null) {
+            return { deviceId, mode: CLI_MODES.USER.key, context: null, parentMode: CLI_MODES.GLOBAL_CONFIG.key };
+        }
+        let cliState = createCLIState();
         let cliHostname = 'Router';
         let cliInterface = 'GigabitEthernet0/0';
         let cliPasswordPrompt = false;
+
+        function useCLIState(device) {
+            if (!device) return cliState;
+            if (!device.cliState) device.cliState = createCLIState(device.id);
+            cliState = device.cliState;
+            cliState.deviceId = device.id;
+            return cliState;
+        }
+
+        function setCLIState(mode, context = null, parentMode = CLI_MODES.GLOBAL_CONFIG.key) {
+            cliState.mode = mode;
+            cliState.context = context;
+            cliState.parentMode = parentMode;
+        }
 
         function showCLITerminal() {
             const cli = document.getElementById('cliTerminal');
@@ -5926,6 +6839,7 @@ Router&gt;
             
             const selectedDevice = simulatorState.activeDevices.find(d => d.id === simulatorState.selectedDevice);
             if (selectedDevice) {
+                useCLIState(selectedDevice);
                 cliHostname = selectedDevice.device.name.replace(/\s+/g, '');
                 document.getElementById('cliDeviceName').textContent = `CLI - ${selectedDevice.device.name}`;
             }
@@ -5947,13 +6861,218 @@ Router&gt;
                 document.getElementById('cliPrompt').textContent = 'Password: ';
                 return;
             }
-            let prompt = cliHostname;
-            switch(cliMode) {
-                case 'user': prompt += '>'; break;
-                case 'privileged': prompt += '#'; break;
-                case 'config': prompt += '(config)#'; break;
+            const mode = Object.values(CLI_MODES).find(entry => entry.key === cliState.mode) || CLI_MODES.USER;
+            document.getElementById('cliPrompt').textContent = `${cliHostname}${mode.prompt}`;
+        }
+
+        const cliCommandPatterns = [
+            { words: ['enable'], mode: 'exec', aliases: ['en'] },
+            { words: ['disable'], mode: 'exec' },
+            { words: ['configure', 'terminal'], mode: 'exec', aliases: [['conf', 't']] },
+            { words: ['exit'], mode: 'any' },
+            { words: ['end'], mode: 'config' },
+            { words: ['write', 'memory'], mode: 'exec', aliases: [['wr', 'mem']] },
+            { words: ['copy', 'running-config', 'startup-config'], mode: 'exec' },
+            { words: ['show', 'ip', 'interface', 'brief'], mode: 'exec', aliases: [['sh', 'ip', 'int', 'br']] },
+            { words: ['show', 'ip', 'route'], mode: 'exec', aliases: [['sh', 'ip', 'route']] },
+            { words: ['show', 'ip', 'ospf', 'neighbor'], mode: 'exec' },
+            { words: ['show', 'ip', 'ospf', 'database'], mode: 'exec' },
+            { words: ['show', 'ip', 'eigrp', 'neighbors'], mode: 'exec' },
+            { words: ['show', 'ip', 'eigrp', 'topology'], mode: 'exec' },
+            { words: ['show', 'ip', 'bgp', 'summary'], mode: 'exec' },
+            { words: ['show', 'ip', 'protocols'], mode: 'exec' },
+            { words: ['show', 'ip', 'dhcp', 'binding'], mode: 'exec' },
+            { words: ['show', 'ip', 'dhcp', 'pool'], mode: 'exec', args: true },
+            { words: ['show', 'ip', 'nat', 'translations'], mode: 'exec' },
+            { words: ['show', 'access-lists'], mode: 'exec' },
+            { words: ['show', 'vlan', 'brief'], mode: 'exec' },
+            { words: ['show', 'spanning-tree'], mode: 'exec' },
+            { words: ['show', 'port-security', 'address'], mode: 'exec' },
+            { words: ['show', 'cdp', 'neighbors'], mode: 'exec' },
+            { words: ['show', 'lldp', 'neighbors'], mode: 'exec' },
+            { words: ['show', 'vtp', 'status'], mode: 'exec' },
+            { words: ['show', 'interfaces'], mode: 'exec', args: true },
+            { words: ['show', 'flash'], mode: 'exec' },
+            { words: ['show', 'flash:'], mode: 'exec' },
+            { words: ['show', 'arp'], mode: 'exec' },
+            { words: ['show', 'mac', 'address-table'], mode: 'exec' },
+            { words: ['show', 'mac', 'address-table', 'dynamic'], mode: 'exec' },
+            { words: ['show', 'running-config'], mode: 'exec', aliases: [['sh', 'run']] },
+            { words: ['show', 'startup-config'], mode: 'exec' },
+            { words: ['show', 'version'], mode: 'exec', aliases: [['sh', 'ver']] },
+            { words: ['help'], mode: 'any' },
+            { words: ['ping'], mode: 'exec', args: true },
+            { words: ['clear'], mode: 'any', aliases: ['cls'] },
+            { words: ['interface'], mode: 'config', args: true },
+            { words: ['interface', 'range'], mode: 'config', args: true },
+            { words: ['line'], mode: 'config', args: true },
+            { words: ['router', 'rip'], mode: 'config' },
+            { words: ['router', 'ospf'], mode: 'config', args: true },
+            { words: ['router', 'eigrp'], mode: 'config', args: true },
+            { words: ['router', 'bgp'], mode: 'config', args: true },
+            { words: ['vlan'], mode: 'config', args: true },
+            { words: ['ip', 'access-list', 'standard'], mode: 'config', args: true },
+            { words: ['ip', 'access-list', 'extended'], mode: 'config', args: true },
+            { words: ['ip', 'dhcp', 'pool'], mode: 'config', args: true },
+            { words: ['ip', 'route'], mode: 'config', args: true },
+            { words: ['hostname'], mode: 'config', args: true },
+            { words: ['enable', 'password'], mode: 'config', args: true },
+            { words: ['enable', 'secret'], mode: 'config', args: true },
+            { words: ['no', 'ip', 'domain-lookup'], mode: 'config' },
+            { words: ['banner', 'motd'], mode: 'config', args: true },
+            { words: ['service', 'password-encryption'], mode: 'config' },
+            { words: ['ip', 'default-gateway'], mode: 'config', args: true },
+            { words: ['ip', 'domain-name'], mode: 'config', args: true },
+            { words: ['username'], mode: 'config', args: true },
+            { words: ['crypto', 'key', 'generate', 'rsa'], mode: 'config', args: true },
+            { words: ['ip', 'ssh', 'version'], mode: 'config', args: true },
+            { words: ['ip', 'dhcp', 'excluded-address'], mode: 'config', args: true },
+            { words: ['ip', 'nat', 'pool'], mode: 'config', args: true },
+            { words: ['vtp'], mode: 'config', args: true },
+            { words: ['spanning-tree', 'vlan'], mode: 'config', args: true },
+            { words: ['cdp', 'run'], mode: 'config' },
+            { words: ['lldp', 'run'], mode: 'config' },
+            { words: ['ntp', 'server'], mode: 'config', args: true },
+            { words: ['logging'], mode: 'config', args: true },
+            { words: ['clock', 'set'], mode: 'config', args: true },
+            { words: ['ip', 'address'], mode: 'interface', args: true },
+            { words: ['ip', 'address', 'dhcp'], mode: 'interface' },
+            { words: ['ip', 'address'], mode: 'subinterface', args: true },
+            { words: ['ip', 'address', 'dhcp'], mode: 'subinterface' },
+            { words: ['ip', 'address'], mode: 'interface-range', args: true },
+            { words: ['no', 'shutdown'], mode: 'interface' },
+            { words: ['no', 'shutdown'], mode: 'subinterface' },
+            { words: ['no', 'shutdown'], mode: 'interface-range' },
+            { words: ['shutdown'], mode: 'interface' },
+            { words: ['shutdown'], mode: 'subinterface' },
+            { words: ['shutdown'], mode: 'interface-range' },
+            { words: ['description'], mode: 'interface', args: true },
+            { words: ['description'], mode: 'subinterface', args: true },
+            { words: ['description'], mode: 'interface-range', args: true },
+            { words: ['speed'], mode: 'interface', args: true },
+            { words: ['duplex'], mode: 'interface', args: true },
+            { words: ['name'], mode: 'vlan', args: true },
+            { words: ['switchport', 'mode'], mode: 'interface', args: true },
+            { words: ['switchport', 'access', 'vlan'], mode: 'interface', args: true },
+            { words: ['switchport', 'trunk'], mode: 'interface', args: true },
+            { words: ['switchport', 'port-security'], mode: 'interface', args: true },
+            { words: ['encapsulation', 'dot1q'], mode: 'interface', args: true },
+            { words: ['encapsulation', 'dot1q'], mode: 'subinterface', args: true },
+            { words: ['ip', 'ospf'], mode: 'interface', args: true },
+            { words: ['ip', 'ospf'], mode: 'subinterface', args: true },
+            { words: ['ip', 'access-group'], mode: 'interface', args: true },
+            { words: ['ip', 'nat'], mode: 'interface', args: true },
+            { words: ['ip', 'helper-address'], mode: 'interface', args: true },
+            { words: ['spanning-tree'], mode: 'interface', args: true },
+            { words: ['cdp', 'enable'], mode: 'interface' },
+            { words: ['lldp'], mode: 'interface', args: true },
+            { words: ['password'], mode: 'line', args: true },
+            { words: ['login'], mode: 'line', args: true },
+            { words: ['logging', 'synchronous'], mode: 'line' },
+            { words: ['transport', 'input'], mode: 'line', args: true },
+            { words: ['access-class'], mode: 'line', args: true },
+            { words: ['network'], mode: 'router', args: true },
+            { words: ['version'], mode: 'router', args: true },
+            { words: ['no', 'auto-summary'], mode: 'router' },
+            { words: ['passive-interface'], mode: 'router', args: true },
+            { words: ['default-information', 'originate'], mode: 'router' },
+            { words: ['router-id'], mode: 'router', args: true },
+            { words: ['eigrp', 'router-id'], mode: 'router', args: true },
+            { words: ['auto-cost', 'reference-bandwidth'], mode: 'router', args: true },
+            { words: ['neighbor'], mode: 'router', args: true },
+            { words: ['network'], mode: 'dhcp', args: true },
+            { words: ['default-router'], mode: 'dhcp', args: true },
+            { words: ['dns-server'], mode: 'dhcp', args: true },
+            { words: ['domain-name'], mode: 'dhcp', args: true },
+            { words: ['permit'], mode: 'acl-standard', args: true },
+            { words: ['deny'], mode: 'acl-standard', args: true },
+            { words: ['permit'], mode: 'acl-extended', args: true },
+            { words: ['deny'], mode: 'acl-extended', args: true },
+            { words: ['access-list'], mode: 'config', args: true },
+            { words: ['ip', 'nat', 'inside', 'source'], mode: 'config', args: true }
+        ];
+
+        function cliPatternsForMode() {
+            return cliCommandPatterns.filter(pattern => pattern.mode === 'any'
+                || (pattern.mode === 'exec' && ['user', 'privileged'].includes(cliState.mode))
+                || (pattern.mode === 'config' && cliState.mode === CLI_MODES.GLOBAL_CONFIG.key)
+                || pattern.mode === cliState.mode);
+        }
+
+        function normalizeCLIInput(command) {
+            const aliases = {
+                intvlan: 'interface vlan',
+                interfaces: 'interface',
+                ipssh: 'ip ssh',
+                ipnat: 'ip nat',
+                ipdhcp: 'ip dhcp',
+                iproute: 'ip route',
+                ipospf: 'ip ospf',
+                ipeigrp: 'ip eigrp',
+                ipbgp: 'ip bgp',
+                ship: 'show ip',
+                shipospf: 'show ip ospf',
+                shipdhcpbinding: 'show ip dhcp binding',
+                shipdhcppool: 'show ip dhcp pool',
+                shipnat: 'show ip nat',
+                'shipaccess-lists': 'show access-lists',
+                'shaccess-lists': 'show access-lists',
+                showiproute: 'show ip route',
+                showipprotocols: 'show ip protocols',
+                showipeigrpneighbors: 'show ip eigrp neighbors',
+                showipospfneighbor: 'show ip ospf neighbor',
+                showipospfdatabase: 'show ip ospf database'
+            };
+            let normalized = command.trim().replace(/^router(rip|ospf|eigrp|bgp)(\d*)/i, (_, protocol, id) => `router ${protocol}${id ? ` ${id}` : ''}`);
+            normalized = normalized.replace(/^router\s+(rip|ospf|eigrp|bgp)(\d+)(?=\s|$)/i, 'router $1 $2');
+            normalized = normalized.replace(/^(\S+)/, token => aliases[token.toLowerCase()] || token);
+            normalized = normalized.replace(/\bswitchport\s+accessvlan\b/i, 'switchport access vlan');
+            return normalized;
+        }
+
+        function resolveCLICommand(command) {
+            const normalizedCommand = normalizeCLIInput(command);
+            const inputTokens = normalizedCommand.split(/\s+/).filter(Boolean);
+            const tokens = inputTokens.map(token => token.toLowerCase());
+            if (!tokens.length || tokens[0] === '?') return { command };
+            const matches = cliPatternsForMode().filter(pattern => {
+                if (pattern.args ? tokens.length < pattern.words.length : tokens.length !== pattern.words.length) return false;
+                const canonicalMatch = pattern.words.every((word, index) => word.startsWith(tokens[index]));
+                const aliasMatch = (pattern.aliases || []).some(alias => {
+                    const aliasWords = Array.isArray(alias) ? alias : [alias];
+                    return aliasWords.length === tokens.length && aliasWords.every((word, index) => word === tokens[index]);
+                });
+                return canonicalMatch || aliasMatch;
+            });
+            if (!matches.length) return { command };
+            const longest = Math.max(...matches.map(pattern => pattern.words.length));
+            const bestMatches = matches.filter(pattern => pattern.words.length === longest);
+            if (bestMatches.length > 1) return { error: '% Ambiguous command' };
+            const pattern = bestMatches[0];
+            return { command: [...pattern.words, ...inputTokens.slice(pattern.words.length)].join(' ') };
+        }
+
+        function completeCLICommand(input) {
+            const value = input.value;
+            const hasTrailingSpace = /\s$/.test(value);
+            const tokens = value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+            if (!tokens.length) return;
+            const prefixTokens = hasTrailingSpace ? tokens : tokens.slice(0, -1);
+            const currentPrefix = hasTrailingSpace ? '' : tokens[tokens.length - 1];
+            const candidates = cliPatternsForMode().filter(pattern => {
+                if (pattern.words.length < tokens.length) return false;
+                return prefixTokens.every((token, index) => pattern.words[index]?.startsWith(token)) && pattern.words[prefixTokens.length]?.startsWith(currentPrefix);
+            });
+            const uniqueCommands = [...new Set(candidates.map(pattern => pattern.words.join(' ')))].sort();
+            if (uniqueCommands.length === 1) {
+                input.value = `${uniqueCommands[0]} `;
+                return;
             }
-            document.getElementById('cliPrompt').textContent = prompt;
+            if (uniqueCommands.length > 1) {
+                const output = document.getElementById('cliOutput');
+                output.innerHTML += `\n${uniqueCommands.join('    ')}`;
+                output.scrollTop = output.scrollHeight;
+            }
         }
 
         // CLI 命令處理
@@ -5965,7 +7084,10 @@ Router&gt;
         function handleCLICommand(event) {
             const input = event.currentTarget || document.getElementById('cliInput');
             if (!input) return;
-            if (event.key === 'Enter') {
+            if (event.key === 'Tab') {
+                event.preventDefault();
+                completeCLICommand(input);
+            } else if (event.key === 'Enter') {
                 event.preventDefault();
                 const command = input.value.trim();
                 if (command) cliHistory.push(command);
@@ -5992,6 +7114,228 @@ Router&gt;
             const config = selected.config;
             const trimmed = cmd.trim();
             const lower = trimmed.toLowerCase();
+            const parts = trimmed.split(/\s+/);
+            const state = cliState;
+            const interfaceNames = state.mode === CLI_MODES.INTERFACE_RANGE_CONFIG.key
+                ? expandInterfaceRange(state.context, selected)
+                : [state.context];
+
+            if ([CLI_MODES.INTERFACE_CONFIG.key, CLI_MODES.SUBINTERFACE_CONFIG.key, CLI_MODES.INTERFACE_RANGE_CONFIG.key].includes(state.mode)) {
+                if (lower === 'ip address dhcp') return requestDHCPLease(selected, interfaceNames[0]);
+                if (lower.startsWith('ip address ')) return setInterfaceAddress(selected, interfaceNames[0], parts[2], parts[3]);
+                if (lower === 'shutdown' || lower === 'no shutdown') {
+                    const shutdown = lower === 'shutdown';
+                    interfaceNames.forEach(interfaceName => {
+                        const current = selected.device.interfaces?.[interfaceName];
+                        const currentValue = typeof current === 'object' && current ? current : current ? { ip: current } : {};
+                        selected.device.interfaces[interfaceName] = { ...currentValue, status: shutdown ? 'administratively down' : 'up' };
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), shutdown };
+                    });
+                    invalidateNetworkCaches();
+                    return shutdown ? 'Interface administratively down' : 'Interface enabled';
+                }
+                if (lower.startsWith('description ')) {
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), description: trimmed.slice(12) };
+                    });
+                    return 'Interface description updated';
+                }
+                if (lower.startsWith('speed ') || lower.startsWith('duplex ')) {
+                    const [key, value] = parts;
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), [key.toLowerCase()]: value };
+                    });
+                    return `${key} ${value} configured`;
+                }
+                if (lower.startsWith('switchport mode ')) {
+                    const value = parts.slice(2).join(' ').toLowerCase();
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), switchportMode: value };
+                    });
+                    invalidateNetworkCaches();
+                    return `Switchport mode ${value} configured`;
+                }
+                if (lower.startsWith('switchport access vlan ')) {
+                    const vlanId = parts[3];
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), accessVlan: vlanId };
+                    });
+                    invalidateNetworkCaches();
+                    return `Access VLAN ${vlanId} assigned`;
+                }
+                if (lower.startsWith('switchport trunk ')) {
+                    const setting = parts[2]?.toLowerCase();
+                    const value = parts.slice(3).join(' ');
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        const current = config.interfaces[interfaceName] || {};
+                        if (setting === 'native' && parts[3]?.toLowerCase() === 'vlan') current.trunkNativeVlan = parts[4];
+                        if (setting === 'allowed' && parts[3]?.toLowerCase() === 'vlan') current.trunkAllowedVlans = parts.slice(4).join('').split(',');
+                        config.interfaces[interfaceName] = { ...current, switchportMode: 'trunk', trunkSetting: value };
+                    });
+                    invalidateNetworkCaches();
+                    return 'Trunk configuration updated';
+                }
+                if (lower.startsWith('switchport port-security')) {
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        const current = config.interfaces[interfaceName] || {};
+                        current.portSecurity = current.portSecurity || { enabled: true, maximum: 1, violation: 'shutdown', sticky: false, secureMacs: [] };
+                        if (lower === 'switchport port-security') current.portSecurity.enabled = true;
+                        else if (lower.includes(' maximum ')) current.portSecurity.maximum = Number(parts[3]) || 1;
+                        else if (lower.includes(' mac-address sticky')) current.portSecurity.sticky = true;
+                        else if (lower.includes(' violation ')) current.portSecurity.violation = parts[3];
+                        config.interfaces[interfaceName] = current;
+                    });
+                    return 'Port security updated';
+                }
+                if (lower.startsWith('encapsulation dot1q ')) {
+                    const vlanId = parts[2];
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), encapsulation: { protocol: 'dot1q', vlanId } };
+                    });
+                    return `802.1Q VLAN ${vlanId} encapsulation configured`;
+                }
+                if (lower.startsWith('ip ospf ')) {
+                    const key = parts[2]?.toLowerCase();
+                    const value = parts[3];
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        const current = config.interfaces[interfaceName] || {};
+                        current.ospf = current.ospf || {};
+                        if (key === 'cost') current.ospf.cost = Number(value);
+                        if (key === 'hello-interval') current.ospf.helloInterval = Number(value);
+                        if (key === 'dead-interval') current.ospf.deadInterval = Number(value);
+                        config.interfaces[interfaceName] = current;
+                    });
+                    return 'OSPF interface parameters updated';
+                }
+                if (lower.startsWith('ip access-group ')) {
+                    const binding = { name: parts[2], direction: (parts[3] || 'in').toLowerCase() };
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), accessGroup: binding };
+                    });
+                    return `Access list ${binding.name} applied ${binding.direction}`;
+                }
+                if (lower === 'ip nat inside' || lower === 'ip nat outside') {
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), natZone: lower.endsWith('inside') ? 'inside' : 'outside' };
+                    });
+                    return `NAT ${lower.endsWith('inside') ? 'inside' : 'outside'} interface configured`;
+                }
+                if (lower.startsWith('ip helper-address ')) {
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), helperAddress: parts[2] };
+                    });
+                    return `DHCP relay target ${parts[2]} configured`;
+                }
+                if (lower.startsWith('spanning-tree portfast')) {
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), portfast: true };
+                    });
+                    return 'PortFast enabled';
+                }
+                if (lower.startsWith('spanning-tree bpduguard enable')) {
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), bpduGuard: true };
+                    });
+                    return 'BPDU Guard enabled';
+                }
+                if (lower === 'cdp enable' || lower === 'lldp transmit' || lower === 'lldp receive') {
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        const current = config.interfaces[interfaceName] || {};
+                        current.discovery = current.discovery || {};
+                        current.discovery[lower === 'cdp enable' ? 'cdp' : lower.endsWith('transmit') ? 'lldpTransmit' : 'lldpReceive'] = true;
+                        config.interfaces[interfaceName] = current;
+                    });
+                    return `${parts.slice(0, 2).join(' ')} enabled`;
+                }
+            }
+
+            if (state.mode === CLI_MODES.LINE_CONFIG.key) {
+                const line = config.lines?.[state.context] || (config.lines[state.context] = {});
+                if (lower.startsWith('password ')) { line.password = parts.slice(1).join(' '); return 'Line password configured'; }
+                if (lower === 'login') { line.login = 'password'; return 'Line password authentication enabled'; }
+                if (lower === 'login local') { line.login = 'local'; return 'Local user authentication enabled'; }
+                if (lower === 'logging synchronous') { line.loggingSynchronous = true; return 'Synchronous logging enabled'; }
+                if (lower.startsWith('transport input ')) { line.transportInput = parts.slice(2); return `Accepted transports: ${line.transportInput.join(', ')}`; }
+                if (lower.startsWith('access-class ')) { line.accessClass = { name: parts[1], direction: parts[2] || 'in' }; return 'VTY access class configured'; }
+            }
+
+            if (state.mode === CLI_MODES.ROUTER_CONFIG.key) {
+                const routing = config.routing;
+                if (lower.startsWith('network ')) {
+                    const address = parts[1];
+                    const areaIndex = parts.findIndex(part => part.toLowerCase() === 'area');
+                    const wildcardOrMask = parts[2]?.toLowerCase() === 'area' ? null : parts[2];
+                    const mask = routing.protocol === 'bgp' ? wildcardOrMask : null;
+                    const wildcard = mask ? subnetMaskToWildcard(mask) : wildcardOrMask;
+                    if (mask && !wildcard) return '% Invalid BGP network mask';
+                    const network = { address, wildcard: wildcard || null, mask: mask || null, area: areaIndex >= 0 ? parts[areaIndex + 1] : routing.area || '0' };
+                    routing.networks = routing.networks || [];
+                    routing.networks = routing.networks.filter(entry => entry.address !== address);
+                    routing.networks.push(network);
+                    if (routing.protocol === 'ospf' && network.area) routing.area = network.area;
+                    return `Network ${address}${wildcardOrMask ? ` ${wildcardOrMask}` : ''} added to ${routing.protocol.toUpperCase()}`;
+                }
+                if (lower.startsWith('version ')) { routing.version = parts[1]; return `Routing protocol version ${parts[1]} configured`; }
+                if (lower === 'no auto-summary') { routing.autoSummary = false; return 'Automatic route summarization disabled'; }
+                if (lower.startsWith('passive-interface ')) {
+                    routing.passiveInterfaces = routing.passiveInterfaces || [];
+                    const interfaceName = normalizeInterfaceName(parts.slice(1).join(' '), selected);
+                    if (!routing.passiveInterfaces.includes(interfaceName)) routing.passiveInterfaces.push(interfaceName);
+                    return `Interface ${interfaceName} is passive`;
+                }
+                if (lower === 'default-information originate') { routing.defaultInformation = true; return 'Default route advertisement enabled'; }
+                if (lower.startsWith('router-id ') || lower.startsWith('eigrp router-id ')) { routing.routerId = parts[parts.length - 1]; return `Router ID ${routing.routerId} configured`; }
+                if (lower.startsWith('auto-cost reference-bandwidth ')) { routing.referenceBandwidth = Number(parts[2]); return 'OSPF reference bandwidth updated'; }
+                if (lower.startsWith('neighbor ') && lower.includes(' remote-as ')) {
+                    const neighbor = { address: parts[1], remoteAs: parts[3], state: 'Idle' };
+                    routing.neighbors = routing.neighbors || [];
+                    const existing = routing.neighbors.findIndex(entry => entry.address === neighbor.address);
+                    if (existing < 0) routing.neighbors.push(neighbor); else routing.neighbors[existing] = neighbor;
+                    return `Neighbor ${neighbor.address} configured; waiting for peer`;
+                }
+            }
+
+            if (state.mode === CLI_MODES.VLAN_CONFIG.key && lower.startsWith('name ')) {
+                config.vlans[state.context].name = parts.slice(1).join(' ');
+                if (config.vtp?.mode === 'server') {
+                    config.vtp.revision = (config.vtp.revision || 0) + 1;
+                    runVtpProtocolTick();
+                }
+                return `VLAN ${state.context} named ${config.vlans[state.context].name}`;
+            }
+
+            if (state.mode === CLI_MODES.DHCP_CONFIG.key) {
+                const pool = config.dhcp.pools[state.context];
+                if (lower.startsWith('network ')) { pool.network = parts[1]; pool.mask = parts[2]; return `DHCP network ${pool.network} ${pool.mask} configured`; }
+                if (lower.startsWith('default-router ')) { pool.defaultRouter = parts.slice(1); return 'DHCP default router configured'; }
+                if (lower.startsWith('dns-server ')) { pool.dnsServers = parts.slice(1); return 'DHCP DNS server configured'; }
+                if (lower.startsWith('domain-name ')) { pool.domainName = parts.slice(1).join(' '); return 'DHCP domain name configured'; }
+            }
+
+            if ([CLI_MODES.STANDARD_ACL_CONFIG.key, CLI_MODES.EXTENDED_ACL_CONFIG.key].includes(state.mode)) {
+                if (lower.startsWith('permit ') || lower.startsWith('deny ')) {
+                    const acl = config.acls[state.context];
+                    acl.entries.push({ action: parts[0].toLowerCase(), type: state.mode === CLI_MODES.STANDARD_ACL_CONFIG.key ? 'standard' : 'extended', tokens: parts.slice(1) });
+                    return `${parts[0].toUpperCase()} rule added to ${state.context}`;
+                }
+            }
+
+            if (state.mode !== CLI_MODES.GLOBAL_CONFIG.key) return '% Invalid input detected at \'^\' marker.';
             if (lower.startsWith('enable password ')) {
                 const password = trimmed.slice('enable password '.length).trim();
                 if (!password) return '% Incomplete command.';
@@ -5999,88 +7343,321 @@ Router&gt;
                 config.enablePassword = 'configured';
                 return '';
             }
-            if (lower.startsWith('interface ')) {
-                cliInterface = trimmed.slice(10).trim();
-                config.interfaces = config.interfaces || {};
-                config.interfaces[cliInterface] = config.interfaces[cliInterface] || {};
-                selected.device.interfaces = selected.device.interfaces || {};
-                return `Configuring interface ${cliInterface}`;
+            if (lower.startsWith('enable secret ')) { selected.device.enableSecret = parts.slice(2).join(' '); return 'Enable secret configured'; }
+            if (lower.startsWith('hostname ')) {
+                const name = parts.slice(1).join(' ');
+                selected.device.name = name;
+                cliHostname = name.replace(/\s+/g, '');
+                const node = document.getElementById(selected.id);
+                if (node?.querySelector('.node-name')) node.querySelector('.node-name').textContent = name;
+                document.getElementById('cliDeviceName').textContent = `CLI - ${name}`;
+                updateCLIPrompt();
+                return `Hostname changed to ${name}`;
             }
-            if (lower.startsWith('ip address ')) {
-                const parts = trimmed.split(/\s+/);
-                config.interfaces = config.interfaces || {};
-                config.interfaces[cliInterface] = { ...(config.interfaces[cliInterface] || {}), ip: parts[2], mask: parts[3] };
-                selected.device.interfaces = selected.device.interfaces || {};
+            if (lower === 'no ip domain-lookup') { config.domainLookup = false; return 'DNS lookup disabled'; }
+            if (lower.startsWith('banner motd ')) { config.banner = trimmed.slice('banner motd '.length).replace(/^['"“]|['"”]$/g, ''); return 'MOTD banner configured'; }
+            if (lower === 'service password-encryption') { config.passwordEncryption = true; return 'Password encryption enabled'; }
+            if (lower.startsWith('ip default-gateway ')) { selected.device.gateway = parts[2]; config.gateway = parts[2]; invalidateNetworkCaches(); return `Default gateway ${parts[2]} configured`; }
+            if (lower.startsWith('ip domain-name ')) { config.domainName = parts.slice(2).join(' '); return `Domain name ${config.domainName} configured`; }
+            if (lower.startsWith('username ') && lower.includes(' secret ')) {
+                const secretIndex = parts.findIndex(part => part.toLowerCase() === 'secret');
+                config.users = config.users || {};
+                config.users[parts[1]] = { secret: parts.slice(secretIndex + 1).join(' '), privilege: 1 };
+                return `Local user ${parts[1]} configured`;
+            }
+            if (lower.startsWith('crypto key generate rsa')) { config.ssh = config.ssh || {}; config.ssh.rsaBits = Number(parts[parts.length - 1]) || 1024; return `Simulated RSA key generated (${config.ssh.rsaBits} bits)`; }
+            if (lower.startsWith('ip ssh version ')) { config.ssh = config.ssh || {}; config.ssh.version = parts[3]; return `SSH version ${parts[3]} configured`; }
+            if (lower.startsWith('ip route ')) {
                 const prefix = maskToPrefix(parts[3]);
-                selected.device.interfaces[cliInterface] = `${parts[2]}/${prefix === null ? 24 : prefix}`;
-                if (!selected.device.ip || cliInterface === 'GigabitEthernet0/0/0' || cliInterface === 'FastEthernet0') selected.device.ip = selected.device.interfaces[cliInterface];
-                return `IP address ${parts[2]} ${parts[3]} assigned to ${cliInterface}`;
+                const destination = prefix === null ? null : ipv4Details(`${parts[2]}/${prefix}`);
+                if (!destination) return '% Invalid route network or mask';
+                config.routing = config.routing || {};
+                config.routing.staticRoutes = config.routing.staticRoutes || [];
+                const route = { destination: destination.key, nextHop: parts[4], interface: parts[4], distance: Number(parts[5]) || 1, metric: Number(parts[5]) || 1 };
+                config.routing.staticRoutes = config.routing.staticRoutes.filter(entry => entry.destination !== route.destination || entry.nextHop !== route.nextHop || entry.distance !== route.distance);
+                config.routing.staticRoutes.push(route);
+                invalidateNetworkCaches();
+                return `Static route ${route.destination} via ${route.nextHop} installed`;
             }
-            if (lower === 'no shutdown' || lower === 'shutdown') {
-                config.interfaces = config.interfaces || {};
-                config.interfaces[cliInterface] = { ...(config.interfaces[cliInterface] || {}), shutdown: lower === 'shutdown' };
-                selected.device.interfaces = selected.device.interfaces || {};
-                selected.device.interfaces[cliInterface] = { ...(typeof selected.device.interfaces[cliInterface] === 'object' ? selected.device.interfaces[cliInterface] : { ip: selected.device.interfaces[cliInterface] }), status: lower === 'no shutdown' ? 'up' : 'administratively down' };
-                return lower === 'no shutdown' ? 'Interface enabled' : 'Interface administratively down';
-            }
-            if (lower.startsWith('description ')) {
-                config.interfaces = config.interfaces || {};
-                config.interfaces[cliInterface] = { ...(config.interfaces[cliInterface] || {}), description: trimmed.slice(12) };
-                return 'Interface description updated';
-            }
-            if (lower.startsWith('speed ') || lower.startsWith('duplex ')) {
-                const [key, value] = trimmed.split(/\s+/, 2);
-                config.interfaces = config.interfaces || {};
-                config.interfaces[cliInterface] = { ...(config.interfaces[cliInterface] || {}), [key.toLowerCase()]: value };
-                return `${key} ${value} configured`;
-            }
-            if (lower.startsWith('vlan ')) {
-                const id = trimmed.split(/\s+/)[1];
-                config.vlans = config.vlans || {};
-                config.vlans[id] = config.vlans[id] || { id, name: `VLAN${id}` };
-                return `VLAN ${id} created`;
-            }
-            if (lower.startsWith('switchport mode ') || lower.startsWith('switchport access vlan ') || lower.startsWith('switchport trunk encapsulation ')) {
-                config.interfaces = config.interfaces || {};
-                config.interfaces[cliInterface] = { ...(config.interfaces[cliInterface] || {}), switchport: trimmed.slice(11) };
-                return `${trimmed} configured`;
-            }
-            if (lower.startsWith('router ospf ') || lower.startsWith('router eigrp ') || lower.startsWith('router bgp ')) {
-                const [protocol, id] = trimmed.slice(7).split(/\s+/);
-                config.routing = { protocol: protocol.toLowerCase(), processId: id, neighbors: config.routing?.neighbors || [] };
-                return `${protocol.toUpperCase()} process ${id} started`;
-            }
-            if (lower.startsWith('neighbor ') && lower.includes(' remote-as ')) {
-                const parts = trimmed.split(/\s+/);
-                config.routing = config.routing || { neighbors: [] };
-                config.routing.neighbors = config.routing.neighbors || [];
-                config.routing.neighbors.push({ address: parts[1], remoteAs: parts[3], state: 'Established' });
-                return `Neighbor ${parts[1]} remote-as ${parts[3]} Established`;
+            if (lower.startsWith('ip dhcp excluded-address ')) {
+                config.dhcp = config.dhcp || { excluded: [], pools: {}, bindings: {} };
+                config.dhcp.excluded.push(parts.slice(3));
+                return 'DHCP excluded address range configured';
             }
             if (lower.startsWith('access-list ')) {
-                config.acl = config.acl || [];
-                config.acl.push(trimmed);
-                return `ACL entry ${config.acl.length} added`;
+                const listId = parts[1];
+                config.acls = config.acls || {};
+                config.acls[listId] = config.acls[listId] || { type: Number(listId) >= 100 ? 'extended' : 'standard', entries: [] };
+                config.acls[listId].entries.push({ action: parts[2]?.toLowerCase(), type: config.acls[listId].type, tokens: parts.slice(3) });
+                invalidateNetworkCaches();
+                return `Access list ${listId} rule added`;
             }
+            if (lower.startsWith('ip nat pool ')) { config.natPools = config.natPools || {}; config.natPools[parts[3]] = { start: parts[4], end: parts[5], mask: parts[6] }; return `NAT pool ${parts[3]} configured`; }
             if (lower.startsWith('ip nat inside source ')) {
                 config.nat = config.nat || [];
-                config.nat.push(trimmed);
-                return 'NAT/PAT rule added';
+                const rule = { rule: trimmed, tokens: parts.slice(4) };
+                config.nat.push(rule);
+                if (parts[4]?.toLowerCase() === 'static') {
+                    config.natTranslations = config.natTranslations || [];
+                    if (parts[5]?.toLowerCase() === 'tcp') {
+                        config.natTranslations.push({ protocol: 'TCP', inside: `${parts[6]}:${parts[7]}`, outside: `${parts[8]}:${parts[9]}`, static: true });
+                    } else {
+                        config.natTranslations.push({ protocol: '---', inside: parts[5], outside: parts[6], static: true });
+                    }
+                }
+                return 'NAT/PAT translation rule installed';
             }
+            if (lower.startsWith('vtp ')) {
+                config.vtp = config.vtp || {};
+                config.vtp[parts[1]] = parts.slice(2).join(' ');
+                if (parts[1] === 'mode' && parts[2] === 'server') config.vtp.revision = config.vtp.revision || 1;
+                runVtpProtocolTick();
+                return `VTP ${parts[1]} configured`;
+            }
+            if (lower.startsWith('spanning-tree vlan ')) {
+                config.spanningTree = config.spanningTree || {};
+                config.spanningTree[parts[2]] = parts[3] === 'priority' ? { priority: Number(parts[4]) } : { root: parts[4] };
+                return 'Spanning-tree setting updated';
+            }
+            if (lower === 'cdp run') { config.discovery = config.discovery || {}; config.discovery.cdp = true; return 'CDP enabled'; }
+            if (lower === 'lldp run') { config.discovery = config.discovery || {}; config.discovery.lldp = true; return 'LLDP enabled'; }
+            if (lower.startsWith('ntp server ')) { config.ntpServers = config.ntpServers || []; config.ntpServers.push(parts[2]); return `NTP server ${parts[2]} configured`; }
+            if (lower.startsWith('logging ')) { config.syslog = config.syslog || {}; if (parts[1] === 'trap') config.syslog.level = parts[2]; else if (parts[1] === 'source-interface') config.syslog.sourceInterface = normalizeInterfaceName(parts[2], selected); else config.syslog.server = parts[1]; return 'Syslog configuration updated'; }
+            if (lower.startsWith('clock set ')) { config.clock = parts.slice(2).join(' '); return `Simulated clock set to ${config.clock}`; }
             return `% Invalid input detected at '^' marker.`;
+        }
+
+        function normalizeInterfaceName(name, selected) {
+            const trimmed = String(name || '').replace(/\s+/g, '');
+            const match = trimmed.match(/^([a-z-]+)(.*)$/i);
+            if (!match) return trimmed;
+            const prefixes = { g: 'GigabitEthernet', gi: 'GigabitEthernet', gigabitethernet: 'GigabitEthernet', f: 'FastEthernet', fa: 'FastEthernet', fastethernet: 'FastEthernet', s: 'Serial', se: 'Serial', serial: 'Serial', v: 'Vlan', vlan: 'Vlan' };
+            const canonical = `${prefixes[match[1].toLowerCase()] || match[1]}${match[2]}`;
+            const existing = Object.keys(selected?.device?.interfaces || {});
+            return existing.find(interfaceName => interfaceName.toLowerCase() === canonical.toLowerCase())
+                || existing.find(interfaceName => interfaceName.toLowerCase().startsWith(canonical.toLowerCase()))
+                || canonical;
+        }
+
+            function expandInterfaceRange(range, selected) {
+                const match = String(range || '').match(/^(.*\/)(\d+)-(\d+)$/);
+                if (!match) return [normalizeInterfaceName(range, selected)];
+                const start = Number(match[2]);
+                const end = Number(match[3]);
+                if (end < start || end - start > 127) return [];
+                return Array.from({ length: end - start + 1 }, (_, index) => normalizeInterfaceName(`${match[1]}${start + index}`, selected));
+            }
+
+        function enterCLIContext(command, selected) {
+            if (cliState.mode !== CLI_MODES.GLOBAL_CONFIG.key || !selected) return null;
+            const tokens = command.trim().split(/\s+/);
+            const first = tokens[0]?.toLowerCase();
+            selected.config = selected.config || {};
+            if (first === 'interface') {
+                const isRange = tokens[1]?.toLowerCase() === 'range';
+                const name = tokens.slice(isRange ? 2 : 1).join(' ');
+                if (!name) return '% Incomplete command.';
+                cliInterface = normalizeInterfaceName(name, selected);
+                selected.device.interfaces = selected.device.interfaces || {};
+                selected.config.interfaces = selected.config.interfaces || {};
+                selected.device.interfaces[cliInterface] = selected.device.interfaces[cliInterface] || { status: 'up' };
+                selected.config.interfaces[cliInterface] = selected.config.interfaces[cliInterface] || {};
+                const mode = isRange ? CLI_MODES.INTERFACE_RANGE_CONFIG.key : cliInterface.includes('.') ? CLI_MODES.SUBINTERFACE_CONFIG.key : CLI_MODES.INTERFACE_CONFIG.key;
+                setCLIState(mode, cliInterface);
+                updateCLIPrompt();
+                return `Configuring ${isRange ? 'interface range' : 'interface'} ${cliInterface}`;
+            }
+            if (first === 'line') {
+                const name = tokens.slice(1).join(' ');
+                if (!name) return '% Incomplete command.';
+                selected.config.lines = selected.config.lines || {};
+                selected.config.lines[name] = selected.config.lines[name] || {};
+                setCLIState(CLI_MODES.LINE_CONFIG.key, name);
+                updateCLIPrompt();
+                return `Configuring line ${name}`;
+            }
+            if (first === 'router') {
+                const protocol = tokens[1]?.toLowerCase();
+                const processId = tokens[2] || '1';
+                if (!['rip', 'eigrp', 'ospf', 'bgp'].includes(protocol)) return '% Unsupported routing protocol';
+                const previous = selected.config.routing || {};
+                selected.config.routing = {
+                    ...previous,
+                    protocol,
+                    processId,
+                    area: protocol === 'ospf' ? previous.area || '0' : previous.area,
+                    neighbors: previous.neighbors || [],
+                    adjacencies: {},
+                    helloCounters: {},
+                    helloSentAt: {},
+                    learnedRoutes: previous.learnedRoutes || [],
+                    lsdb: previous.lsdb || [],
+                    networks: previous.networks || [],
+                    passiveInterfaces: previous.passiveInterfaces || []
+                };
+                setCLIState(CLI_MODES.ROUTER_CONFIG.key, `${protocol} ${processId}`);
+                updateCLIPrompt();
+                return `${protocol.toUpperCase()} process ${processId}; waiting for neighbors`;
+            }
+            if (first === 'vlan') {
+                const vlanId = tokens[1];
+                if (!vlanId || !/^\d+$/.test(vlanId)) return '% Invalid VLAN identifier';
+                selected.config.vlans = selected.config.vlans || {};
+                const isNewVlan = !selected.config.vlans[vlanId];
+                selected.config.vlans[vlanId] = selected.config.vlans[vlanId] || { id: vlanId, name: `VLAN${vlanId}` };
+                if (isNewVlan && selected.config.vtp?.mode === 'server') {
+                    selected.config.vtp.revision = (selected.config.vtp.revision || 0) + 1;
+                    runVtpProtocolTick();
+                }
+                setCLIState(CLI_MODES.VLAN_CONFIG.key, vlanId);
+                updateCLIPrompt();
+                return `Configuring VLAN ${vlanId}`;
+            }
+            if (first === 'ip' && tokens[1]?.toLowerCase() === 'access-list') {
+                const aclType = tokens[2]?.toLowerCase();
+                const name = tokens[3];
+                if (!['standard', 'extended'].includes(aclType) || !name) return '% Incomplete command.';
+                selected.config.acls = selected.config.acls || {};
+                selected.config.acls[name] = selected.config.acls[name] || { type: aclType, entries: [] };
+                const mode = aclType === 'standard' ? CLI_MODES.STANDARD_ACL_CONFIG.key : CLI_MODES.EXTENDED_ACL_CONFIG.key;
+                setCLIState(mode, name);
+                updateCLIPrompt();
+                return `Configuring ${aclType} access list ${name}`;
+            }
+            if (first === 'ip' && tokens[1]?.toLowerCase() === 'dhcp' && tokens[2]?.toLowerCase() === 'pool') {
+                const name = tokens.slice(3).join(' ');
+                if (!name) return '% Incomplete command.';
+                selected.config.dhcp = selected.config.dhcp || { excluded: [], pools: {}, bindings: {} };
+                selected.config.dhcp.pools[name] = selected.config.dhcp.pools[name] || { name };
+                setCLIState(CLI_MODES.DHCP_CONFIG.key, name);
+                updateCLIPrompt();
+                return `Configuring DHCP pool ${name}`;
+            }
+            return null;
+        }
+
+        function prefixToMask(prefix) {
+            const numeric = Number(prefix);
+            if (!Number.isInteger(numeric) || numeric < 0 || numeric > 32) return '255.255.255.0';
+            const mask = numeric === 0 ? 0 : (0xffffffff << (32 - numeric)) >>> 0;
+            return [24, 16, 8, 0].map(shift => (mask >>> shift) & 255).join('.');
+        }
+
+        function buildRunningConfig(entry) {
+            const config = entry.config || {};
+            const lines = ['Building configuration...', `hostname ${entry.device.name}`, '!'];
+            if (entry.device.enableSecret) lines.push(`enable secret ${entry.device.enableSecret}`);
+            else if (entry.device.enablePassword) lines.push(`enable password ${entry.device.enablePassword}`);
+            if (config.domainLookup === false) lines.push('no ip domain-lookup');
+            if (config.domainName) lines.push(`ip domain-name ${config.domainName}`);
+            if (config.banner) lines.push(`banner motd "${config.banner}"`);
+            if (config.passwordEncryption) lines.push('service password-encryption');
+            if (entry.device.gateway) lines.push(`ip default-gateway ${entry.device.gateway}`);
+            Object.entries(config.users || {}).forEach(([name, user]) => lines.push(`username ${name} secret ${user.secret}`));
+            if (config.ssh?.rsaBits) lines.push(`crypto key generate rsa modulus ${config.ssh.rsaBits}`);
+            if (config.ssh?.version) lines.push(`ip ssh version ${config.ssh.version}`);
+
+            Object.entries(entry.device.interfaces || {}).forEach(([name, value]) => {
+                const interfaceConfig = config.interfaces?.[name] || {};
+                const ip = typeof value === 'string' ? value : value?.ip;
+                const parsed = ipv4Details(ip);
+                lines.push(`interface ${name}`);
+                if (parsed) lines.push(` ip address ${parsed.ip} ${interfaceConfig.mask || prefixToMask(parsed.prefix)}`);
+                if (interfaceConfig.encapsulation) lines.push(` encapsulation dot1q ${interfaceConfig.encapsulation.vlanId}`);
+                if (interfaceConfig.description) lines.push(` description ${interfaceConfig.description}`);
+                if (interfaceConfig.switchportMode) lines.push(` switchport mode ${interfaceConfig.switchportMode}`);
+                if (interfaceConfig.accessVlan) lines.push(` switchport access vlan ${interfaceConfig.accessVlan}`);
+                if (interfaceConfig.trunkNativeVlan) lines.push(` switchport trunk native vlan ${interfaceConfig.trunkNativeVlan}`);
+                if (interfaceConfig.trunkAllowedVlans) lines.push(` switchport trunk allowed vlan ${interfaceConfig.trunkAllowedVlans.join(',')}`);
+                if (interfaceConfig.portSecurity?.enabled) {
+                    lines.push(' switchport port-security');
+                    if (interfaceConfig.portSecurity.maximum !== 1) lines.push(` switchport port-security maximum ${interfaceConfig.portSecurity.maximum}`);
+                    if (interfaceConfig.portSecurity.sticky) lines.push(' switchport port-security mac-address sticky');
+                    if (interfaceConfig.portSecurity.violation) lines.push(` switchport port-security violation ${interfaceConfig.portSecurity.violation}`);
+                }
+                if (interfaceConfig.accessGroup) lines.push(` ip access-group ${interfaceConfig.accessGroup.name} ${interfaceConfig.accessGroup.direction}`);
+                if (interfaceConfig.natZone) lines.push(` ip nat ${interfaceConfig.natZone}`);
+                if (interfaceConfig.shutdown || value?.status === 'administratively down') lines.push(' shutdown'); else lines.push(' no shutdown');
+                lines.push('!');
+            });
+
+            Object.entries(config.lines || {}).forEach(([name, line]) => {
+                lines.push(`line ${name}`);
+                if (line.password) lines.push(` password ${line.password}`);
+                if (line.login === 'local') lines.push(' login local'); else if (line.login) lines.push(' login');
+                if (line.loggingSynchronous) lines.push(' logging synchronous');
+                if (line.transportInput) lines.push(` transport input ${line.transportInput.join(' ')}`);
+                if (line.accessClass) lines.push(` access-class ${line.accessClass.name} ${line.accessClass.direction}`);
+                lines.push('!');
+            });
+
+            Object.values(config.vlans || {}).forEach(vlan => lines.push(`vlan ${vlan.id}`, ` name ${vlan.name}`, '!'));
+            (config.dhcp?.excluded || []).forEach(range => lines.push(`ip dhcp excluded-address ${range.join(' ')}`));
+            Object.values(config.dhcp?.pools || {}).forEach(pool => {
+                lines.push(`ip dhcp pool ${pool.name}`);
+                if (pool.network) lines.push(` network ${pool.network} ${pool.mask}`);
+                if (pool.defaultRouter?.length) lines.push(` default-router ${pool.defaultRouter.join(' ')}`);
+                if (pool.dnsServers?.length) lines.push(` dns-server ${pool.dnsServers.join(' ')}`);
+                if (pool.domainName) lines.push(` domain-name ${pool.domainName}`);
+                lines.push('!');
+            });
+
+            Object.entries(config.acls || {}).forEach(([name, acl]) => {
+                if (/^\d+$/.test(name)) acl.entries.forEach(rule => lines.push(`access-list ${name} ${rule.action} ${rule.tokens.join(' ')}`));
+                else {
+                    lines.push(`ip access-list ${acl.type} ${name}`);
+                    acl.entries.forEach(rule => lines.push(` ${rule.action} ${rule.tokens.join(' ')}`));
+                    lines.push(' exit');
+                }
+            });
+
+            const routing = config.routing;
+            if (routing?.protocol) {
+                lines.push(`router ${routing.protocol}${routing.protocol === 'rip' ? '' : ` ${routing.processId}`}`);
+                if (routing.version) lines.push(` version ${routing.version}`);
+                if (routing.routerId) lines.push(` router-id ${routing.routerId}`);
+                (routing.networks || []).forEach(network => lines.push(` network ${network.address}${network.mask ? ` ${network.mask}` : network.wildcard ? ` ${network.wildcard}` : ''}${routing.protocol === 'ospf' ? ` area ${network.area || routing.area || '0'}` : ''}`));
+                if (routing.autoSummary === false) lines.push(' no auto-summary');
+                (routing.passiveInterfaces || []).forEach(interfaceName => lines.push(` passive-interface ${interfaceName}`));
+                if (routing.defaultInformation) lines.push(' default-information originate');
+                (routing.neighbors || []).forEach(neighbor => lines.push(` neighbor ${neighbor.address} remote-as ${neighbor.remoteAs}`));
+                lines.push('!');
+            }
+            (routing?.staticRoutes || []).forEach(route => lines.push(`ip route ${route.destination.split('/')[0]} ${prefixToMask(ipv4Details(route.destination)?.prefix)} ${route.nextHop}`));
+            Object.entries(config.vtp || {}).forEach(([key, value]) => lines.push(`vtp ${key} ${value}`));
+            Object.entries(config.spanningTree || {}).forEach(([vlan, tree]) => lines.push(tree.priority ? `spanning-tree vlan ${vlan} priority ${tree.priority}` : `spanning-tree vlan ${vlan} root ${tree.root}`));
+            if (config.discovery?.cdp) lines.push('cdp run');
+            if (config.discovery?.lldp) lines.push('lldp run');
+            (config.ntpServers || []).forEach(server => lines.push(`ntp server ${server}`));
+            if (config.syslog?.server) lines.push(`logging ${config.syslog.server}`);
+            if (config.syslog?.level) lines.push(`logging trap ${config.syslog.level}`);
+            if (config.clock) lines.push(`clock set ${config.clock}`);
+            if (config.nat) config.nat.forEach(entry => lines.push(typeof entry === 'string' ? entry : entry.rule));
+            lines.push('end');
+            return lines.join('\n');
         }
 
         function executeCLICommand(cmd) {
             const output = document.getElementById('cliOutput');
+            const selected = simulatorState.activeDevices.find(device => device.id === simulatorState.selectedDevice);
+            if (selected) {
+                const changedDevice = cliState.deviceId !== selected.id;
+                useCLIState(selected);
+                if (changedDevice) {
+                    cliHostname = selected.device.name.replace(/\s+/g, '');
+                    updateCLIPrompt();
+                }
+            }
             const prompt = document.getElementById('cliPrompt').textContent;
             let response = '';
-            const cmdLower = cmd.toLowerCase().trim();
-            const selected = simulatorState.activeDevices.find(device => device.id === simulatorState.selectedDevice);
+            const resolution = resolveCLICommand(cmd);
+            const resolvedCommand = resolution.command || cmd;
+            const cmdLower = resolvedCommand.toLowerCase().trim();
 
             if (cliPasswordPrompt) {
                 cliPasswordPrompt = false;
-                if (selected && selected.device.enablePassword === cmd.trim()) {
-                    cliMode = 'privileged';
+                if (selected && [selected.device.enablePassword, selected.device.enableSecret].includes(cmd.trim())) {
+                    setCLIState(CLI_MODES.PRIVILEGED.key);
                 } else {
                     response = '% Access denied';
                 }
@@ -6089,39 +7666,49 @@ Router&gt;
                 output.scrollTop = output.scrollHeight;
                 return;
             }
+
+            if (resolution.error) {
+                output.innerHTML += `\n${prompt} ${cmd}\n${resolution.error}`;
+                output.scrollTop = output.scrollHeight;
+                return;
+            }
             
             if (cmdLower === 'enable' || cmdLower === 'en') {
-                if (selected?.device.enablePassword) {
+                if (selected?.device.enablePassword || selected?.device.enableSecret) {
                     cliPasswordPrompt = true;
                 } else {
-                    cliMode = 'privileged';
+                    setCLIState(CLI_MODES.PRIVILEGED.key);
                 }
                 updateCLIPrompt();
             } else if (cmdLower === 'disable') {
-                cliMode = 'user';
+                setCLIState(CLI_MODES.USER.key);
                 updateCLIPrompt();
             } else if (cmdLower === 'configure terminal' || cmdLower === 'conf t') {
-                if (cliMode === 'privileged') {
-                    cliMode = 'config';
+                if (cliState.mode === CLI_MODES.PRIVILEGED.key) {
+                    setCLIState(CLI_MODES.GLOBAL_CONFIG.key);
                     response = 'Enter configuration commands, one per line. End with CNTL/Z.';
                     updateCLIPrompt();
                 } else {
                     response = '% Invalid input detected';
                 }
             } else if (cmdLower === 'exit') {
-                if (cliMode === 'config') {
-                    cliMode = 'privileged';
-                } else if (cliMode === 'privileged') {
-                    cliMode = 'user';
+                if (cliState.mode === CLI_MODES.GLOBAL_CONFIG.key) {
+                    setCLIState(CLI_MODES.PRIVILEGED.key);
+                } else if (cliState.mode === CLI_MODES.PRIVILEGED.key) {
+                    setCLIState(CLI_MODES.USER.key);
+                } else if (cliState.mode !== CLI_MODES.USER.key) {
+                    setCLIState(cliState.parentMode || CLI_MODES.GLOBAL_CONFIG.key);
                 }
                 updateCLIPrompt();
             } else if (cmdLower === 'end') {
-                cliMode = 'privileged';
+                setCLIState(CLI_MODES.PRIVILEGED.key);
                 updateCLIPrompt();
-            } else if (cmdLower.startsWith('interface ') || cmdLower.startsWith('ip address ') || cmdLower === 'no shutdown' || cmdLower === 'shutdown' || cmdLower.startsWith('description ') || cmdLower.startsWith('speed ') || cmdLower.startsWith('duplex ') || cmdLower.startsWith('vlan ') || cmdLower.startsWith('switchport ') || cmdLower.startsWith('router ospf ') || cmdLower.startsWith('router eigrp ') || cmdLower.startsWith('router bgp ') || cmdLower.startsWith('neighbor ') || cmdLower.startsWith('access-list ') || cmdLower.startsWith('ip nat inside source ') || cmdLower.startsWith('enable password ')) {
-                response = cliMode === 'config' ? applyCLIConfigCommand(cmd) : '% Configuration commands must be entered in configuration mode';
+            } else if (!['user', 'privileged'].includes(cliState.mode)) {
+                const contextResponse = enterCLIContext(resolvedCommand, selected);
+                response = contextResponse === null ? applyCLIConfigCommand(resolvedCommand) : contextResponse;
             } else if (cmdLower === 'write memory' || cmdLower === 'wr mem' || cmdLower === 'copy running-config startup-config') {
-                response = 'Building configuration...\n[OK]\nConfiguration saved to NVRAM (simulated).';
+                if (selected) selected.startupConfig = JSON.parse(JSON.stringify({ device: selected.device, config: selected.config || {} }));
+                response = selected ? 'Building configuration...\n[OK]\nConfiguration saved to startup-config.' : '% No device selected';
             } else if (cmdLower === 'show ip interface brief' || cmdLower === 'sh ip int br') {
                 const interfaces = selected?.device.interfaces || {};
                 const rows = Object.entries(interfaces).map(([name, value]) => {
@@ -6133,25 +7720,91 @@ Router&gt;
             } else if (cmdLower === 'show ip route' || cmdLower === 'sh ip route') {
                 updateNetworkTables();
                 const routes = selected ? (simulatorState.networkTables.routes[selected.id] || []) : [];
-                response = routes.length ? `Codes: C - connected, S - static\n${routes.map(route => `${route.destination} [${route.metric}/0] via ${route.nextHop}, ${route.interface}`).join('\n')}` : 'Gateway of last resort is not set';
+                response = routes.length ? `Codes: C - connected, S - static, R - RIP, D - EIGRP, O - OSPF, B - BGP\n${routes.map(route => `${route.protocol} ${route.destination} [${route.metric}/0] via ${route.nextHop}, ${route.interface || 'learned'}`).join('\n')}` : 'Gateway of last resort is not set';
+            } else if (cmdLower === 'show ip protocols') {
+                const routing = selected?.config?.routing;
+                response = routing
+                    ? `Routing Protocol: ${routing.protocol.toUpperCase()}${routing.version ? ` v${routing.version}` : ''}\nProcess/AS: ${routing.processId}\nNetworks: ${(routing.networks || []).map(network => `${network.address}${network.wildcard ? ` ${network.wildcard}` : ''}${network.area ? ` area ${network.area}` : ''}`).join(', ') || 'none'}\nLearned routes: ${(routing.learnedRoutes || []).length}`
+                    : 'No routing protocols configured';
+            } else if (cmdLower === 'show ip ospf neighbor') {
+                const adjacencies = Object.entries(selected?.config?.routing?.adjacencies || {}).filter(([, adjacency]) => adjacency.protocol === 'OSPF');
+                response = adjacencies.length
+                    ? `Neighbor ID           State  Area\n${adjacencies.map(([id, adjacency]) => `${getPrimaryAddress(simulatorState.activeDevices.find(entry => entry.id === id)).padEnd(21)} ${adjacency.state.padEnd(6)} ${adjacency.area}`).join('\n')}`
+                    : 'No OSPF neighbors';
+            } else if (cmdLower === 'show ip ospf database') {
+                const records = selected?.config?.routing?.lsdb || [];
+                response = records.length
+                    ? `OSPF Router Link States\n${records.map(record => `${record.routerId.padEnd(16)} ${record.network.padEnd(20)} seq ${record.sequence}`).join('\n')}`
+                    : 'OSPF database is empty';
+            } else if (cmdLower === 'show ip eigrp neighbors') {
+                const adjacencies = Object.entries(selected?.config?.routing?.adjacencies || {}).filter(([, adjacency]) => adjacency.protocol === 'EIGRP');
+                response = adjacencies.length
+                    ? `Neighbor           AS     State\n${adjacencies.map(([id, adjacency]) => `${getPrimaryAddress(simulatorState.activeDevices.find(entry => entry.id === id)).padEnd(18)} ${String(adjacency.as).padEnd(6)} ${adjacency.state}`).join('\n')}`
+                    : 'No EIGRP neighbors';
+            } else if (cmdLower === 'show ip eigrp topology') {
+                const routes = selected?.config?.routing?.learnedRoutes?.filter(route => route.protocol === 'D') || [];
+                response = routes.length ? routes.map(route => `${route.destination} via ${route.nextHopId || route.nextHop} metric ${route.metric}`).join('\n') : 'EIGRP topology table is empty';
+            } else if (cmdLower === 'show ip bgp summary') {
+                const neighbors = selected?.config?.routing?.neighbors || [];
+                response = neighbors.length
+                    ? `Neighbor           AS        State\n${neighbors.map(neighbor => `${neighbor.address.padEnd(18)} ${String(neighbor.remoteAs).padEnd(9)} ${neighbor.state || 'Idle'}`).join('\n')}`
+                    : 'No BGP neighbors configured';
+            } else if (cmdLower === 'show ip dhcp binding') {
+                const bindings = selected?.config?.dhcp?.bindings || {};
+                response = Object.values(bindings).map(binding => `${binding.ip.padEnd(16)} ${binding.client} ${binding.pool}`).join('\n') || 'No DHCP bindings';
+            } else if (cmdLower.startsWith('show ip dhcp pool')) {
+                const pools = selected?.config?.dhcp?.pools || {};
+                const requestedPool = resolvedCommand.split(/\s+/).slice(3).join(' ');
+                const entries = Object.values(pools).filter(pool => !requestedPool || pool.name === requestedPool);
+                response = entries.map(pool => `${pool.name}: network ${pool.network || 'not set'} ${pool.mask || ''}, gateway ${(pool.defaultRouter || []).join(', ') || 'not set'}, DNS ${(pool.dnsServers || []).join(', ') || 'not set'}`).join('\n') || 'No DHCP pools configured';
+            } else if (cmdLower === 'show ip nat translations') {
+                response = (selected?.config?.natTranslations || []).map(translation => `${translation.protocol} ${translation.inside} -> ${translation.outside}`).join('\n') || 'No active NAT translations';
+            } else if (cmdLower === 'show access-lists') {
+                const lists = selected?.config?.acls || {};
+                response = Object.entries(lists).flatMap(([name, acl]) => acl.entries.map(entry => `${name} ${entry.action} ${entry.tokens.join(' ')}`)).join('\n') || 'No access lists configured';
+            } else if (cmdLower === 'show vlan brief') {
+                const vlans = selected?.config?.vlans || {};
+                response = Object.values(vlans).map(vlan => `${String(vlan.id).padEnd(8)} ${vlan.name}`).join('\n') || 'No VLANs configured';
+            } else if (cmdLower === 'show spanning-tree') {
+                const trees = selected?.config?.spanningTree || {};
+                response = Object.entries(trees).map(([vlan, tree]) => `VLAN${vlan}: ${tree.root || `priority ${tree.priority || 32768}`}`).join('\n') || 'Spanning tree is using default settings';
+            } else if (cmdLower === 'show port-security address') {
+                const secured = Object.entries(selected?.config?.interfaces || {}).filter(([, value]) => value.portSecurity?.enabled);
+                response = secured.map(([name, value]) => `${name}: maximum ${value.portSecurity.maximum}, secure MACs ${(value.portSecurity.secureMacs || []).join(', ') || 'none'}, violations ${value.portSecurity.violations || 0}, action ${value.portSecurity.violation}`).join('\n') || 'No secure addresses configured';
+            } else if (cmdLower === 'show cdp neighbors') {
+                const neighbors = selected?.config?.discoveryNeighbors?.cdp || [];
+                response = neighbors.map(neighbor => `${neighbor.device.padEnd(20)} local ${neighbor.localInterface} remote ${neighbor.interface}`).join('\n') || 'No CDP neighbors';
+            } else if (cmdLower === 'show lldp neighbors') {
+                const neighbors = selected?.config?.discoveryNeighbors?.lldp || [];
+                response = neighbors.map(neighbor => `${neighbor.device.padEnd(20)} local ${neighbor.localInterface} remote ${neighbor.interface}`).join('\n') || 'No LLDP neighbors';
+            } else if (cmdLower === 'show vtp status') {
+                const vtp = selected?.config?.vtp || {};
+                response = `VTP mode: ${vtp.mode || 'server'}\nDomain: ${vtp.domain || 'not set'}\nRevision: ${vtp.revision || 0}\nVLANs: ${Object.keys(selected?.config?.vlans || {}).length}`;
+            } else if (cmdLower.startsWith('show interfaces')) {
+                const requestedInterface = resolvedCommand.split(/\s+/).slice(2).join(' ');
+                const interfaces = selected?.device.interfaces || {};
+                const entries = Object.entries(interfaces).filter(([name]) => !requestedInterface || name === normalizeInterfaceName(requestedInterface, selected));
+                response = entries.map(([name, value]) => {
+                    const configInterface = selected.config?.interfaces?.[name] || {};
+                    const ip = typeof value === 'string' ? value : value?.ip || 'unassigned';
+                    const status = configInterface.shutdown || value?.status === 'administratively down' ? 'administratively down' : value?.status || 'up';
+                    return `${name} is ${status}, line protocol is ${status === 'up' ? 'up' : 'down'}\n  Internet address is ${ip}`;
+                }).join('\n') || 'No interfaces configured';
+            } else if (cmdLower === 'show flash' || cmdLower === 'show flash:') {
+                response = 'Directory of flash:/\nstartup-config\nprivate-config (simulated)';
             } else if (cmdLower === 'show arp') {
                 updateNetworkTables();
-                response = Object.values(simulatorState.networkTables.arp).map(entry => `${entry.ip.padEnd(16)} ${entry.mac.padEnd(20)} ${entry.device}`).join('\n') || 'Protocol  Address  Age  Hardware Addr  Type  Interface';
+                const arpEntries = selected ? Object.values(simulatorState.networkTables.arp[selected.id] || {}) : Object.values(simulatorState.networkTables.arp).flatMap(cache => Object.values(cache));
+                response = arpEntries.map(entry => `${entry.ip.padEnd(16)} ${entry.mac.padEnd(20)} ${entry.device}`).join('\n') || 'Protocol  Address  Age  Hardware Addr  Type  Interface';
             } else if (cmdLower === 'show mac address-table' || cmdLower === 'show mac address-table dynamic') {
                 updateNetworkTables();
                 const table = selected ? simulatorState.networkTables.mac[selected.id] || {} : {};
                 response = Object.values(table).map(entry => `${entry.status.padEnd(8)} ${entry.device.padEnd(20)} ${entry.port}`).join('\n') || 'Mac Address Table is empty';
             } else if (cmdLower === 'show running-config' || cmdLower === 'sh run') {
-                response = `Building configuration...
-Current configuration : 1024 bytes
-!
-hostname ${cliHostname}
-!
-interface GigabitEthernet0/0
- ip address 192.168.1.1 255.255.255.0
- no shutdown
-!
-end`;
+                response = selected ? buildRunningConfig(selected) : 'No device selected';
+            } else if (cmdLower === 'show startup-config') {
+                const startup = selected?.startupConfig;
+                response = startup ? buildRunningConfig({ device: startup.device, config: startup.config }) : 'Startup-config has not been saved';
             } else if (cmdLower === 'show version' || cmdLower === 'sh ver') {
                 response = `Cisco IOS Software, Virtual Device
 Technical Support: N/A (Simulated Environment)
@@ -6162,18 +7815,20 @@ ${cliHostname} uptime is 0 days, 0 hours, 15 minutes`;
                 response = `enable    - Enter privileged EXEC mode
 exit      - Exit the CLI
 ping      - Send echo messages
-show      - Show running system information`;
+show      - Show running system information
+show ip ospf neighbor - Display OSPF adjacencies
+show ip bgp summary  - Display BGP peers`;
             } else if (cmdLower.startsWith('ping ')) {
-                const target = cmd.split(' ')[1];
-                const targetEntry = simulatorState.activeDevices.find(entry => entry.device.ip.split('/')[0] === target);
-                const reachable = targetEntry && selected ? canReachNetwork(selected, targetEntry) : false;
-                response = reachable ? `Type escape sequence to abort.
+                const target = resolvedCommand.split(' ')[1];
+                const targetEntry = simulatorState.activeDevices.find(entry => deviceAddresses(entry).some(address => address.split('/')[0] === target));
+                const successes = selected && targetEntry
+                    ? Array.from({ length: 5 }, () => simulateNetworkPing(selected, targetEntry).success).filter(Boolean).length
+                    : 0;
+                const marks = '!'.repeat(successes) + '.'.repeat(5 - successes);
+                response = `Type escape sequence to abort.
 Sending 5, 100-byte ICMP Echos to ${target}, timeout is 2 seconds:
-!!!!!
-Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms` : `Type escape sequence to abort.
-Sending 5, 100-byte ICMP Echos to ${target}, timeout is 2 seconds:
-.....
-Success rate is 0 percent (0/5)`;
+${marks}
+Success rate is ${successes * 20} percent (${successes}/5)${successes ? ', round-trip min/avg/max = 2/4/8 ms' : ''}`;
             } else if (cmdLower === 'clear' || cmdLower === 'cls') {
                 clearCLI();
                 return;
@@ -6517,13 +8172,6 @@ Success rate is 0 percent (0/5)`;
                         const el = document.getElementById(c.id); if (el) { el.setAttribute('stroke-opacity', '0.25'); el.setAttribute('stroke-dasharray','3,3'); }
                         refreshFaultList();
                         showHint('故障注入', `連線 ${c.id} 已標示為 down`);
-                    }
-
-                    function clearAllFaults() {
-                        simulatorState.faults = [];
-                        simulatorState.connections.forEach(c=> { c.status = 'active'; const el=document.getElementById(c.id); if (el) { el.setAttribute('stroke-opacity','1'); el.removeAttribute('stroke-dasharray'); } });
-                        refreshFaultList();
-                        showHint('故障', '已清除所有故障');
                     }
 
                     function refreshFaultList() {
