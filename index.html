@@ -4,7 +4,7 @@
     <title>CCNA Network SIMULATOR  (2026)</title>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <link id="fontAwesomeStylesheet" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
@@ -512,12 +512,22 @@
             border-radius: 3px;
         }
 
-        .icons-fallback .fas {
+        .icons-fallback .fas,
+        .icons-fallback .far,
+        .icons-fallback .fab,
+        .icons-fallback .fa-solid,
+        .icons-fallback .fa-regular,
+        .icons-fallback .fa-brands {
             font-family: 'Segoe UI Symbol', 'Arial Unicode MS', sans-serif;
             font-style: normal;
         }
 
-        .icons-fallback .fas::before {
+        .icons-fallback .fas::before,
+        .icons-fallback .far::before,
+        .icons-fallback .fab::before,
+        .icons-fallback .fa-solid::before,
+        .icons-fallback .fa-regular::before,
+        .icons-fallback .fa-brands::before {
             content: attr(data-fallback);
         }
 
@@ -1574,7 +1584,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(2, 8, 18, 0.62);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
             z-index: 10002;
             display: flex;
             align-items: center;
@@ -1583,16 +1595,25 @@
         }
         
         .cli-terminal-window {
-            width: 100%;
-            max-width: 900px;
-            height: 80vh;
-            max-height: 600px;
-            background: linear-gradient(155deg, rgba(14,22,38,.98), rgba(5,9,18,.98));
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: min(900px, calc(100vw - 2rem));
+            height: min(600px, 80vh);
+            min-width: min(320px, calc(100vw - 1rem));
+            min-height: 220px;
+            max-width: none;
+            max-height: none;
+            resize: both;
+            background: linear-gradient(155deg, rgba(18,30,50,.92), rgba(5,9,18,.94));
             border-radius: 14px;
-            border: 1px solid rgba(77,195,255,.32);
+            border: 1px solid rgba(77,195,255,.42);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            backdrop-filter: blur(18px) saturate(135%);
+            -webkit-backdrop-filter: blur(18px) saturate(135%);
             box-shadow: 0 24px 80px rgba(0,0,0,.58), 0 0 36px rgba(0,180,216,.12);
         }
         
@@ -1604,6 +1625,9 @@
             background: linear-gradient(90deg, rgba(21,34,57,.96), rgba(12,19,34,.96));
             border-bottom: 1px solid var(--neon-border);
             border-radius: 8px 8px 0 0;
+            cursor: move;
+            touch-action: none;
+            user-select: none;
         }
         
         .cli-terminal-title {
@@ -1634,6 +1658,22 @@
         .cli-btn:hover {
             background: rgba(255, 255, 255, 0.2);
         }
+
+        .cli-terminal-window.cli-maximized {
+            inset: 12px;
+            left: 12px;
+            top: 12px;
+            width: calc(100vw - 24px);
+            height: calc(100dvh - 24px);
+            transform: none;
+            resize: none;
+        }
+
+        .cli-terminal-window.cli-minimized { height: 44px !important; min-height: 44px; resize: none; }
+        .cli-terminal-window.cli-minimized > :not(.cli-terminal-header) { display: none; }
+        .cli-terminal-window.cli-minimized .cli-terminal-header { border-radius: 8px; }
+        .cli-terminal-header .cli-window-spacer { flex: 1; }
+        .cli-terminal-window.cli-dragging { transition: none !important; }
         
         .cli-terminal-body {
             flex: 1;
@@ -2720,6 +2760,187 @@
         .wifi-obstacle { fill:rgba(255,90,70,.11); stroke:rgba(255,130,90,.55); stroke-dasharray:5 3; }
         .wifi-coverage-ring { fill:none; stroke-width:1.2; stroke-dasharray:4 4; opacity:.75; }
         .wifi-ap-label { font-size:11px; fill:#eaf8ff; paint-order:stroke; stroke:rgba(4,10,20,.9); stroke-width:3px; stroke-linejoin:round; }
+
+        /* Consistent viewport sizing across desktop, tablet and touch devices. */
+        .simulator-interface {
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .simulator-header {
+            flex: 0 0 auto;
+            min-width: 0;
+        }
+
+        .simulator-controls {
+            min-width: 0;
+            max-width: 74vw;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+
+        .workspace-container {
+            flex: 1 1 auto;
+            height: auto;
+            min-height: 0;
+        }
+
+        .workspace-canvas {
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .mini-map-stage { touch-action: none; }
+        #miniMapConnections { pointer-events: none; }
+        .mini-map-viewport {
+            fill: rgba(77, 195, 255, 0.08);
+            stroke: #4dc3ff;
+            stroke-width: 1.25;
+            vector-effect: non-scaling-stroke;
+        }
+
+        @media (max-width: 1200px) {
+            .workspace-container {
+                height: auto;
+                flex-direction: column;
+            }
+
+            .tool-panel,
+            .control-panel {
+                flex: 0 0 auto;
+                width: 100%;
+                max-height: 20dvh;
+                min-height: 0;
+            }
+
+            .main-workspace {
+                flex: 1 1 0;
+                width: 100%;
+                min-height: 180px;
+            }
+
+            .panel-collapsed {
+                width: 100% !important;
+                min-width: 0;
+                height: 42px;
+                max-height: 42px;
+                padding: 0.35rem 0.75rem !important;
+                overflow: hidden;
+            }
+
+            .panel-collapsed > :not(.panel-toggle) { display: none !important; }
+
+            .panel-toggle {
+                position: sticky;
+                top: 0;
+                right: auto;
+                align-self: flex-end;
+                min-width: 40px;
+                min-height: 36px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-title-cyber { white-space: normal; }
+
+            .simulator-header {
+                gap: 0.35rem;
+                padding: 0.45rem 0.65rem;
+                max-height: 22dvh;
+                overflow: hidden;
+            }
+
+            .simulator-title {
+                min-width: 0;
+                max-width: 100%;
+                font-size: 0.95rem;
+            }
+
+            .simulator-title span:not(.app-version) {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .simulator-controls {
+                flex: 1 1 100%;
+                width: 100%;
+                max-width: 100%;
+                justify-content: flex-start;
+                gap: 0.35rem;
+                padding-bottom: 0.15rem;
+            }
+
+            .simulator-controls .control-btn {
+                flex: 0 0 auto;
+                min-height: 42px;
+                padding: 0.45rem 0.65rem;
+                white-space: nowrap;
+            }
+
+            .progress-indicator {
+                flex: 0 0 auto;
+                width: auto;
+                max-width: 72vw;
+            }
+
+            .workspace-container { gap: 0; }
+
+            .tool-panel {
+                max-height: 18dvh;
+                padding: 0.55rem;
+                overscroll-behavior: contain;
+            }
+
+            .control-panel {
+                max-height: 20dvh;
+                padding: 0.65rem;
+                overscroll-behavior: contain;
+            }
+
+            .main-workspace {
+                min-height: 150px;
+                padding: 0.35rem;
+            }
+
+            .workspace-canvas {
+                min-height: 100%;
+                touch-action: pan-x pan-y;
+            }
+
+            .network-node { touch-action: none; }
+
+            .mini-map {
+                right: 0.45rem;
+                bottom: 0.45rem;
+                width: 132px;
+                height: 94px;
+            }
+
+            .quick-toolbar {
+                max-width: calc(100% - 1rem);
+                overflow-x: auto;
+                touch-action: pan-x;
+            }
+
+            .mode-switcher {
+                max-width: calc(100% - 1rem);
+                touch-action: pan-x;
+            }
+
+            .packet-controls { flex-wrap: wrap; }
+            .packet-analyzer-body { overflow-x: hidden; }
+            .packet-list-container { overflow-x: auto; }
+        }
+
+        @media (max-width: 420px) {
+            .simulator-header { max-height: 25dvh; }
+            .progress-indicator { display: none; }
+            .tool-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .tool-panel { max-height: 16dvh; }
+            .control-panel { max-height: 18dvh; }
+            .mini-map { width: 116px; height: 84px; }
+        }
     </style>
 </head>
 <body>
@@ -2890,33 +3111,6 @@
                     <div class="card-tip">🌐 <em>智慧家居與工業 IoT</em></div>
                 </div>
 
-                <div class="cyber-card wireless-feature-card" onclick="showSimulator('wireless')" data-category="wireless">
-                    <div class="card-badge">NEW / 新功能</div>
-                    <div class="card-icon-cyber"><i class="fas fa-wifi"></i></div>
-                    <h3 class="card-title-cyber">無線 RF 覆蓋分析 / Wireless Heatmap</h3>
-                    <p class="card-desc-cyber"><strong>RF Coverage</strong> - 即時查看 AP 訊號、頻道重疊與障礙物造成的衰減。</p>
-                    <ul class="card-features">
-                        <li>動態 dBm 覆蓋熱圖與 AP 等訊號線</li>
-                        <li>2.4 / 5 GHz 頻道及同頻干擾模擬</li>
-                        <li>新增牆體並模擬 RF 衰減</li>
-                        <li>客戶端掃描、訊號強度及漫遊演示</li>
-                    </ul>
-                    <div class="card-tip">📶 <em>新模組，可由左側無線控制面板操作</em></div>
-                </div>
-
-                <div class="cyber-card" onclick="showSimulator('datacenter')" data-category="datacenter">
-                    <div class="card-badge">資料中心</div>
-                    <div class="card-icon-cyber"><i class="fas fa-server"></i></div>
-                    <h3 class="card-title-cyber">資料中心網絡</h3>
-                    <p class="card-desc-cyber"><strong>Spine-Leaf 架構</strong> - 建立資料中心交換網路、負載平衡與伺服器農場。</p>
-                    <ul class="card-features">
-                        <li>Spine-Leaf 網路拓撲</li>
-                        <li>Web 與資料庫伺服器</li>
-                        <li>儲存設備與負載平衡器</li>
-                    </ul>
-                    <div class="card-tip">🗄️ <em>練習現代化資料中心設計</em></div>
-                </div>
-
             </div>
         </section>
         
@@ -3027,12 +3221,6 @@
                         <button class="device-type-btn" onclick="switchSimulatorMode('cloud')" data-mode="cloud">
                             <i class="fas fa-cloud"></i> 雲網絡
                         </button>
-                        <button class="device-type-btn" onclick="switchSimulatorMode('datacenter')" data-mode="datacenter">
-                            <i class="fas fa-server"></i> 資料中心
-                        </button>
-                        <button class="device-type-btn" onclick="switchSimulatorMode('wireless')" data-mode="wireless">
-                            <i class="fas fa-wifi"></i> 無線
-                        </button>
                         <button class="device-type-btn" onclick="switchSimulatorMode('sdwan')" data-mode="sdwan">
                             <i class="fas fa-project-diagram"></i> SD-WAN
                         </button>
@@ -3048,22 +3236,6 @@
                         設備庫 <span id="deviceCount" style="font-size: 0.7rem; color: var(--cyber-gray); margin-left: 0.5rem;"></span>
                     </h3>
                     <div class="tool-grid" id="deviceLibrary"></div>
-                    <div id="wirelessControls" class="wireless-controls" hidden>
-                        <h4 id="wirelessControlsTitle">📶 RF Coverage / 無線分析</h4>
-                        <div class="wireless-control-actions wireless-primary-tools">
-                            <button id="wirelessHeatmapTool" type="button" aria-pressed="false" onclick="toggleWirelessHeatmapTool()"><i class="fas fa-fire"></i> RF Heatmap / 訊號熱圖</button>
-                            <button id="wirelessScanTool" type="button" onclick="scanWirelessCoverage()"><i class="fas fa-signal"></i> AP Coverage / 干擾掃描</button>
-                        </div>
-                        <label><input id="wirelessHeatmapToggle" type="checkbox" onchange="setWirelessHeatmap(this.checked)"> 顯示訊號熱圖</label>
-                        <label><input id="wirelessCoverageToggle" type="checkbox" checked onchange="setWirelessCoverage(this.checked)"> 顯示 AP 覆蓋圈</label>
-                        <div class="wireless-control-row"><label for="wirelessBand">頻段</label><select id="wirelessBand" onchange="updateWirelessSettings()"><option value="2.4">2.4 GHz</option><option value="5">5 GHz</option></select></div>
-                        <div class="wireless-control-row"><label for="wirelessChannel">頻道</label><select id="wirelessChannel" onchange="updateWirelessSettings()"></select></div>
-                        <div class="wireless-control-row"><label for="wirelessPower">AP Tx Power</label><input id="wirelessPower" type="range" min="5" max="30" value="15" oninput="updateWirelessSettings()"><output id="wirelessPowerValue">15 dBm</output></div>
-                        <div class="wireless-control-actions"><button type="button" onclick="registerSelectedAccessPoint()">將選取設備設為 AP</button><button type="button" onclick="toggleWirelessObstaclePlacement()">新增牆體</button><button type="button" onclick="clearWirelessObstacles()">清除牆體</button></div>
-                        <div class="wireless-control-actions"><button type="button" onclick="scanWirelessCoverage()">掃描客戶端訊號</button><button type="button" onclick="startWirelessRoaming()">漫遊演示</button><button type="button" onclick="clearWirelessRoaming()">停止漫遊</button></div>
-                        <div id="wirelessStatus" aria-live="polite">先在工作區加入 AP，再啟用熱圖。</div>
-                        <div class="wireless-legend"><span>弱 −100 dBm</span><i></i><span>強 −50 dBm</span></div>
-                    </div>
                 </div>
                 
                 <div class="tool-category">
@@ -3150,10 +3322,6 @@
                             <span class="tool-hotkey">PDU</span>
                             <div class="tool-icon"><i class="fas fa-envelope"></i></div>
                             <div class="tool-label">Simple PDU</div>
-                        </div>
-                        <div class="tool-item" onclick="toggleWirelessHeatmapTool()" data-tooltip="顯示或隱藏無線 RF 熱圖">
-                            <div class="tool-icon" style="color: #00cc66;"><i class="fas fa-wifi"></i></div>
-                            <div class="tool-label">RF 熱圖</div>
                         </div>
                         <div class="tool-item" onclick="showCLITerminal()" data-tooltip="CLI終端 (L)">
                             <span class="tool-hotkey">L</span>
@@ -3398,6 +3566,8 @@
                 </div>
                 <div class="cli-terminal-controls">
                     <button class="cli-btn" onclick="clearCLI()"><i class="fas fa-eraser"></i></button>
+                    <button class="cli-btn" onclick="toggleCLIMinimize()" title="最小化"><i class="fas fa-window-minimize"></i></button>
+                    <button class="cli-btn" onclick="toggleCLIMaximize()" title="最大化 / 還原"><i class="fas fa-window-maximize"></i></button>
                     <button class="cli-btn" onclick="closeCLI()"><i class="fas fa-times"></i></button>
                 </div>
             </div>
@@ -3859,22 +4029,67 @@ Router&gt;
         }
 
         let simulationWorker = null;
+        let simulationWorkerUrl = null;
         let simulationWorkerSequence = 0;
         const simulationWorkerCallbacks = new Map();
-        if (typeof Worker === 'function' && typeof Blob === 'function') {
-            const workerSource = `self.onmessage = function(event) { const data = event.data; const points = []; const count = data.count || 32; for (let i = 0; i <= count; i++) { const t = i / count; const eased = 1 - Math.pow(1 - t, 3); points.push({ x: data.from.x + (data.to.x - data.from.x) * eased, y: data.from.y + (data.to.y - data.from.y) * eased }); } self.postMessage({ id: data.id, points }); };`;
-            simulationWorker = new Worker(URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' })));
-            simulationWorker.onmessage = event => {
-                const callback = simulationWorkerCallbacks.get(event.data.id);
-                if (callback) { simulationWorkerCallbacks.delete(event.data.id); callback(event.data.points); }
-            };
+        const SIMULATION_WORKER_TIMEOUT_MS = 1500;
+        function disableSimulationWorker() {
+            simulationWorker?.terminate();
+            simulationWorker = null;
+            if (simulationWorkerUrl && typeof URL?.revokeObjectURL === 'function') {
+                try { URL.revokeObjectURL(simulationWorkerUrl); } catch (error) { console.warn('Worker URL cleanup failed.', error); }
+            }
+            simulationWorkerUrl = null;
+            const pending = Array.from(simulationWorkerCallbacks.values());
+            simulationWorkerCallbacks.clear();
+            pending.forEach(record => {
+                clearTimeout(record.timer);
+                try { record.callback(null); } catch (error) { console.warn('Simulation path fallback callback failed.', error); }
+            });
+        }
+
+        try {
+            if (typeof Worker === 'function' && typeof Blob === 'function' && typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+                const workerSource = `self.onmessage = function(event) { const data = event.data; const points = []; const count = data.count || 32; for (let i = 0; i <= count; i++) { const t = i / count; const eased = 1 - Math.pow(1 - t, 3); points.push({ x: data.from.x + (data.to.x - data.from.x) * eased, y: data.from.y + (data.to.y - data.from.y) * eased }); } self.postMessage({ id: data.id, points }); };`;
+                simulationWorkerUrl = URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' }));
+                simulationWorker = new Worker(simulationWorkerUrl);
+                simulationWorker.onmessage = event => {
+                    const record = simulationWorkerCallbacks.get(event.data?.id);
+                    if (!record) return;
+                    simulationWorkerCallbacks.delete(event.data.id);
+                    clearTimeout(record.timer);
+                    const points = event.data.points;
+                    const validPoints = Array.isArray(points) && points.every(point => Number.isFinite(point?.x) && Number.isFinite(point?.y));
+                    try { record.callback(validPoints ? points : null); } catch (error) { console.warn('Simulation path callback failed.', error); }
+                };
+                simulationWorker.onerror = event => {
+                    event.preventDefault?.();
+                    disableSimulationWorker();
+                };
+            }
+        } catch (error) {
+            disableSimulationWorker();
         }
 
         function requestSimulationPath(from, to, callback) {
             if (!simulationWorker) return callback(null);
             const id = ++simulationWorkerSequence;
-            simulationWorkerCallbacks.set(id, callback);
-            simulationWorker.postMessage({ id, from, to, count: 32 });
+            const record = { callback, timer: null };
+            record.timer = setTimeout(() => {
+                if (!simulationWorkerCallbacks.has(id)) return;
+                simulationWorkerCallbacks.delete(id);
+                try { callback(null); } catch (error) { console.warn('Simulation path timeout fallback failed.', error); }
+                disableSimulationWorker();
+            }, SIMULATION_WORKER_TIMEOUT_MS);
+            simulationWorkerCallbacks.set(id, record);
+            try {
+                simulationWorker.postMessage({ id, from, to, count: 32 });
+            } catch (error) {
+                simulationWorkerCallbacks.delete(id);
+                clearTimeout(record.timer);
+                callback(null);
+                disableSimulationWorker();
+            }
         }
 
         // 設備數據庫 - 按模式分類
@@ -3986,20 +4201,33 @@ Router&gt;
                 'fa-question': '?', 'fa-info-circle': 'ⓘ'
             };
 
-            const decorate = (root = document) => root.querySelectorAll('.fas').forEach(icon => {
+            const iconSelector = '.fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands';
+            const decorate = (root = document) => {
+                const icons = [];
+                if (root.matches?.(iconSelector)) icons.push(root);
+                icons.push(...root.querySelectorAll(iconSelector));
+                icons.forEach(icon => {
                 const iconClass = [...icon.classList].find(className => className.indexOf('fa-') === 0);
                 icon.dataset.fallback = symbols[iconClass] || '•';
-            });
-
-            document.fonts.ready.then(() => {
-                if (!document.fonts.check('16px "Font Awesome 6 Free"')) {
-                    decorate();
-                    document.documentElement.classList.add('icons-fallback');
-                    new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => {
+                });
+            };
+            let observer = null;
+            const activateFallback = () => {
+                decorate();
+                document.documentElement.classList.add('icons-fallback');
+                if (!observer && document.body) {
+                    observer = new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => {
                         if (node.nodeType === Node.ELEMENT_NODE) decorate(node);
-                    }))).observe(document.body, { childList: true, subtree: true });
+                    })));
+                    observer.observe(document.body, { childList: true, subtree: true });
                 }
-            });
+            };
+
+            document.getElementById('fontAwesomeStylesheet')?.addEventListener('error', activateFallback, { once: true });
+            if (!document.fonts) return;
+            document.fonts.ready.then(() => {
+                if (!document.fonts.check('16px "Font Awesome 6 Free"') || !document.fonts.check('16px "Font Awesome 6 Brands"')) activateFallback();
+            }).catch(activateFallback);
         }
 
         // 初始化函數
@@ -4008,6 +4236,7 @@ Router&gt;
             document.querySelectorAll('[data-app-version]').forEach(element => {
                 element.textContent = `SIMULATOR ${APP_VERSION}`;
             });
+            loadConfigVersions();
             createBackground();
             renderDeviceLibrary();
             setupEventListeners();
@@ -4037,24 +4266,29 @@ Router&gt;
             canvas.dataset.panBound = 'true';
             canvas.addEventListener('pointerdown', event => {
                 if (event.button !== 1 || event.target.closest('.network-node')) return;
-                simulatorState.panState = { x: event.clientX, y: event.clientY, left: canvas.scrollLeft, top: canvas.scrollTop };
+                simulatorState.panState = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: canvas.scrollLeft, top: canvas.scrollTop };
                 canvas.setPointerCapture?.(event.pointerId);
                 canvas.classList.add('panning');
             });
             canvas.addEventListener('pointermove', event => {
                 const pan = simulatorState.panState;
-                if (!pan) return;
+                if (!pan || pan.pointerId !== event.pointerId) return;
                 canvas.scrollLeft = pan.left - (event.clientX - pan.x);
                 canvas.scrollTop = pan.top - (event.clientY - pan.y);
             });
             const stopPan = event => {
-                if (!simulatorState.panState) return;
+                const pan = simulatorState.panState;
+                if (!pan || (event?.pointerId !== undefined && pan.pointerId !== event.pointerId)) return;
                 simulatorState.panState = null;
-                canvas.releasePointerCapture?.(event.pointerId);
+                try {
+                    if (canvas.hasPointerCapture?.(pan.pointerId)) canvas.releasePointerCapture(pan.pointerId);
+                } catch (error) { /* Pointer capture may already have been released by the browser. */ }
                 canvas.classList.remove('panning');
             };
             canvas.addEventListener('pointerup', stopPan);
             canvas.addEventListener('pointercancel', stopPan);
+            canvas.addEventListener('lostpointercapture', stopPan);
+            window.addEventListener('blur', () => stopPan());
         }
 
         function updateNetworkTables() {
@@ -4098,12 +4332,14 @@ Router&gt;
         function startNetworkTicker() {
             if (simulatorState.networkTicker) return;
             simulatorState.networkTicker = setInterval(() => {
+                ageNatTranslations();
                 if (document.hidden) return;
                 runRoutingProtocolTick();
                 runVtpProtocolTick();
                 runDeviceDiscoveryTick();
                 updateNetworkTables();
                 updatePortLeds();
+                refreshOpenHubPortPanel();
             }, 1000);
         }
 
@@ -4543,18 +4779,28 @@ Router&gt;
                     if (tool) addDevice(JSON.parse(tool.dataset.device));
                 });
             }
-            const cacheKey = `${mode}:v${deviceLibraryMarkupVersion}`;
+            const categories = modeDeviceConfig[mode] || modeDeviceConfig.core;
+            const language = document.documentElement.lang || 'und';
+            const librarySignature = JSON.stringify({
+                language,
+                categories: categories.map(category => [category, (deviceLibrary[category] || []).map(device => [
+                    device.id, device.name, device.nameZh, device.type, device.icon, device.ip,
+                    device.model, device.desc, device.ports, device.powered, device.status
+                ])])
+            });
+            const cacheKey = `${mode}:v${deviceLibraryMarkupVersion}:${librarySignature}`;
             if (deviceLibraryMarkupCache.has(cacheKey)) {
                 library.innerHTML = deviceLibraryMarkupCache.get(cacheKey);
                 updateDeviceCount();
                 updateWirelessControlsVisibility(mode);
                 return;
             }
+            for (const key of deviceLibraryMarkupCache.keys()) {
+                if (key.startsWith(`${mode}:v${deviceLibraryMarkupVersion}:`) && key !== cacheKey) deviceLibraryMarkupCache.delete(key);
+            }
             library.innerHTML = '';
 
             // 獲取當前模式對應的設備類別
-            const categories = modeDeviceConfig[mode] || modeDeviceConfig.core;
-
             // 收集所有對應類別的設備
             let allDevices = [];
             categories.forEach(cat => {
@@ -4603,7 +4849,7 @@ Router&gt;
                         tool.title = `${bilingualName}\n${device.desc || ''}`;
                         tool.innerHTML = `
                             <div class="tool-icon">
-                                <i class="fas ${normalizeDeviceIcon(device.icon)}"></i>
+                                <i class="fas ${escapeHtml(normalizeDeviceIcon(device.icon))}"></i>
                             </div>
                             <div class="tool-label">${escapeHtml(bilingualName)}</div>
                         `;
@@ -4734,25 +4980,56 @@ Router&gt;
         function addDevice(device, x = 100, y = 100) {
             const canvas = document.getElementById('workspaceCanvas');
             const nodeId = `dev_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-            const usedAddresses = new Set(simulatorState.activeDevices.flatMap(entry => deviceAddresses(entry)));
+            const usedAddresses = new Set(simulatorState.activeDevices.flatMap(entry => {
+                const configured = Object.values(entry.device.interfaces || {}).map(value => typeof value === 'string' ? value : value?.ip).filter(Boolean);
+                if (!configured.length && entry.device.ip) configured.push(entry.device.ip);
+                return configured.map(address => ipv4Details(address)?.ip).filter(Boolean);
+            }));
             const deviceInstance = {
                 ...device,
                 interfaces: { ...(device.interfaces || {}) },
                 gateway: device.gateway || ''
             };
+            if (deviceInstance.type === 'hub') {
+                deviceInstance.ip = '';
+                deviceInstance.gateway = '';
+                deviceInstance.interfaces = {};
+                deviceInstance.primaryInterface = null;
+            }
             const defaultAddress = ipv4Details(deviceInstance.ip);
-            if (defaultAddress && usedAddresses.has(`${defaultAddress.ip}/${defaultAddress.prefix}`)) {
-                const octets = defaultAddress.ip.split('.').map(Number);
-                for (let host = Math.max(2, octets[3] + 1); host < 255; host++) {
-                    const candidate = `${octets[0]}.${octets[1]}.${octets[2]}.${host}/${defaultAddress.prefix}`;
-                    if (!usedAddresses.has(candidate)) { deviceInstance.ip = candidate; break; }
+            if (defaultAddress && usedAddresses.has(defaultAddress.ip)) {
+                const mask = defaultAddress.prefix === 0 ? 0 : (0xffffffff << (32 - defaultAddress.prefix)) >>> 0;
+                const broadcast = (defaultAddress.network | (~mask >>> 0)) >>> 0;
+                const hostCount = Math.max(1, broadcast - defaultAddress.network + 1);
+                let candidateNumber = defaultAddress.numeric;
+                let foundAddress = '';
+                for (let attempt = 0; attempt <= usedAddresses.size; attempt++) {
+                    candidateNumber = candidateNumber >= broadcast ? defaultAddress.network : candidateNumber + 1;
+                    const candidate = `${ipv4String(candidateNumber)}/${defaultAddress.prefix}`;
+                    if (isUsableHostAddress(candidate) && !usedAddresses.has(candidate.split('/')[0])) {
+                        foundAddress = candidate;
+                        break;
+                    }
+                    if (attempt + 1 >= hostCount) break;
                 }
+                if (!foundAddress) {
+                    showHint('設備添加失敗', '此子網沒有可用的 IPv4 位址，請先調整現有位址。');
+                    return null;
+                }
+                deviceInstance.ip = foundAddress;
             }
             const interfaceNames = getDefaultInterfaceNames(deviceInstance);
-            deviceInstance.primaryInterface = deviceInstance.primaryInterface || interfaceNames[0];
-            interfaceNames.forEach((name, index) => {
-                deviceInstance.interfaces[name] = index === 0 ? deviceInstance.ip : { status: 'up' };
-            });
+            const isLayer2Switch = ['switch', 'bridge'].includes(deviceInstance.type);
+            if (deviceInstance.type === 'hub') {
+                interfaceNames.forEach(name => { deviceInstance.interfaces[name] = { status: 'up' }; });
+            } else {
+                deviceInstance.primaryInterface = deviceInstance.primaryInterface || (isLayer2Switch && deviceInstance.ip ? 'Vlan1' : interfaceNames[0]);
+                interfaceNames.forEach((name, index) => {
+                    deviceInstance.interfaces[name] = !isLayer2Switch && index === 0 && deviceInstance.ip ? deviceInstance.ip : { status: 'up' };
+                });
+            }
+            // A switch's configured IP is its management SVI, never a physical access port.
+            if (isLayer2Switch && deviceInstance.ip) deviceInstance.interfaces.Vlan1 = deviceInstance.ip;
             
             const node = document.createElement('div');
             node.className = 'network-node';
@@ -4784,11 +5061,11 @@ Router&gt;
             node.addEventListener('click', (e) => {
                 e.stopPropagation();
                 selectDevice(nodeId, deviceInstance);
-                if (simulatorState.selectedTool === 'select' && !simulatorState.pduMode) showDeviceDetails(nodeId);
+                if (simulatorState.selectedTool === 'select' && !simulatorState.pduMode) openDeviceInteraction(nodeId);
             });
             
             node.addEventListener('dblclick', () => {
-                showDeviceDetails(nodeId);
+                if (simulatorState.selectedTool === 'select' && !simulatorState.pduMode) openDeviceInteraction(nodeId);
             });
             
             node.addEventListener('contextmenu', (e) => {
@@ -4871,6 +5148,7 @@ Router&gt;
         // 設備拖動
         function setupNodeDragging(node) {
             let isDragging = false;
+            let activePointerId = null;
             let startX, startY, initialX, initialY;
 
             // Use pointer events when available for better reliability
@@ -4884,7 +5162,7 @@ Router&gt;
             function startDragPointer(e) {
                 if (e.pointerType === 'mouse' && e.button !== 0) return;
                 e.preventDefault();
-                (e.target || e.srcElement).setPointerCapture && (e.target || e.srcElement).setPointerCapture(e.pointerId);
+                try { node.setPointerCapture?.(e.pointerId); } catch (error) { /* Continue with document-level pointer listeners. */ }
                 isDragging = true;
 
                 startX = e.clientX;
@@ -4894,6 +5172,9 @@ Router&gt;
 
                 document.addEventListener('pointermove', dragPointer);
                 document.addEventListener('pointerup', stopDragPointer);
+                document.addEventListener('pointercancel', stopDragPointer);
+                node.addEventListener('lostpointercapture', stopDragPointer, { once: true });
+                window.addEventListener('blur', stopDragPointer, { once: true });
                 node.style.cursor = 'grabbing';
             }
 
@@ -4909,8 +5190,8 @@ Router&gt;
                 let newX = initialX + deltaX / zoom;
                 let newY = initialY + deltaY / zoom;
                 // clamp within canvas
-                const maxX = Math.max(0, canvas.clientWidth - node.offsetWidth);
-                const maxY = Math.max(0, canvas.clientHeight - node.offsetHeight);
+                const maxX = Math.max(0, canvas.scrollWidth - node.offsetWidth);
+                const maxY = Math.max(0, canvas.scrollHeight - node.offsetHeight);
                 newX = Math.max(0, Math.min(newX, maxX));
                 newY = Math.max(0, Math.min(newY, maxY));
 
@@ -4927,10 +5208,15 @@ Router&gt;
             }
 
             function stopDragPointer(e) {
+                if (!isDragging) return;
                 isDragging = false;
-                try { (e.target || e.srcElement).releasePointerCapture && (e.target || e.srcElement).releasePointerCapture(e.pointerId); } catch(e) {}
+                const pointerId = e?.pointerId;
+                try { if (pointerId !== undefined && node.hasPointerCapture?.(pointerId)) node.releasePointerCapture(pointerId); } catch(error) {}
                 document.removeEventListener('pointermove', dragPointer);
                 document.removeEventListener('pointerup', stopDragPointer);
+                document.removeEventListener('pointercancel', stopDragPointer);
+                node.removeEventListener('lostpointercapture', stopDragPointer);
+                window.removeEventListener('blur', stopDragPointer);
                 node.style.cursor = 'move';
             }
 
@@ -4955,6 +5241,8 @@ Router&gt;
                 document.addEventListener('mouseup', stopDrag);
                 document.addEventListener('touchmove', drag);
                 document.addEventListener('touchend', stopDrag);
+                document.addEventListener('touchcancel', stopDrag);
+                window.addEventListener('blur', stopDrag, { once: true });
                 node.style.cursor = 'grabbing';
             }
 
@@ -4977,8 +5265,8 @@ Router&gt;
                 let newX = initialX + deltaX / zoom;
                 let newY = initialY + deltaY / zoom;
                 // clamp within canvas
-                const maxX = Math.max(0, canvas.clientWidth - node.offsetWidth);
-                const maxY = Math.max(0, canvas.clientHeight - node.offsetHeight);
+                const maxX = Math.max(0, canvas.scrollWidth - node.offsetWidth);
+                const maxY = Math.max(0, canvas.scrollHeight - node.offsetHeight);
                 newX = Math.max(0, Math.min(newX, maxX));
                 newY = Math.max(0, Math.min(newY, maxY));
 
@@ -5000,6 +5288,8 @@ Router&gt;
                 document.removeEventListener('mouseup', stopDrag);
                 document.removeEventListener('touchmove', drag);
                 document.removeEventListener('touchend', stopDrag);
+                document.removeEventListener('touchcancel', stopDrag);
+                window.removeEventListener('blur', stopDrag);
                 node.style.cursor = 'move';
             }
         }
@@ -5053,7 +5343,7 @@ Router&gt;
                         return;
                     }
                     
-                    createConnection(simulatorState.connectFrom, nodeId, simulatorState.selectedTool);
+                    const created = createConnection(simulatorState.connectFrom, nodeId, simulatorState.selectedTool);
                     simulatorState.isConnecting = false;
                     simulatorState.connectFrom = null;
                     
@@ -5062,9 +5352,11 @@ Router&gt;
                     });
                     
                     removeTempConnection();
-                    showHint('連線成功', `${device.name} 已連接！`);
-                    updateProgress(2);
-                    updateGuidedTutorial();
+                    if (created) {
+                        showHint('連線成功', `${device.name} 已連接！`);
+                        updateProgress(2);
+                        updateGuidedTutorial();
+                    }
                 }
                 return;
             }
@@ -5107,6 +5399,7 @@ Router&gt;
             const canvas = document.getElementById('workspaceCanvas');
             const fromDevice = simulatorState.activeDevices.find(d => d.id === fromId);
             if (!fromDevice) return;
+            removeTempConnection();
             
             let svg = document.getElementById('connectionSvg');
             if (!svg) {
@@ -5129,12 +5422,31 @@ Router&gt;
             tempPath.style.opacity = '0.7';
             svg.appendChild(tempPath);
 
-            // prefer pointer events if available
+            tempConnectionCanvas = canvas;
+            tempConnectionAbortController = typeof AbortController === 'function' ? new AbortController() : null;
+            const options = tempConnectionAbortController ? { signal: tempConnectionAbortController.signal } : undefined;
+            const moveEvent = window.PointerEvent ? 'pointermove' : 'mousemove';
+            const moveTarget = window.PointerEvent ? document : canvas;
+            moveTarget.addEventListener(moveEvent, updateTempConnection, options);
+            window.addEventListener('blur', cancelTempConnection, options);
+            document.addEventListener('visibilitychange', cancelTempConnectionWhenHidden, options);
             if (window.PointerEvent) {
-                canvas.addEventListener('pointermove', updateTempConnection);
-            } else {
-                canvas.addEventListener('mousemove', updateTempConnection);
+                document.addEventListener('pointercancel', cancelTempConnection, options);
             }
+        }
+
+        let tempConnectionCanvas = null;
+        let tempConnectionAbortController = null;
+
+        function cancelTempConnection() {
+            removeTempConnection();
+            simulatorState.isConnecting = false;
+            simulatorState.connectFrom = null;
+            document.querySelectorAll('.network-node.connect-from').forEach(node => node.classList.remove('connect-from'));
+        }
+
+        function cancelTempConnectionWhenHidden() {
+            if (document.hidden) cancelTempConnection();
         }
 
         function updateTempConnection(e) {
@@ -5145,8 +5457,9 @@ Router&gt;
             const rect = canvas.getBoundingClientRect();
             const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] && e.touches[0].clientX) || 0;
             const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] && e.touches[0].clientY) || 0;
-            const x = clientX - rect.left;
-            const y = clientY - rect.top;
+            const zoom = Math.max(0.01, canvasZoom || 1);
+            const x = (clientX - rect.left) / zoom + canvas.scrollLeft;
+            const y = (clientY - rect.top) / zoom + canvas.scrollTop;
 
             // update as a curved path towards the pointer
             const d = tempLine.getAttribute('d') || '';
@@ -5161,12 +5474,20 @@ Router&gt;
             const tempLine = document.getElementById('tempConnectionLine');
             if (tempLine) tempLine.remove();
             
-            const canvas = document.getElementById('workspaceCanvas');
-            if (window.PointerEvent) {
+            tempConnectionAbortController?.abort();
+            tempConnectionAbortController = null;
+            const canvas = tempConnectionCanvas || document.getElementById('workspaceCanvas');
+            if (canvas) {
                 canvas.removeEventListener('pointermove', updateTempConnection);
-            } else {
                 canvas.removeEventListener('mousemove', updateTempConnection);
             }
+            if (typeof document !== 'undefined') {
+                document.removeEventListener('pointermove', updateTempConnection);
+                document.removeEventListener('pointercancel', cancelTempConnection);
+                document.removeEventListener('visibilitychange', cancelTempConnectionWhenHidden);
+            }
+            if (typeof window !== 'undefined') window.removeEventListener('blur', cancelTempConnection);
+            tempConnectionCanvas = null;
         }
 
         // 獲取線纜顏色
@@ -5235,6 +5556,8 @@ Router&gt;
             });
         }
 
+        let stageMapGeometry = null;
+
         function renderMiniMap() {
             const canvas = document.getElementById('workspaceCanvas');
             const mapNodes = document.getElementById('miniMapNodes');
@@ -5244,11 +5567,13 @@ Router&gt;
 
             const mapWidth = mapNodes.clientWidth || 180;
             const mapHeight = mapNodes.clientHeight || 100;
-            const worldWidth = Math.max(canvas.clientWidth, ...simulatorState.activeDevices.map(device => device.x + 120), 1);
-            const worldHeight = Math.max(canvas.clientHeight, ...simulatorState.activeDevices.map(device => device.y + 140), 1);
+            const zoom = Math.max(0.01, canvasZoom || 1);
+            const worldWidth = Math.max(canvas.scrollWidth, canvas.clientWidth, ...simulatorState.activeDevices.map(device => device.x + 120), 1);
+            const worldHeight = Math.max(canvas.scrollHeight, canvas.clientHeight, ...simulatorState.activeDevices.map(device => device.y + 140), 1);
             const scale = Math.min(mapWidth / worldWidth, mapHeight / worldHeight);
             const offsetX = (mapWidth - worldWidth * scale) / 2;
             const offsetY = (mapHeight - worldHeight * scale) / 2;
+            stageMapGeometry = { mapWidth, mapHeight, worldWidth, worldHeight, scale, offsetX, offsetY, zoom };
 
             mapNodes.innerHTML = '';
             mapConnections.innerHTML = '';
@@ -5284,6 +5609,19 @@ Router&gt;
                 mapNodes.appendChild(node);
             });
 
+            const viewport = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            viewport.setAttribute('class', 'mini-map-viewport');
+            const viewLeft = Math.max(0, canvas.scrollLeft);
+            const viewTop = Math.max(0, canvas.scrollTop);
+            const viewWidth = Math.min(worldWidth - viewLeft, canvas.clientWidth);
+            const viewHeight = Math.min(worldHeight - viewTop, canvas.clientHeight);
+            viewport.setAttribute('x', offsetX + viewLeft * scale);
+            viewport.setAttribute('y', offsetY + viewTop * scale);
+            viewport.setAttribute('width', Math.max(0, Math.min(mapWidth - offsetX, viewWidth * scale)));
+            viewport.setAttribute('height', Math.max(0, Math.min(mapHeight - offsetY, viewHeight * scale)));
+            viewport.setAttribute('rx', '1');
+            mapConnections.appendChild(viewport);
+
             if (count) count.textContent = `${simulatorState.activeDevices.length} / ${simulatorState.connections.length}`;
         }
 
@@ -5292,24 +5630,69 @@ Router&gt;
             const canvas = document.getElementById('workspaceCanvas');
             if (!stage || !canvas || stage.dataset.bound) return;
             stage.dataset.bound = 'true';
+            let isDragging = false;
+            let activePointerId = null;
+            const navigate = (event, behavior = 'smooth') => {
+                const rect = stage.getBoundingClientRect();
+                const geometry = stageMapGeometry;
+                if (!geometry?.scale) return;
+                const localX = Math.max(0, Math.min(geometry.mapWidth, event.clientX - rect.left));
+                const localY = Math.max(0, Math.min(geometry.mapHeight, event.clientY - rect.top));
+                const worldX = Math.max(0, Math.min(geometry.worldWidth, (localX - geometry.offsetX) / geometry.scale));
+                const worldY = Math.max(0, Math.min(geometry.worldHeight, (localY - geometry.offsetY) / geometry.scale));
+                canvas.scrollTo({
+                    left: Math.max(0, worldX - canvas.clientWidth / 2),
+                    top: Math.max(0, worldY - canvas.clientHeight / 2),
+                    behavior
+                });
+            };
             stage.addEventListener('click', event => {
                 if (event.target.closest('.mini-map-node')) return;
-                const rect = stage.getBoundingClientRect();
-                const x = (event.clientX - rect.left) / rect.width;
-                const y = (event.clientY - rect.top) / rect.height;
-                canvas.scrollTo({
-                    left: Math.max(0, x * canvas.scrollWidth - canvas.clientWidth / 2),
-                    top: Math.max(0, y * canvas.scrollHeight - canvas.clientHeight / 2),
-                    behavior: 'smooth'
-                });
+                navigate(event);
             });
+            stage.addEventListener('pointerdown', event => {
+                if (event.target.closest('.mini-map-node')) return;
+                isDragging = true;
+                activePointerId = event.pointerId;
+                stage.setPointerCapture?.(event.pointerId);
+                navigate(event, 'auto');
+            });
+            stage.addEventListener('pointermove', event => {
+                if (isDragging && event.pointerId === activePointerId) navigate(event, 'auto');
+            });
+            const stopDragging = event => {
+                if (activePointerId !== null && event?.pointerId !== undefined && event.pointerId !== activePointerId) return;
+                isDragging = false;
+                const pointerId = activePointerId;
+                activePointerId = null;
+                try { if (pointerId !== null && stage.hasPointerCapture?.(pointerId)) stage.releasePointerCapture(pointerId); } catch (error) {}
+            };
+            stage.addEventListener('pointerup', stopDragging);
+            stage.addEventListener('pointercancel', stopDragging);
+            stage.addEventListener('lostpointercapture', stopDragging);
+            window.addEventListener('blur', () => stopDragging());
+            let renderScheduled = false;
+            canvas.addEventListener('scroll', () => {
+                if (renderScheduled) return;
+                renderScheduled = true;
+                requestAnimationFrame(() => {
+                    renderScheduled = false;
+                    renderMiniMap();
+                });
+            }, { passive: true });
+            window.addEventListener('resize', renderMiniMap, { passive: true });
+            if (typeof ResizeObserver === 'function') {
+                const observer = new ResizeObserver(() => renderMiniMap());
+                observer.observe(canvas);
+                observer.observe(stage);
+            }
         }
 
         // 創建連線
         function createConnection(fromId, toId, cableType) {
             const fromDevice = simulatorState.activeDevices.find(d => d.id === fromId);
             const toDevice = simulatorState.activeDevices.find(d => d.id === toId);
-            if (!fromDevice || !toDevice) return;
+            if (!fromDevice || !toDevice || fromId === toId) return false;
             
             const existingConn = simulatorState.connections.find(c =>
                 (c.from === fromId && c.to === toId) || (c.from === toId && c.to === fromId)
@@ -5317,7 +5700,22 @@ Router&gt;
             
             if (existingConn) {
                 showHint('連線錯誤', '這兩個設備之間已經有連線了！');
-                return;
+                return false;
+            }
+
+            const findAvailableInterface = entry => {
+                const interfaces = Object.keys(entry.device.interfaces || {});
+                const connected = new Set(simulatorState.connections
+                    .filter(connection => connection.from === entry.id || connection.to === entry.id)
+                    .map(connection => getConnectionInterface(entry, connection))
+                    .filter(Boolean));
+                return interfaces.find(name => !connected.has(name));
+            };
+            const fromInterface = findAvailableInterface(fromDevice);
+            const toInterface = findAvailableInterface(toDevice);
+            if (!fromInterface || !toInterface) {
+                showHint('連線錯誤', '沒有可用的介面連接埠，請檢查設備介面數量。');
+                return false;
             }
             
             const connId = `conn_${Date.now()}`;
@@ -5325,6 +5723,8 @@ Router&gt;
                 id: connId,
                 from: fromId,
                 to: toId,
+                fromInterface,
+                toInterface,
                 type: cableType,
                 status: 'active'
             };
@@ -5335,6 +5735,7 @@ Router&gt;
             toDevice.connections.push(connId);
             updatePortLeds();
             renderMiniMap();
+            return true;
         }
 
         // 繪製連線
@@ -5441,6 +5842,7 @@ Router&gt;
         function deleteDevice(nodeId) {
             const device = simulatorState.activeDevices.find(d => d.id === nodeId);
             if (!device) return;
+            if (simulatorState.connectFrom === nodeId) cancelTempConnection();
             
             device.connections.forEach(connId => {
                 deleteConnection(connId);
@@ -5508,8 +5910,16 @@ Router&gt;
             const form = document.getElementById('deviceConfigForm');
             if (!form) return;
             const entry = simulatorState.activeDevices.find(item => item.id === simulatorState.selectedDevice);
-            const config = entry?.config || device.config || {};
+            const configForm = document.getElementById('configForm');
             const typeSelect = document.getElementById('deviceTypeSelect');
+            const isHub = device.type === 'hub';
+            if (typeSelect) typeSelect.disabled = isHub;
+            configForm?.querySelectorAll('.btn-group, .form-group').forEach(section => { section.hidden = isHub; });
+            if (isHub) {
+                form.innerHTML = '<div class="detail-card" style="padding:.75rem;color:var(--cyber-gray)"><strong style="color:var(--interface-blue)">Hub-PT · Layer 1</strong><p style="margin:.4rem 0 0">集線器不提供 IP 設定或 CLI。點選設備可查看實體連接埠、LED 狀態及埠開關。</p></div>';
+                return;
+            }
+            const config = entry?.config || device.config || {};
             if (typeSelect) typeSelect.value = device.type;
             const gateway = config.gateway || device.gateway || '';
             const interfaces = Object.keys(device.interfaces || {});
@@ -5557,6 +5967,7 @@ Router&gt;
 
         // 工具選擇
         function selectTool(tool) {
+            if (simulatorState.isConnecting || document.getElementById('tempConnectionLine')) cancelTempConnection();
             simulatorState.selectedTool = tool;
             simulatorState.isConnecting = false;
             simulatorState.connectFrom = null;
@@ -5689,9 +6100,16 @@ Router&gt;
                 };
                 updateCounter(fromEntry, getConnectionInterface(fromEntry, connection), 'output');
                 updateCounter(toEntry, getConnectionInterface(toEntry, connection), 'input');
+                [fromEntry, toEntry].forEach(entry => {
+                    const interfaceName = getConnectionInterface(entry, connection);
+                    if (!interfaceName) return;
+                    entry.config.interfaces = entry.config.interfaces || {};
+                    entry.config.interfaces[interfaceName] = { ...(entry.config.interfaces[interfaceName] || {}), lastActivityAt: Date.now() };
+                });
             }
             const activePackets = canvas.querySelectorAll('.data-packet');
-            if (activePackets.length >= 120) {
+            const packetLimit = window.matchMedia('(max-width: 768px)').matches ? 50 : 120;
+            if (activePackets.length >= packetLimit) {
                 activePackets[0].remove();
                 canvas.querySelector('.packet-trail')?.remove();
             }
@@ -5783,7 +6201,7 @@ Router&gt;
         function showSimulator(mode) {
             const wasHidden = document.getElementById('simulatorInterface').style.display === 'none' || getComputedStyle(document.getElementById('simulatorInterface')).display === 'none';
             document.getElementById('homePage').style.display = 'none';
-            document.getElementById('simulatorInterface').style.display = 'block';
+            document.getElementById('simulatorInterface').style.display = 'flex';
             
             const titles = {
                 'core': '🔧 核心模擬器 - 自由設計網絡拓撲',
@@ -5837,6 +6255,7 @@ Router&gt;
         }
 
         function hideSimulator() {
+            cancelTempConnection();
             document.getElementById('simulatorInterface').style.display = 'none';
             document.getElementById('homePage').style.display = 'block';
             stopPacketAnimation();
@@ -6195,10 +6614,31 @@ Router&gt;
             const cfg = {};
             inputs.forEach(i => { cfg[i.previousElementSibling ? i.previousElementSibling.textContent.trim() : i.name || i.id] = i.value; });
 
-            const version = { id: `v_${Date.now()}`, ts: Date.now(), author: 'local', config: cfg };
+            const version = { id: `v_${Date.now()}`, ts: Date.now(), author: 'local', config: deepCloneSimulatorValue(cfg) };
             simulatorState.configVersions[devId] = simulatorState.configVersions[devId] || [];
             simulatorState.configVersions[devId].push(version);
+            simulatorState.configVersions[devId] = simulatorState.configVersions[devId].slice(-50);
+            persistConfigVersions();
             showHint('版本儲存', `已為 ${dev.device.name} 儲存新版本`);
+        }
+
+        function loadConfigVersions() {
+            try {
+                const saved = localStorage.getItem('network-simulator-config-versions');
+                const parsed = saved ? JSON.parse(saved) : {};
+                simulatorState.configVersions = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+            } catch (error) {
+                simulatorState.configVersions = {};
+                console.warn('Could not load saved configuration versions.', error);
+            }
+        }
+
+        function persistConfigVersions() {
+            try {
+                localStorage.setItem('network-simulator-config-versions', JSON.stringify(simulatorState.configVersions));
+            } catch (error) {
+                showHint('版本儲存', '瀏覽器儲存空間不可用，版本僅保留於本次工作階段。');
+            }
         }
 
         // Show versions modal
@@ -6209,7 +6649,7 @@ Router&gt;
             let html = `<div class="modal-overlay" id="configVersionsModal" onclick="if(event.target===this)closeConfigVersions()"><div class="modal-content" style="max-width:700px"><div class="modal-header"><h3>版本歷史</h3><button class="close-btn" onclick="closeConfigVersions()">×</button></div><div class="modal-body">`;
             if (!versions.length) html += '<div style="color:var(--cyber-gray)">尚無版本</div>';
             versions.slice().reverse().forEach(v => {
-                html += `<div style="padding:0.5rem 0.2rem; border-bottom:1px solid rgba(255,255,255,0.03); display:flex; justify-content:space-between; align-items:center;"><div><div style="font-weight:500">${new Date(v.ts).toLocaleString()}</div><div style="font-size:0.85rem; color:var(--cyber-gray)">${v.author}</div></div><div style="display:flex; gap:0.4rem;"><button class="btn btn-secondary" onclick="showConfigDiff('${devId}','${v.id}')">Diff</button><button class="btn btn-secondary" onclick="restoreConfigVersion('${devId}','${v.id}')">Restore</button></div></div>`;
+                html += `<div style="padding:0.5rem 0.2rem; border-bottom:1px solid rgba(255,255,255,0.03); display:flex; justify-content:space-between; align-items:center;"><div><div style="font-weight:500">${new Date(v.ts).toLocaleString()}</div><div style="font-size:0.85rem; color:var(--cyber-gray)">${escapeHtml(v.author)}</div></div><div style="display:flex; gap:0.4rem;"><button class="btn btn-secondary" onclick="showConfigDiff('${devId}','${v.id}')">Diff</button><button class="btn btn-secondary" onclick="restoreConfigVersion('${devId}','${v.id}')">Restore</button></div></div>`;
             });
             html += `</div><div class="modal-footer"><button class="action-btn" onclick="closeConfigVersions()">關閉</button></div></div></div>`;
             document.body.insertAdjacentHTML('beforeend', html);
@@ -6253,12 +6693,14 @@ Router&gt;
             if (!ok) return;
 
             // save pre-restore snapshot so user can recover
-            const pre = { id: `pre_${Date.now()}`, ts: Date.now(), author: 'local', config: Object.assign({}, dev.config || {}) };
+            const pre = { id: `pre_${Date.now()}`, ts: Date.now(), author: 'local', config: deepCloneSimulatorValue(dev.config || {}) };
             simulatorState.configVersions[devId] = simulatorState.configVersions[devId] || [];
             simulatorState.configVersions[devId].push(pre);
+            simulatorState.configVersions[devId] = simulatorState.configVersions[devId].slice(-50);
+            persistConfigVersions();
 
             // apply to device config object (merge)
-            dev.config = Object.assign({}, dev.config || {}, v.config);
+            dev.config = Object.assign({}, dev.config || {}, deepCloneSimulatorValue(v.config || {}));
 
             // also write into form inputs so UI reflects the restored values
             const inputs = Array.from(document.querySelectorAll('#deviceConfigForm input'));
@@ -6277,7 +6719,22 @@ Router&gt;
             closeConfigVersions();
         }
 
-        function escapeHtml(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+        function deepCloneSimulatorValue(value) {
+            if (typeof structuredClone === 'function') {
+                try { return structuredClone(value); } catch (error) { /* Fall through for non-cloneable legacy values. */ }
+            }
+            return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+        }
+
+        function escapeHtml(s) {
+            return String(s ?? '')
+                .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
         function testConnection() {
             const devices = simulatorState.activeDevices;
@@ -6403,9 +6860,10 @@ Router&gt;
             const parsed = prefix === null ? null : ipv4Details(`${ip}/${prefix}`);
             if (!parsed) return '% Invalid IP address or subnet mask';
             if (!isUsableHostAddress(`${ip}/${prefix}`)) return '% IP address is the network or broadcast address';
-            const conflict = simulatorState.activeDevices.some(device => getDeviceAddressRecords(device).some(record =>
-                record.ip === parsed.ip && !(device.id === entry.id && record.interface === interfaceName)
-            ));
+            const conflict = simulatorState.activeDevices.some(device => Object.entries(device.device.interfaces || {}).some(([name, value]) => {
+                const address = typeof value === 'string' ? value : value?.ip;
+                return ipv4Details(address)?.ip === parsed.ip && !(device.id === entry.id && name === interfaceName);
+            }));
             if (conflict) return `% IP address ${parsed.ip} conflicts with another interface`;
 
             entry.device.interfaces = entry.device.interfaces || {};
@@ -6460,6 +6918,8 @@ Router&gt;
                     if (prefix !== null && start && end && start.numeric <= end.numeric) {
                         const reachable = findLayer2Path(entry.id, server.id);
                         if (reachable) {
+                            const snoopingCheck = validateDhcpSnoopingOffer(reachable, entry, interfaceName);
+                            if (!snoopingCheck.allowed) return `% DHCP snooping dropped offer from untrusted interface ${snoopingCheck.interfaceName}`;
                             const used = new Set(simulatorState.activeDevices.flatMap(device => getDeviceAddressRecords(device).map(record => record.ip)));
                             let leasedAddress = null;
                             for (let candidate = start.numeric; candidate <= end.numeric; candidate++) {
@@ -6502,6 +6962,8 @@ Router&gt;
                         }
                     }
                     if (!clientPath) continue;
+                    const snoopingCheck = validateDhcpSnoopingOffer(relayPath ? clientPath : clientPath, entry, interfaceName);
+                    if (!snoopingCheck.allowed) return `% DHCP snooping dropped offer from untrusted interface ${snoopingCheck.interfaceName}`;
                     const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0;
                     const broadcast = (network.network | (~mask >>> 0)) >>> 0;
                     const excluded = (dhcp.excluded || []).map(range => range.map(ipv4Details)).filter(range => range[0]);
@@ -6536,6 +6998,24 @@ Router&gt;
                 }
             }
             return '% DHCP server or matching pool not reachable';
+        }
+
+        function validateDhcpSnoopingOffer(path, client, clientInterface) {
+            if (!path?.nodes?.length) return { allowed: true };
+            const clientPort = client.config?.interfaces?.[clientInterface] || {};
+            const vlan = Number(clientPort.accessVlan || 1);
+            for (let index = 1; index < path.nodes.length - 1; index++) {
+                const device = simulatorState.activeDevices.find(entry => entry.id === path.nodes[index]);
+                if (!['switch', 'bridge'].includes(device?.device?.type)) continue;
+                const snooping = device.config?.dhcpSnooping;
+                if (!snooping?.enabled || !(snooping.vlans || []).includes(vlan)) continue;
+                const serverFacingConnection = path.connections[index];
+                const serverFacingInterface = serverFacingConnection && getConnectionInterface(device, serverFacingConnection);
+                if (!serverFacingInterface || !device.config?.interfaces?.[serverFacingInterface]?.dhcpSnoopingTrust) {
+                    return { allowed: false, interfaceName: serverFacingInterface || 'unknown' };
+                }
+            }
+            return { allowed: true };
         }
 
         function invalidateNetworkCaches() {
@@ -6600,9 +7080,15 @@ Router&gt;
         }
 
         function getDeviceMac(entry) {
+            if (entry?.device?.type === 'hub') return '';
             const hash = [...String(entry?.id || '')].reduce((value, character) => (value * 31 + character.charCodeAt(0)) >>> 0, 0);
             const suffix = hash.toString(16).padStart(8, '0').slice(-8);
             return `02:00:${suffix.slice(0, 2)}:${suffix.slice(2, 4)}:${suffix.slice(4, 6)}:${suffix.slice(6, 8)}`;
+        }
+
+        function formatCiscoMac(address) {
+            const hex = String(address || '').replace(/[^a-f0-9]/gi, '').toUpperCase().padStart(12, '0').slice(-12);
+            return `${hex.slice(0, 4)}.${hex.slice(4, 8)}.${hex.slice(8, 12)}`;
         }
 
         function isBridgeDevice(entry) {
@@ -6718,7 +7204,8 @@ Router&gt;
                 const segments = candidate.path ? [candidate.path] : [];
                 let currentRouter = candidate.router;
                 const visitedRouters = new Set();
-                while (currentRouter && !visitedRouters.has(currentRouter.id)) {
+                const maxHops = Math.max(1, routers.length);
+                while (currentRouter && visitedRouters.size < maxHops && !visitedRouters.has(currentRouter.id)) {
                     visitedRouters.add(currentRouter.id);
                     if (getDirectRoute(currentRouter, targetAddress)) {
                         const finalPath = findLayer2Path(currentRouter.id, target.id);
@@ -6726,7 +7213,7 @@ Router&gt;
                     }
                     const route = getLearnedRoute(currentRouter, targetAddress);
                     const nextRouter = resolveRouteNextHop(currentRouter, route);
-                    if (!nextRouter || visitedRouters.has(nextRouter.id)) break;
+                    if (!nextRouter || !['router', 'firewall'].includes(nextRouter.device?.type) || visitedRouters.has(nextRouter.id)) break;
                     const nextPath = findLayer2Path(currentRouter.id, nextRouter.id);
                     if (!nextPath) break;
                     segments.push(nextPath);
@@ -6754,21 +7241,22 @@ Router&gt;
             let allowed = true;
             path.nodes.forEach((nodeId, index) => {
                 const node = simulatorState.activeDevices.find(device => device.id === nodeId);
-                if (!isBridgeDevice(node)) return;
+                if (!isBridgeDevice(node) || node.device.type === 'hub') return;
                 const connection = index > 0 ? path.connections[index - 1] : path.connections[index];
                 const port = connection && getConnectionInterface(node, connection);
-                const portConfig = node.config?.interfaces?.[port];
+                const portConfig = port && (node.config.interfaces = node.config.interfaces || {})[port];
                 const security = portConfig?.portSecurity;
                 if (security?.enabled) {
                     security.secureMacs = security.secureMacs || [];
+                    security.maximum = Math.max(1, Math.floor(Number(security.maximum) || 1));
                     if (!security.secureMacs.includes(mac)) {
                         if (security.secureMacs.length >= security.maximum) {
                             security.violations = (security.violations || 0) + 1;
-                            if (security.violation === 'shutdown') {
+                            allowed = false;
+                            if ((security.violation || 'shutdown') === 'shutdown') {
                                 portConfig.shutdown = true;
                                 const value = node.device.interfaces?.[port];
                                 node.device.interfaces[port] = { ...(typeof value === 'object' && value ? value : value ? { ip: value } : {}), status: 'administratively down' };
-                                allowed = false;
                                 invalidateNetworkCaches();
                             }
                             return;
@@ -6828,28 +7316,44 @@ Router&gt;
             return broadcastArpRequest(source, target, path);
         }
 
+        function parseStrictIPv4Numeric(value) {
+            const parts = String(value || '').split('.');
+            if (parts.length !== 4 || parts.some(part => !/^\d{1,3}$/.test(part) || Number(part) > 255)) return null;
+            return parts.reduce((number, part) => number * 256 + Number(part), 0) >>> 0;
+        }
+
         function parseAclAddress(tokens, startIndex) {
             const token = tokens[startIndex]?.toLowerCase();
             if (token === 'any') return { nextIndex: startIndex + 1, matches: () => true };
             if (token === 'host') {
                 const host = tokens[startIndex + 1];
-                return { nextIndex: startIndex + 2, matches: address => address === host };
+                const hostNumeric = parseStrictIPv4Numeric(host);
+                return {
+                    valid: hostNumeric !== null,
+                    nextIndex: startIndex + 2,
+                    matches: address => hostNumeric !== null && parseStrictIPv4Numeric(address) === hostNumeric
+                };
             }
             const network = tokens[startIndex];
             const wildcardCandidate = tokens[startIndex + 1];
-            const wildcardOctets = wildcardCandidate?.split('.').map(Number);
-            if (wildcardOctets?.length === 4 && wildcardOctets.every(value => Number.isInteger(value) && value >= 0 && value <= 255)) {
-                const wildcard = wildcardOctets.reduce((value, octet) => value * 256 + octet, 0) >>> 0;
-                const networkAddress = ipv4Details(network)?.numeric;
+            const networkAddress = parseStrictIPv4Numeric(network);
+            if (wildcardCandidate?.includes('.')) {
+                const wildcard = parseStrictIPv4Numeric(wildcardCandidate);
                 return {
+                    valid: networkAddress !== null && wildcard !== null,
                     nextIndex: startIndex + 2,
                     matches: address => {
-                        const parsed = ipv4Details(address);
-                        return Boolean(parsed && networkAddress !== undefined && ((parsed.numeric & (~wildcard >>> 0)) >>> 0) === ((networkAddress & (~wildcard >>> 0)) >>> 0));
+                        const addressNumeric = parseStrictIPv4Numeric(address);
+                        return addressNumeric !== null && networkAddress !== null && wildcard !== null
+                            && ((addressNumeric & (~wildcard >>> 0)) >>> 0) === ((networkAddress & (~wildcard >>> 0)) >>> 0);
                     }
                 };
             }
-            return { nextIndex: startIndex + 1, matches: address => address === network };
+            return {
+                valid: networkAddress !== null,
+                nextIndex: startIndex + 1,
+                matches: address => networkAddress !== null && parseStrictIPv4Numeric(address) === networkAddress
+            };
         }
 
         function aclRuleMatches(rule, sourceAddress, targetAddress, protocol) {
@@ -6860,11 +7364,26 @@ Router&gt;
                 if (ruleProtocol !== 'ip' && ruleProtocol !== protocol) return false;
             }
             const source = parseAclAddress(tokens, index);
+            if (source.valid === false) return false;
             index = source.nextIndex;
             if (!source.matches(sourceAddress)) return false;
             if (rule.type === 'standard') return true;
             const destination = parseAclAddress(tokens, index);
-            return destination.matches(targetAddress);
+            return destination.valid !== false && destination.matches(targetAddress);
+        }
+
+        function validateAclRuleTokens(type, tokens) {
+            let index = 0;
+            if (type === 'extended') {
+                const protocol = tokens[index++]?.toLowerCase();
+                if (!['ip', 'icmp', 'tcp', 'udp'].includes(protocol)) return false;
+            }
+            const source = parseAclAddress(tokens, index);
+            if (source.valid === false) return false;
+            index = source.nextIndex;
+            if (type === 'standard') return true;
+            const destination = parseAclAddress(tokens, index);
+            return destination.valid !== false;
         }
 
         function isTrafficAllowed(source, target, segments, protocol) {
@@ -6890,7 +7409,28 @@ Router&gt;
             return true;
         }
 
+        const NAT_TRANSLATION_TIMEOUT_MS = 60 * 1000;
+
+        function ageNatTranslations(now = Date.now()) {
+            let removed = 0;
+            simulatorState.activeDevices.forEach(entry => {
+                const translations = entry.config?.natTranslations;
+                if (!Array.isArray(translations)) return;
+                const retained = translations.filter(translation => {
+                    if (translation.static) return true;
+                    const lastUsed = Number(translation.lastUsedAt || translation.createdAt || 0);
+                    const timeout = Number(translation.timeoutMs) > 0 ? Number(translation.timeoutMs) : NAT_TRANSLATION_TIMEOUT_MS;
+                    const active = lastUsed > 0 && now - lastUsed < timeout;
+                    if (!active) removed++;
+                    return active;
+                });
+                if (retained.length !== translations.length) entry.config.natTranslations = retained;
+            });
+            return removed;
+        }
+
         function applyNatToPing(source, target, segments) {
+            ageNatTranslations();
             const sourceAddress = getPrimaryAddress(source);
             const targetAddress = getPrimaryAddress(target);
             const routers = simulatorState.activeDevices.filter(entry => ['router', 'firewall'].includes(entry.device.type));
@@ -6923,13 +7463,25 @@ Router&gt;
                     const end = ipv4Details(pool?.end);
                     if (!start || !end) continue;
                     const existing = router.config.natTranslations || (router.config.natTranslations = []);
+                    const poolName = tokens[poolIndex + 1];
+                    const now = Date.now();
+                    const reusable = existing.find(translation => !translation.static
+                        && translation.protocol === 'ICMP'
+                        && translation.inside === sourceAddress
+                        && translation.pool === poolName);
+                    if (reusable) {
+                        reusable.lastUsedAt = now;
+                        reusable.expiresAt = now + NAT_TRANSLATION_TIMEOUT_MS;
+                        reusable.destination = targetAddress;
+                        return reusable;
+                    }
                     let outsideAddress = null;
                     for (let candidate = start.numeric; candidate <= end.numeric; candidate++) {
                         const address = ipv4String(candidate >>> 0);
                         if (!existing.some(translation => translation.outside === address)) { outsideAddress = address; break; }
                     }
                     if (!outsideAddress) continue;
-                    const translation = { protocol: 'ICMP', inside: sourceAddress, outside: outsideAddress, destination: targetAddress, pool: pool.name, static: false, createdAt: Date.now() };
+                    const translation = { protocol: 'ICMP', inside: sourceAddress, outside: outsideAddress, destination: targetAddress, pool: poolName, static: false, createdAt: now, lastUsedAt: now, expiresAt: now + NAT_TRANSLATION_TIMEOUT_MS, timeoutMs: NAT_TRANSLATION_TIMEOUT_MS };
                     existing.push(translation);
                     return translation;
                 }
@@ -6937,7 +7489,7 @@ Router&gt;
             return null;
         }
 
-        function simulateNetworkPing(source, target) {
+        function simulateNetworkPing(source, target, protocol = 'icmp', animateTraffic = true) {
             if (!source || !target) return { success: false, reason: 'Source or destination does not exist' };
             const segments = findPingSegments(source, target);
             if (!segments?.length) return { success: false, reason: 'No active route to host' };
@@ -6948,14 +7500,17 @@ Router&gt;
                 if (!resolveArpForSegment(segmentSource, segmentTarget, segment)) return { success: false, reason: 'ARP resolution failed' };
             }
             const returnSegments = segments.slice().reverse().map(reverseNetworkPath);
-            if (!isTrafficAllowed(source, target, segments, 'icmp') || !isTrafficAllowed(target, source, returnSegments, 'icmp')) {
-                return { success: false, reason: 'Access list denied ICMP traffic' };
+            if (!isTrafficAllowed(source, target, segments, protocol) || !isTrafficAllowed(target, source, returnSegments, protocol)) {
+                return { success: false, reason: `Access list denied ${protocol.toUpperCase()} traffic` };
             }
-            const natTranslation = applyNatToPing(source, target, segments);
-            let delay = 0;
-            const requestPayload = natTranslation ? `Echo request NAT ${natTranslation.inside} -> ${natTranslation.outside}` : 'Echo request';
-            segments.forEach(segment => { delay += animateNetworkPath(segment, 'icmp', requestPayload, delay, { natTranslation, direction: 'outbound' }); });
-            segments.slice().reverse().forEach(segment => { delay += animateNetworkPath(reverseNetworkPath(segment), 'icmp', 'Echo reply', delay, { natTranslation, direction: 'inbound' }); });
+            const natTranslation = protocol === 'icmp' ? applyNatToPing(source, target, segments) : null;
+            if (animateTraffic) {
+                let delay = 0;
+                const packetType = protocol === 'tcp' ? 'tcp' : 'icmp';
+                const requestPayload = natTranslation ? `Echo request NAT ${natTranslation.inside} -> ${natTranslation.outside}` : protocol === 'tcp' ? 'TCP connection request' : 'Echo request';
+                segments.forEach(segment => { delay += animateNetworkPath(segment, packetType, requestPayload, delay, { natTranslation, direction: 'outbound' }); });
+                segments.slice().reverse().forEach(segment => { delay += animateNetworkPath(reverseNetworkPath(segment), packetType, protocol === 'tcp' ? 'TCP connection response' : 'Echo reply', delay, { natTranslation, direction: 'inbound' }); });
+            }
             updateNetworkTables();
             return { success: true, segments, natTranslation, path: segments.flatMap((segment, index) => index ? segment.nodes.slice(1) : segment.nodes) };
         }
@@ -7097,8 +7652,36 @@ Router&gt;
             const modal = document.getElementById('deviceDetailsModal');
             const header = modal.querySelector('.modal-header h3');
             if (header) header.textContent = `${device.device.name} 設備工作區`;
-            renderDeviceDetailTabs(device, 'config');
+            renderDeviceDetailTabs(device, getDefaultDeviceTab(device));
             modal.style.display = 'flex';
+        }
+
+        function getDeviceCategory(entry) {
+            const type = entry?.device?.type;
+            if (type === 'hub') return 'layer1';
+            if (['router', 'switch', 'bridge', 'firewall', 'wlc'].includes(type)) return 'network';
+            if (['pc', 'laptop', 'server', 'web-server', 'db-server', 'storage', 'load-balancer', 'client'].includes(type)) return 'endpoint';
+            return 'appliance';
+        }
+
+        function getDefaultDeviceTab(entry) {
+            const category = getDeviceCategory(entry);
+            if (category === 'layer1') return 'physical';
+            if (category === 'network') return 'cli';
+            if (category === 'endpoint') return 'desktop';
+            return 'config';
+        }
+
+        function openDeviceInteraction(deviceId) {
+            const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
+            if (!entry) return;
+            simulatorState.selectedDevice = entry.id;
+            const category = getDeviceCategory(entry);
+            if (category === 'network') {
+                showCLITerminal();
+                return;
+            }
+            showDeviceDetails(entry.id);
         }
 
         function renderDeviceDetailTabs(entry, activeTab = 'config') {
@@ -7107,7 +7690,12 @@ Router&gt;
             const type = entry.device.type;
             const networkDeviceTypes = ['router', 'switch', 'bridge', 'firewall', 'wlc'];
             const serverTypes = ['server', 'web-server', 'db-server', 'storage', 'load-balancer'];
-            const tabs = [{ id: 'config', label: 'Config', icon: 'fa-sliders' }, { id: 'physical', label: 'Physical', icon: 'fa-microchip' }];
+            const category = getDeviceCategory(entry);
+            const tabs = category === 'layer1'
+                ? [{ id: 'physical', label: 'Ports', icon: 'fa-ethernet' }]
+                : category === 'endpoint'
+                    ? [{ id: 'physical', label: 'Physical', icon: 'fa-microchip' }]
+                    : [{ id: 'config', label: 'Config', icon: 'fa-sliders' }, { id: 'physical', label: 'Physical', icon: 'fa-microchip' }];
             if (networkDeviceTypes.includes(type)) tabs.push({ id: 'cli', label: 'CLI', icon: 'fa-terminal' });
             if (['pc', 'laptop', ...serverTypes, 'client'].includes(type)) tabs.push({ id: 'desktop', label: 'Desktop', icon: 'fa-desktop' });
             if (serverTypes.includes(type)) tabs.push({ id: 'services', label: 'Services', icon: 'fa-server' });
@@ -7142,6 +7730,21 @@ Router&gt;
         function renderPhysicalDevicePanel(entry, panel) {
             const config = entry.config || (entry.config = {});
             const powered = config.powered !== false;
+            if (entry.device.type === 'hub') {
+                const ports = Object.keys(entry.device.interfaces || {});
+                panel.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem"><div><strong>Hub-PT · Layer 1 Repeater</strong><div style="font-size:.78rem;color:var(--cyber-gray)">無 IP／MAC／CLI；只重複實體訊號。</div></div><button class="action-btn ${powered ? '' : 'primary'}" onclick="toggleDevicePower('${entry.id}')">${powered ? '關閉 Hub 電源' : '開啟 Hub 電源'}</button></div><div class="detail-card"><strong>Physical Ports</strong><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.5rem;margin-top:.7rem">${ports.map(name => {
+                    const connection = simulatorState.connections.find(link => (link.from === entry.id || link.to === entry.id) && getConnectionInterface(entry, link) === name);
+                    const peerId = connection && (connection.from === entry.id ? connection.to : connection.from);
+                    const peer = simulatorState.activeDevices.find(device => device.id === peerId);
+                    const off = config.interfaces?.[name]?.shutdown || entry.device.interfaces[name]?.status === 'administratively down';
+                    const linked = Boolean(connection && isConnectionOperational(connection) && powered && !off);
+                    const transmitting = linked && Date.now() - Number(config.interfaces?.[name]?.lastActivityAt || 0) < 1500;
+                    const status = !powered || off ? 'OFF' : transmitting ? 'TX/RX ACTIVITY' : linked ? 'LINK / SIGNAL' : connection ? 'LINK DOWN' : 'NO LINK';
+                    const ledColor = !powered || off ? 'var(--offline)' : transmitting ? 'var(--warning)' : linked ? 'var(--online)' : 'var(--cyber-gray)';
+                    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.6rem;border:1px solid var(--neon-border);border-radius:7px;background:rgba(0,0,0,.18)"><div style="min-width:0"><strong><i class="fas fa-circle" style="font-size:.62rem;color:${ledColor};margin-right:.4rem"></i>${escapeHtml(name)}</strong><div style="font-size:.72rem;color:var(--cyber-gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(peer?.device.name || '未連接')} · ${status}</div></div><button class="action-btn" ${!powered ? 'disabled' : ''} onclick="toggleHubPort('${entry.id}','${name}')">${off ? '開啟埠' : '關閉埠'}</button></div>`;
+                }).join('')}</div></div>`;
+                return;
+            }
             const scale = config.physicalScale || 1;
             const modules = entry.device.modules || ['WMP300N', 'PT-HOST-NM-1FFE', '3G/4G Modem'];
             panel.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap"><strong>Physical / Modules</strong><span style="color:${powered ? 'var(--online)' : 'var(--offline)'}">● 電源 ${powered ? 'ON' : 'OFF'}</span></div><div class="physical-device-preview"><i class="fas ${entry.device.icon}" style="font-size:${2.8 * scale}rem"></i></div><div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="action-btn" onclick="adjustPhysicalScale('${entry.id}', 0.85)">Zoom Out</button><button class="action-btn" onclick="adjustPhysicalScale('${entry.id}', 1.15)">Zoom In</button><button class="action-btn" onclick="resetPhysicalScale('${entry.id}')">Original Size</button><button class="action-btn ${powered ? '' : 'primary'}" onclick="toggleDevicePower('${entry.id}')">${powered ? '關閉電源' : '開啟電源'}</button></div><p style="color:var(--cyber-gray);font-size:.8rem;margin:.7rem 0">必須先關閉電源，才能插拔模組。</p><div class="device-module-list">${modules.map(module => `<div class="device-module"><div>${module}</div><small style="color:var(--cyber-gray)">${(config.modules || []).includes(module) ? '已安裝' : '可用模組'}</small><button class="action-btn" ${powered ? 'disabled' : ''} onclick="installDeviceModule('${entry.id}', '${module}')">${(config.modules || []).includes(module) ? '已安裝' : '安裝'}</button></div>`).join('')}</div>`;
@@ -7171,6 +7774,31 @@ Router&gt;
             invalidateNetworkCaches();
             switchDeviceDetailTab('physical');
             showHint('Physical', `${entry.device.name} 電源已${entry.config.powered ? '開啟' : '關閉'}`);
+        }
+
+        function toggleHubPort(deviceId, interfaceName) {
+            const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
+            if (!entry || entry.device.type !== 'hub' || !Object.prototype.hasOwnProperty.call(entry.device.interfaces || {}, interfaceName)) return;
+            entry.config = entry.config || {};
+            entry.config.interfaces = entry.config.interfaces || {};
+            const current = entry.config.interfaces[interfaceName] || {};
+            const shutdown = !current.shutdown;
+            entry.config.interfaces[interfaceName] = { ...current, shutdown };
+            const value = entry.device.interfaces[interfaceName];
+            entry.device.interfaces[interfaceName] = { ...(typeof value === 'object' && value ? value : {}), status: shutdown ? 'administratively down' : 'up' };
+            invalidateNetworkCaches();
+            switchDeviceDetailTab('physical');
+            showHint('Hub Port', `${interfaceName} ${shutdown ? '已關閉' : '已開啟'}`);
+        }
+
+        function refreshOpenHubPortPanel() {
+            const modal = document.getElementById('deviceDetailsModal');
+            const content = document.getElementById('deviceDetailsContent');
+            if (!modal || getComputedStyle(modal).display === 'none' || !content) return;
+            const entry = simulatorState.activeDevices.find(device => device.id === content.dataset.deviceId);
+            if (entry?.device.type === 'hub' && content.querySelector('[data-tab="physical"]')?.classList.contains('active')) {
+                renderPhysicalDevicePanel(entry, document.getElementById('deviceDetailPanel'));
+            }
         }
 
         function installDeviceModule(deviceId, moduleName) {
@@ -7240,8 +7868,9 @@ Router&gt;
             const serverTypes = ['server', 'web-server', 'db-server', 'storage', 'load-balancer'];
             const isServer = serverTypes.includes(entry.device.type);
             const apps = [
-                { label: 'IP Configuration', icon: 'fa-network-wired', action: "switchDeviceDetailTab('config')" },
-                { label: 'Command Prompt', icon: 'fa-terminal', action: `showDesktopCommandPrompt('${entry.id}')` },
+                { label: 'IP Configuration', icon: 'fa-network-wired', action: `renderDesktopIPConfig('${entry.id}')` },
+                { label: 'Command Prompt', icon: 'fa-terminal', action: `showDesktopCommandPrompt('${entry.id}','cmd')` },
+                { label: 'PowerShell', icon: 'fa-terminal', action: `showDesktopCommandPrompt('${entry.id}','powershell')` },
                 { label: 'Web Browser', icon: 'fa-globe', action: `showDesktopBrowser('${entry.id}')` },
                 ...(isServer ? [{ label: 'Network Services', icon: 'fa-server', action: "switchDeviceDetailTab('services')" }, { label: 'User Manager', icon: 'fa-users', action: "switchDeviceDetailTab('services')" }] : [
                     { label: 'Wireless Utility', icon: 'fa-wifi', action: `showHint('Desktop','無線網卡狀態與可用網路掃描工具。')` },
@@ -7250,7 +7879,82 @@ Router&gt;
                     { label: 'Text Editor', icon: 'fa-file-lines', action: `showHint('Desktop','文字編輯器已就緒。')` }
                 ])
             ];
-            panel.innerHTML = `<div class="desktop-shell"><div class="desktop-topbar"><span><i class="fab fa-windows"></i> ${escapeHtml(entry.device.name)} · Network OS</span><span><i class="fas fa-wifi"></i> ${escapeHtml(getPrimaryAddress(entry) || '未配置 IP')}</span></div><div class="desktop-wallpaper">${apps.map(app => `<button class="desktop-app-card" onclick="${app.action}"><i class="fas ${app.icon}"></i><span>${app.label}</span></button>`).join('')}</div><div class="desktop-taskbar"><button class="action-btn" onclick="switchDeviceDetailTab('config')"><i class="fas fa-gear"></i></button><button class="action-btn" onclick="showDesktopCommandPrompt('${entry.id}')"><i class="fas fa-terminal"></i></button><span style="color:var(--cyber-gray);font-size:.72rem;align-self:center;margin-left:.35rem">${isServer ? 'Server workspace' : 'Desktop workspace'} · ${escapeHtml(entry.device.model || entry.device.type)}</span></div></div><div class="detail-card" style="margin-top:.8rem;display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap"><span><i class="fas fa-circle" style="color:var(--online);font-size:.65rem"></i> 系統狀態：就緒</span><span style="color:var(--cyber-gray);font-size:.75rem">模擬桌面，不會執行外部程式或存取真實網路</span></div>`;
+            panel.innerHTML = `<div class="desktop-shell"><div class="desktop-topbar"><span><i class="fab fa-windows"></i> ${escapeHtml(entry.device.name)} · Network OS</span><span><i class="fas fa-wifi"></i> ${escapeHtml(getPrimaryAddress(entry) || '未配置 IP')}</span></div><div class="desktop-wallpaper">${apps.map(app => `<button class="desktop-app-card" onclick="${app.action}"><i class="fas ${app.icon}"></i><span>${app.label}</span></button>`).join('')}</div><div class="desktop-taskbar"><button class="action-btn" onclick="renderDesktopIPConfig('${entry.id}')"><i class="fas fa-gear"></i></button><button class="action-btn" onclick="showDesktopCommandPrompt('${entry.id}','cmd')"><i class="fas fa-terminal"></i></button><button class="action-btn" onclick="showDesktopCommandPrompt('${entry.id}','powershell')"><i class="fab fa-windows"></i></button><span style="color:var(--cyber-gray);font-size:.72rem;align-self:center;margin-left:.35rem">${isServer ? 'Server workspace' : 'Desktop workspace'} · ${escapeHtml(entry.device.model || entry.device.type)}</span></div></div><div class="detail-card" style="margin-top:.8rem;display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap"><span><i class="fas fa-circle" style="color:var(--online);font-size:.65rem"></i> 系統狀態：就緒</span><span style="color:var(--cyber-gray);font-size:.75rem">模擬桌面，不會執行外部程式或存取真實網路</span></div>`;
+        }
+
+        function renderDesktopIPConfig(deviceId) {
+            const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
+            const panel = document.getElementById('deviceDetailPanel');
+            if (!entry || !panel) return;
+            entry.config = entry.config || {};
+            const interfaces = Object.keys(entry.device.interfaces || {});
+            if (!interfaces.length) return showHint('IP Configuration', '此設備沒有可配置的網路介面。');
+            const interfaceName = interfaces.includes(entry.config.interfaceName) ? entry.config.interfaceName : interfaces[0];
+            const current = entry.device.interfaces[interfaceName];
+            const address = typeof current === 'string' ? current : current?.ip || '';
+            const prefix = address ? ipv4Details(address)?.prefix : 24;
+            const ipv6 = current?.ipv6?.[0] || entry.config.interfaces?.[interfaceName]?.ipv6Addresses?.[0] || '';
+            const dns = entry.config.dns || entry.config.dnsServers?.[0] || '';
+            const mode = entry.config.networkMode || 'static';
+            panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-bottom:.75rem"><h3 style="margin:0;color:var(--interface-blue)"><i class="fas fa-network-wired"></i> IP Configuration</h3><button class="action-btn" onclick="switchDeviceDetailTab('desktop')">返回桌面</button></div><div class="config-section"><label class="form-label">網路介面<select id="desktopInterface" class="control-select">${interfaces.map(name => `<option value="${escapeHtml(name)}" ${name === interfaceName ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="form-label">IPv4 設定<select id="desktopAddressMode" class="control-select" onchange="toggleDesktopIPv4Fields()"><option value="static" ${mode === 'static' ? 'selected' : ''}>Static（靜態）</option><option value="dhcp" ${mode === 'dhcp' ? 'selected' : ''}>DHCP</option></select></label><div id="desktopIPv4Fields" ${mode === 'dhcp' ? 'hidden' : ''}><label class="form-label">IPv4 Address<input id="desktopIPv4" class="control-input" value="${escapeHtml(address.split('/')[0])}" placeholder="192.168.1.10" inputmode="decimal"></label><label class="form-label">Subnet Mask<input id="desktopMask" class="control-input" value="${prefix === null ? '255.255.255.0' : prefixToMask(prefix)}" placeholder="255.255.255.0" inputmode="decimal"></label><label class="form-label">Default Gateway<input id="desktopGateway" class="control-input" value="${escapeHtml(entry.device.gateway || entry.config.gateway || '')}" placeholder="192.168.1.1" inputmode="decimal"></label><label class="form-label">DNS Server<input id="desktopDns" class="control-input" value="${escapeHtml(dns)}" placeholder="192.168.1.2" inputmode="decimal"></label></div><label class="form-label">IPv6 Address<input id="desktopIPv6" class="control-input" value="${escapeHtml(ipv6)}" placeholder="2001:db8:1::10/64"></label><div style="font-size:.78rem;color:var(--cyber-gray);margin:.3rem 0 1rem">MAC Address：<strong style="color:var(--hologram-text);font-family:var(--font-mono)">${formatCiscoMac(getDeviceMac(entry))}</strong></div><button class="action-btn primary" onclick="applyDesktopNetworkConfig('${entry.id}')"><i class="fas fa-check"></i> 套用設定</button></div>`;
+            document.getElementById('desktopInterface')?.addEventListener('change', event => setDesktopInterface(deviceId, event.target.value));
+        }
+
+        function setDesktopInterface(deviceId, interfaceName) {
+            const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
+            if (!entry || !Object.prototype.hasOwnProperty.call(entry.device.interfaces || {}, interfaceName)) return;
+            entry.config = entry.config || {};
+            entry.config.interfaceName = interfaceName;
+            renderDesktopIPConfig(deviceId);
+        }
+
+        function toggleDesktopIPv4Fields() {
+            const fields = document.getElementById('desktopIPv4Fields');
+            const mode = document.getElementById('desktopAddressMode')?.value;
+            if (fields) fields.hidden = mode === 'dhcp';
+        }
+
+        function applyDesktopNetworkConfig(deviceId) {
+            const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
+            if (!entry) return;
+            const interfaceName = document.getElementById('desktopInterface')?.value;
+            const mode = document.getElementById('desktopAddressMode')?.value || 'static';
+            if (!interfaceName || !Object.prototype.hasOwnProperty.call(entry.device.interfaces || {}, interfaceName)) return showHint('IP Configuration', '請選擇有效網路介面。');
+            if (mode === 'dhcp') {
+                const result = requestDHCPLease(entry, interfaceName);
+                if (result.startsWith('%')) return showHint('DHCP', result.slice(2));
+                entry.config.networkMode = 'dhcp';
+                renderDesktopIPConfig(deviceId);
+                updateNetworkTables();
+                return showHint('DHCP', result);
+            }
+
+            const ip = document.getElementById('desktopIPv4')?.value.trim();
+            const mask = document.getElementById('desktopMask')?.value.trim();
+            const gateway = document.getElementById('desktopGateway')?.value.trim() || '';
+            const dns = document.getElementById('desktopDns')?.value.trim() || '';
+            const ipv6 = document.getElementById('desktopIPv6')?.value.trim() || '';
+            const prefix = maskToPrefix(mask);
+            if (!ip || prefix === null || !ipv4Details(`${ip}/${prefix}`) || !isUsableHostAddress(`${ip}/${prefix}`)) return showHint('IP Configuration', 'IPv4 或 Subnet Mask 無效，請輸入有效的主機位址。');
+            if (gateway && (!isUsableHostAddress(gateway) || !addressMatchesPrefix(gateway, `${ip}/${prefix}`))) return showHint('IP Configuration', 'Default Gateway 必須是同一子網內的有效 IPv4 主機位址。');
+            if (dns && !ipv4Details(dns)) return showHint('IP Configuration', 'DNS Server 必須是有效 IPv4 位址。');
+            const parsedIPv6 = ipv6 ? ipv6AddressDetails(ipv6) : null;
+            if (ipv6 && !parsedIPv6) return showHint('IP Configuration', 'IPv6 Address 格式無效，請使用 address/prefix 格式。');
+            const result = setInterfaceAddress(entry, interfaceName, ip, mask);
+            if (result.startsWith('%')) return showHint('IP Configuration', result.slice(2));
+            const current = entry.device.interfaces[interfaceName];
+            const value = typeof current === 'string' ? { ip: current } : { ...(current || {}) };
+            value.ipv6 = parsedIPv6 ? [`${parsedIPv6.address}/${parsedIPv6.prefix}`] : [];
+            entry.device.interfaces[interfaceName] = value;
+            entry.device.gateway = gateway;
+            entry.config = { ...(entry.config || {}), gateway, dns, mask, interfaceName, networkMode: 'static' };
+            entry.config.interfaces = entry.config.interfaces || {};
+            entry.config.interfaces[interfaceName] = { ...(entry.config.interfaces[interfaceName] || {}), ipv6Addresses: value.ipv6.slice() };
+            const node = document.getElementById(entry.id);
+            if (node?.querySelector('.node-ip')) node.querySelector('.node-ip').textContent = entry.device.ip || 'unassigned';
+            invalidateNetworkCaches();
+            renderDesktopIPConfig(deviceId);
+            showHint('IP Configuration', `${entry.device.name} IPv4/IPv6 設定已套用。`);
         }
 
         function renderServerServicesPanel(entry, panel) {
@@ -7353,42 +8057,60 @@ Router&gt;
             showHint('Web 服務', `${entry.device.name} ${protocol.toUpperCase()} 服務${entry.config.services[protocol] ? '已啟動' : '已停止'}`);
         }
 
-        function showDesktopCommandPrompt(deviceId) {
+        function showDesktopCommandPrompt(deviceId, shell = 'cmd') {
             const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
             if (!entry) return;
             const id = `desktopCmd_${Date.now()}`;
             const safeName = escapeHtml(entry.device.name);
-            document.body.insertAdjacentHTML('beforeend', `<div class="modal-overlay" id="${id}" onclick="if(event.target===this)this.remove()"><div class="modal-content" style="max-width:720px"><div class="modal-header"><h3><i class="fas fa-terminal"></i> ${safeName} · Command Prompt</h3><button class="close-btn" onclick="document.getElementById('${id}').remove()">×</button></div><div class="modal-body"><pre id="${id}_out" class="desktop-terminal-output">Microsoft Windows [Simulated Network Desktop]\n(c) Network Simulator. All rights reserved.\n\n${safeName}&gt;</pre><div class="cli-terminal-input desktop-terminal-input"><span class="cli-prompt">${safeName}&gt;</span><input id="${id}_in" class="cli-input-field" placeholder="輸入 ipconfig、ping、tracert 或 netstat" onkeydown="if(event.key==='Enter')runDesktopCommand('${id}','${entry.id}')"></div><p style="margin:.45rem .1rem 0;color:var(--cyber-gray);font-size:.7rem">支援：ipconfig · ping &lt;IPv4&gt; · tracert &lt;IPv4&gt; · netstat</p></div></div></div>`);
+            const isPowerShell = shell === 'powershell';
+            const prompt = isPowerShell ? 'PS C:\\>' : `${safeName}&gt;`;
+            const title = isPowerShell ? 'Windows PowerShell' : 'Command Prompt';
+            const welcome = isPowerShell ? 'Windows PowerShell\nCopyright (C) Network Simulator.\n\n' : 'Microsoft Windows [Simulated Network Desktop]\n(c) Network Simulator. All rights reserved.\n\n';
+            document.body.insertAdjacentHTML('beforeend', `<div class="modal-overlay" id="${id}" onclick="if(event.target===this)this.remove()"><div class="modal-content" style="max-width:720px"><div class="modal-header"><h3><i class="fas fa-terminal"></i> ${safeName} · ${title}</h3><button class="close-btn" onclick="document.getElementById('${id}').remove()">×</button></div><div class="modal-body"><pre id="${id}_out" class="desktop-terminal-output">${welcome}${prompt}</pre><div class="cli-terminal-input desktop-terminal-input"><span class="cli-prompt">${prompt}</span><input id="${id}_in" class="cli-input-field" placeholder="輸入 ipconfig /all、ping 或 tracert" onkeydown="if(event.key==='Enter')runDesktopCommand('${id}','${entry.id}','${shell}')"></div><p style="margin:.45rem .1rem 0;color:var(--cyber-gray);font-size:.7rem">模擬命令：ipconfig /all · ping &lt;IPv4&gt; · tracert &lt;IPv4&gt; · netstat${isPowerShell ? ' · Get-NetIPConfiguration · Test-NetConnection' : ''}</p></div></div></div>`);
             document.getElementById(`${id}_in`).focus();
         }
 
-        function runDesktopCommand(modalId, deviceId) {
+        function runDesktopCommand(modalId, deviceId, shell = 'cmd') {
             const input = document.getElementById(`${modalId}_in`);
             const output = document.getElementById(`${modalId}_out`);
             const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
             if (!input || !output || !entry) return;
             const command = input.value.trim();
             const lower = command.toLowerCase();
+            const isPowerShell = shell === 'powershell';
+            const prompt = isPowerShell ? 'PS C:\\>' : `${entry.device.name}>`;
             let response;
-            if (lower === 'ipconfig') {
-                response = Object.entries(entry.device.interfaces || {}).map(([name, value]) => `Adapter ${name}\n  IPv4 Address: ${(typeof value === 'string' ? value : value?.ip || 'unassigned')}\n  Status: ${value?.status === 'administratively down' ? 'down' : 'up'}`).join('\n') + `\nDefault Gateway: ${entry.device.gateway || '0.0.0.0'}\nDNS Server: ${entry.config?.dns || 'not configured'}`;
+            if (lower === 'ipconfig' || lower === 'ipconfig /all' || lower === 'get-netipconfiguration') {
+                response = Object.entries(entry.device.interfaces || {}).map(([name, value]) => {
+                    const ipv4 = typeof value === 'string' ? value : value?.ip || 'unassigned';
+                    const ipv6 = value?.ipv6 || entry.config?.interfaces?.[name]?.ipv6Addresses || [];
+                    const prefix = ipv4Details(ipv4)?.prefix;
+                    return `Adapter ${name}\n  Physical Address . . . . . . . .: ${formatCiscoMac(getDeviceMac(entry))}\n  IPv4 Address . . . . . . . . . .: ${ipv4.split('/')[0]}\n  Subnet Mask . . . . . . . . . .: ${prefix === undefined ? 'N/A' : prefixToMask(prefix)}\n  IPv6 Address . . . . . . . . . .: ${ipv6.join(', ') || 'not configured'}\n  Status . . . . . . . . . . . .: ${value?.status === 'administratively down' ? 'down' : 'up'}`;
+                }).join('\n\n') + `\n\nDefault Gateway: ${entry.device.gateway || entry.config?.gateway || '0.0.0.0'}\nDNS Server: ${entry.config?.dns || entry.config?.dnsServers?.join(', ') || 'not configured'}\nDHCP Enabled: ${entry.config?.networkMode === 'dhcp' ? 'Yes' : 'No'}`;
             } else if (lower.startsWith('ping ')) {
                 const targetAddress = command.split(/\s+/)[1];
                 const target = simulatorState.activeDevices.find(device => deviceAddresses(device).some(address => address.split('/')[0] === targetAddress));
                 const result = target ? simulateNetworkPing(entry, target) : { success: false, reason: 'Destination host not found' };
                 response = result.success ? `Pinging ${targetAddress} with 32 bytes of data:\nReply from ${targetAddress}: bytes=32 time=${Math.max(1, result.path.length * 2)}ms TTL=64\nPing successful (${result.path.length} hop(s))` : `Pinging ${targetAddress} with 32 bytes of data:\nRequest timed out. (${result.reason})\n100% packet loss`;
-            } else if (lower.startsWith('tracert ')) {
+            } else if (lower.startsWith('tracert ') || lower.startsWith('traceroute ')) {
                 const targetAddress = command.split(/\s+/)[1];
                 const target = simulatorState.activeDevices.find(device => deviceAddresses(device).some(address => address.split('/')[0] === targetAddress));
                 const result = target ? simulateNetworkPing(entry, target) : { success: false, reason: 'Destination host not found' };
                 response = result.success ? `Tracing route to ${targetAddress}\n${result.path.map((id, index) => `  ${index + 1}  ${simulatorState.activeDevices.find(device => device.id === id)?.device.name || id} (${getPrimaryAddress(simulatorState.activeDevices.find(device => device.id === id))})`).join('\n')}\nTrace complete.` : `Unable to trace ${targetAddress}: ${result.reason}`;
+            } else if (lower.startsWith('test-connection ') || lower.startsWith('test-netconnection ')) {
+                const targetAddress = command.split(/\s+/)[1];
+                const target = simulatorState.activeDevices.find(device => deviceAddresses(device).some(address => address.split('/')[0] === targetAddress));
+                const result = target ? simulateNetworkPing(entry, target) : { success: false, reason: 'Destination host not found' };
+                response = `ComputerName     : ${targetAddress}\nRemoteAddress    : ${targetAddress}\nPingSucceeded    : ${Boolean(result.success)}\n${result.success ? `Latency          : ${Math.max(1, result.path.length * 2)} ms` : `FailureReason    : ${result.reason}`}`;
+            } else if (lower === 'get-netadapter') {
+                response = `Name                 Status       MacAddress\n${Object.keys(entry.device.interfaces || {}).map(name => `${name.padEnd(21)} ${(entry.device.interfaces[name]?.status === 'administratively down' ? 'Disabled' : 'Up').padEnd(12)} ${formatCiscoMac(getDeviceMac(entry))}`).join('\n')}`;
             } else if (lower === 'netstat') {
                 const services = entry.config?.services || {};
                 response = `Active Connections\n${services.http ? 'TCP 0.0.0.0:80 LISTENING' : ''}${services.https ? '\nTCP 0.0.0.0:443 LISTENING' : ''}`.trim() || 'No active services';
             } else {
-                response = 'Error: supported commands are ipconfig, ping <IPv4>, tracert <IPv4>, netstat';
+                response = `Error: unsupported ${isPowerShell ? 'PowerShell' : 'CMD'} command. Supported: ipconfig /all, ping <IPv4>, tracert <IPv4>, netstat${isPowerShell ? ', Get-NetIPConfiguration, Get-NetAdapter, Test-NetConnection <IPv4>' : ''}`;
             }
-            output.textContent += `\n${entry.device.name}> ${command}\n${response}`;
+            output.textContent += `\n${prompt} ${command}\n${response}\n${prompt}`;
             input.value = '';
             output.scrollTop = output.scrollHeight;
         }
@@ -7417,13 +8139,17 @@ Router&gt;
                 return dnsResolves || getPrimaryAddress(device) === url.hostname || device.device.name.toLowerCase() === url.hostname.toLowerCase();
             });
             if (!target) { page.textContent = `無法連線：拓撲中找不到 ${url.hostname}。`; return; }
-            const connectivity = simulateNetworkPing(source, target);
+            const connectivity = simulateNetworkPing(source, target, 'tcp', false);
             if (!connectivity.success) { page.textContent = `無法連線到 ${url.hostname}：${connectivity.reason}。請檢查 IP、介面狀態、線路及路由。`; return; }
+            const returnSegments = connectivity.segments.slice().reverse().map(reverseNetworkPath);
             if (!target.config?.services?.http || (url.protocol === 'https:' && !target.config?.services?.https)) {
                 page.textContent = `已連到 ${url.hostname}，但 ${url.protocol.slice(0, -1).toUpperCase()} 服務未啟用（${url.protocol === 'https:' ? 'HTTPS' : 'HTTP'}）。請在目標設備 Services 分頁開啟服務。`;
                 return;
             }
-            page.innerHTML = `<div style="font:14px/1.6 Segoe UI,sans-serif;color:#18212f"><div style="font-size:1.3rem;font-weight:700;color:#0877b9">${escapeHtml(target.device.name)} Web Server</div><hr style="margin:.7rem 0"><p>連線狀態：<strong style="color:#087a42">HTTP 200 OK</strong></p><p>主機：${escapeHtml(url.hostname)}</p><p>IPv4：${escapeHtml(getPrimaryAddress(target))}</p><p>來源設備：${escapeHtml(source.device.name)}</p><p>路徑：${escapeHtml(url.pathname || '/')}</p><p>網絡路徑：${connectivity.path.map(id => escapeHtml(simulatorState.activeDevices.find(device => device.id === id)?.device.name || id)).join(' → ')}</p></div>`;
+            const protocol = url.protocol === 'https:' ? 'HTTPS' : 'HTTP';
+            connectivity.segments.forEach(segment => animateNetworkPath(segment, 'tcp', `${protocol} GET ${url.pathname || '/'}`, 0, { payloadSize: 512 }));
+            returnSegments.forEach(segment => animateNetworkPath(segment, 'tcp', `${protocol} 200 OK`, 200, { payloadSize: 1024 }));
+            page.innerHTML = `<div style="font:14px/1.6 Segoe UI,sans-serif;color:#18212f"><div style="font-size:1.3rem;font-weight:700;color:#0877b9">${escapeHtml(target.device.name)} Web Server</div><hr style="margin:.7rem 0"><p>連線狀態：<strong style="color:#087a42">${protocol} 200 OK</strong></p><p>主機：${escapeHtml(url.hostname)}</p><p>IPv4：${escapeHtml(getPrimaryAddress(target))}</p><p>來源設備：${escapeHtml(source.device.name)}</p><p>路徑：${escapeHtml(url.pathname || '/')}</p><p>網絡路徑：${connectivity.path.map(id => escapeHtml(simulatorState.activeDevices.find(device => device.id === id)?.device.name || id)).join(' → ')}</p><hr style="margin:.7rem 0"><p>此頁面為模擬 Web 回應；HTTP 流量已在拓撲中呈現。</p></div>`;
         }
 
         function hideDeviceDetails() {
@@ -7529,20 +8255,20 @@ Router&gt;
             menu.style.top = `${e.clientY}px`;
             menu.style.left = `${e.clientX}px`;
             
+            const entry = simulatorState.activeDevices.find(device => device.id === nodeId);
+            const category = getDeviceCategory(entry);
+            const cliItem = category === 'network' ? `<button class="context-menu-item" onclick="openDeviceCLI('${nodeId}'); closeContextMenu()"><i class="fas fa-terminal"></i>開啟 CLI</button>` : '';
+            const macTableItem = ['switch', 'bridge'].includes(entry?.device?.type) ? `<button class="context-menu-item" onclick="showMacAddressTable('${nodeId}'); closeContextMenu()"><i class="fas fa-table"></i>檢視 MAC 位址表</button>` : '';
             menu.innerHTML = `
                 <div class="context-menu-header">設備工作區</div>
-                <button class="context-menu-item" onclick="openDeviceWorkspace('${nodeId}'); closeContextMenu()">
+                <button class="context-menu-item" onclick="openDeviceInteraction('${nodeId}'); closeContextMenu()">
                     <i class="fas fa-window-maximize"></i>Physical / Config / Desktop
                 </button>
-                <button class="context-menu-item" onclick="openDeviceCLI('${nodeId}'); closeContextMenu()">
-                    <i class="fas fa-terminal"></i>開啟 CLI
-                </button>
+                ${cliItem}
                 <button class="context-menu-item" onclick="resetDevice('${nodeId}'); closeContextMenu()">
                     <i class="fas fa-undo"></i>重置設備
                 </button>
-                <button class="context-menu-item" onclick="showMacAddressTable('${nodeId}'); closeContextMenu()">
-                    <i class="fas fa-table"></i>檢視 MAC 位址表
-                </button>
+                ${macTableItem}
                 <button class="context-menu-item" onclick="cloneDevice('${nodeId}'); closeContextMenu()">
                     <i class="fas fa-copy"></i>複製設備
                 </button>
@@ -7562,6 +8288,11 @@ Router&gt;
         }
 
         function openDeviceCLI(nodeId) {
+            const entry = simulatorState.activeDevices.find(device => device.id === nodeId);
+            if (!entry || !['router', 'switch', 'bridge', 'firewall', 'wlc'].includes(entry.device.type)) {
+                showHint('CLI', entry?.device.type === 'hub' ? 'Hub-PT 是 Layer 1 設備，不提供 IP、MAC 或 CLI。' : '此設備類型沒有 Cisco IOS CLI。');
+                return;
+            }
             simulatorState.selectedDevice = nodeId;
             showCLITerminal();
         }
@@ -7576,6 +8307,11 @@ Router&gt;
             const node = document.getElementById(nodeId);
             if (!entry || !node) return;
             entry.config = {};
+            if (entry.device.type === 'hub') {
+                entry.device.ip = '';
+                entry.device.gateway = '';
+                Object.keys(entry.device.interfaces || {}).forEach(name => { entry.device.interfaces[name] = { status: 'up' }; });
+            }
             const status = node.querySelector('.node-status');
             if (status) status.style.background = 'var(--online)';
             showHint('設備重置', `${entry.device.name} 的模擬配置已重置`);
@@ -7589,9 +8325,9 @@ Router&gt;
                 const peerId = connection && (connection.from === nodeId ? connection.to : connection.from);
                 const peer = simulatorState.activeDevices.find(device => device.id === peerId);
                 const mac = `02:00:${(index + 1).toString(16).padStart(2, '0')}:${nodeId.slice(-4, -2)}:${nodeId.slice(-2)}:${(index + 10).toString(16).padStart(2, '0')}`;
-                return `<tr><td>${mac}</td><td>Gi0/${index}</td><td>${peer?.device.name || '未知設備'}</td><td>${connection?.status || 'unknown'}</td></tr>`;
+                return `<tr><td>${escapeHtml(mac)}</td><td>Gi0/${index}</td><td>${escapeHtml(peer?.device.name || '未知設備')}</td><td>${escapeHtml(connection?.status || 'unknown')}</td></tr>`;
             }).join('');
-            const html = `<div class="modal-overlay" id="macTableModal" onclick="if(event.target===this)this.remove()"><div class="modal-content" style="max-width:650px"><div class="modal-header"><h3><i class="fas fa-table"></i> ${entry.device.name} MAC 位址表</h3><button class="close-btn" onclick="this.closest('.modal-overlay').remove()">×</button></div><div class="modal-body"><table class="packet-table"><thead><tr><th>MAC Address</th><th>Port</th><th>Connected Device</th><th>Status</th></tr></thead><tbody>${rows || '<tr><td colspan="4">目前沒有連線記錄</td></tr>'}</tbody></table></div></div></div>`;
+            const html = `<div class="modal-overlay" id="macTableModal" onclick="if(event.target===this)this.remove()"><div class="modal-content" style="max-width:650px"><div class="modal-header"><h3><i class="fas fa-table"></i> ${escapeHtml(entry.device.name)} MAC 位址表</h3><button class="close-btn" onclick="this.closest('.modal-overlay').remove()">×</button></div><div class="modal-body"><table class="packet-table"><thead><tr><th>MAC Address</th><th>Port</th><th>Connected Device</th><th>Status</th></tr></thead><tbody>${rows || '<tr><td colspan="4">目前沒有連線記錄</td></tr>'}</tbody></table></div></div></div>`;
             document.body.insertAdjacentHTML('beforeend', html);
         }
 
@@ -7650,13 +8386,23 @@ Router&gt;
             entry.config.interfaces = {};
             entry.config.interfaceName = null;
             const names = getDefaultInterfaceNames(entry.device);
+            if (nextType === 'hub') {
+                entry.device.ip = '';
+                entry.device.gateway = '';
+                entry.config = { powered: entry.config.powered !== false, interfaces: {} };
+            }
             entry.device.ip = '';
             names.forEach((name, index) => {
                 entry.device.interfaces[name] = { status: 'up' };
                 entry.config.interfaces[name] = {};
             });
-            entry.device.primaryInterface = names[0];
-            entry.config.interfaceName = names[0];
+            if (nextType !== 'hub') {
+                entry.device.primaryInterface = names[0];
+                entry.config.interfaceName = names[0];
+            } else {
+                entry.device.primaryInterface = null;
+                entry.config.interfaceName = null;
+            }
             if (['server', 'web-server'].includes(nextType)) {
                 entry.config.services = { http: true, https: true };
             } else {
@@ -7749,14 +8495,18 @@ Router&gt;
 
         function showCLITerminal() {
             const cli = document.getElementById('cliTerminal');
-            cli.style.display = 'flex';
-            
             const selectedDevice = simulatorState.activeDevices.find(d => d.id === simulatorState.selectedDevice);
-            if (selectedDevice) {
-                useCLIState(selectedDevice);
-                cliHostname = selectedDevice.device.name.replace(/\s+/g, '');
-                document.getElementById('cliDeviceName').textContent = `CLI - ${selectedDevice.device.name}`;
+            if (!selectedDevice || !['router', 'switch', 'bridge', 'firewall', 'wlc'].includes(selectedDevice.device.type)) {
+                showHint('CLI', selectedDevice?.device.type === 'hub' ? 'Hub-PT 是 Layer 1 設備，不提供 CLI。' : '請先選取 Router、Switch 或其他支援 CLI 的網絡設備。');
+                return;
             }
+            cli.style.display = 'flex';
+            setupCLIWindowInteractions();
+            const cliWindow = cli.querySelector('.cli-terminal-window');
+            cliWindow?.classList.remove('cli-minimized');
+            useCLIState(selectedDevice);
+            cliHostname = selectedDevice.device.name.replace(/\s+/g, '');
+            document.getElementById('cliDeviceName').textContent = `CLI - ${selectedDevice.device.name}`;
             
             updateCLIPrompt();
             document.getElementById('cliInput').focus();
@@ -7764,6 +8514,79 @@ Router&gt;
 
         function closeCLI() {
             document.getElementById('cliTerminal').style.display = 'none';
+        }
+
+        let cliWindowInteractionsBound = false;
+        let cliWindowRestoreBounds = null;
+
+        function setupCLIWindowInteractions() {
+            if (cliWindowInteractionsBound) return;
+            const overlay = document.getElementById('cliTerminal');
+            const windowElement = overlay?.querySelector('.cli-terminal-window');
+            const header = overlay?.querySelector('.cli-terminal-header');
+            if (!windowElement || !header) return;
+            cliWindowInteractionsBound = true;
+            let drag = null;
+            header.addEventListener('pointerdown', event => {
+                if (event.target.closest('.cli-terminal-controls') || windowElement.classList.contains('cli-maximized')) return;
+                const rect = windowElement.getBoundingClientRect();
+                drag = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: rect.left, top: rect.top };
+                windowElement.style.left = `${rect.left}px`;
+                windowElement.style.top = `${rect.top}px`;
+                windowElement.style.transform = 'none';
+                header.setPointerCapture?.(event.pointerId);
+                windowElement.classList.add('cli-dragging');
+                event.preventDefault();
+            });
+            header.addEventListener('pointermove', event => {
+                if (!drag || drag.pointerId !== event.pointerId) return;
+                const rect = windowElement.getBoundingClientRect();
+                const left = Math.max(0, Math.min(window.innerWidth - rect.width, drag.left + event.clientX - drag.x));
+                const top = Math.max(0, Math.min(window.innerHeight - 44, drag.top + event.clientY - drag.y));
+                windowElement.style.left = `${left}px`;
+                windowElement.style.top = `${top}px`;
+            });
+            const stopDrag = event => {
+                if (!drag || (event?.pointerId !== undefined && drag.pointerId !== event.pointerId)) return;
+                drag = null;
+                windowElement.classList.remove('cli-dragging');
+            };
+            header.addEventListener('pointerup', stopDrag);
+            header.addEventListener('pointercancel', stopDrag);
+            header.addEventListener('lostpointercapture', stopDrag);
+            window.addEventListener('blur', () => stopDrag());
+        }
+
+        function toggleCLIMinimize() {
+            const windowElement = document.querySelector('#cliTerminal .cli-terminal-window');
+            if (!windowElement) return;
+            if (windowElement.classList.contains('cli-minimized')) {
+                windowElement.classList.remove('cli-minimized');
+                return;
+            }
+            windowElement.classList.remove('cli-maximized');
+            windowElement.classList.add('cli-minimized');
+        }
+
+        function toggleCLIMaximize() {
+            const windowElement = document.querySelector('#cliTerminal .cli-terminal-window');
+            if (!windowElement) return;
+            if (!windowElement.classList.contains('cli-maximized')) {
+                if (!windowElement.classList.contains('cli-minimized')) {
+                    const rect = windowElement.getBoundingClientRect();
+                    cliWindowRestoreBounds = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+                }
+                windowElement.classList.remove('cli-minimized');
+                windowElement.classList.add('cli-maximized');
+                return;
+            }
+            windowElement.classList.remove('cli-maximized');
+            const bounds = cliWindowRestoreBounds;
+            windowElement.style.left = `${bounds?.left ?? Math.max(16, (window.innerWidth - 900) / 2)}px`;
+            windowElement.style.top = `${bounds?.top ?? Math.max(16, (window.innerHeight - 600) / 2)}px`;
+            windowElement.style.width = `${bounds?.width ?? Math.min(900, window.innerWidth - 32)}px`;
+            windowElement.style.height = `${bounds?.height ?? Math.min(600, window.innerHeight - 32)}px`;
+            windowElement.style.transform = 'none';
         }
 
         function clearCLI() {
@@ -7790,7 +8613,7 @@ Router&gt;
         function appendCLIOutput(prompt, command, response, options = {}) {
             const output = document.getElementById('cliOutput');
             if (!output) return;
-            const isError = options.error || /^Error \.\.\.\./.test(response || '');
+            const isError = options.error || /^(?:%|Error \.\.\.)/.test(response || '');
             if (command && !options.hideCommand) {
                 const commandLine = document.createElement('div');
                 commandLine.className = `cli-result ${isError ? 'cli-error' : 'cli-success'}`;
@@ -7800,15 +8623,40 @@ Router&gt;
             if (response || !command) {
                 const resultLine = document.createElement('div');
                 resultLine.className = `cli-result ${isError ? 'cli-error' : 'cli-success'}`;
-                resultLine.textContent = response || '';
+                appendCLIAnsiText(resultLine, response || '');
                 output.appendChild(resultLine);
             }
             output.scrollTop = output.scrollHeight;
         }
 
+        function appendCLIAnsiText(container, text) {
+            const palette = { 30: '#111827', 31: '#ff5968', 32: '#00ff88', 33: '#ffaa00', 34: '#4dc3ff', 35: '#c084fc', 36: '#22d3ee', 37: '#e5e7eb', 90: '#94a3b8', 91: '#f87171', 92: '#4ade80', 93: '#facc15', 94: '#60a5fa', 95: '#d8b4fe', 96: '#67e8f9', 97: '#ffffff' };
+            const segments = String(text).split(/\x1b\[([0-9;]*)m/);
+            let color = '';
+            segments.forEach((segment, index) => {
+                if (index % 2 === 1) {
+                    const codes = segment ? segment.split(';').map(Number) : [0];
+                    if (codes.includes(0)) color = '';
+                    const selected = codes.find(code => palette[code]);
+                    if (selected) color = palette[selected];
+                    return;
+                }
+                if (!segment) return;
+                if (!color) container.appendChild(document.createTextNode(segment));
+                else {
+                    const span = document.createElement('span');
+                    span.style.color = color;
+                    span.textContent = segment;
+                    container.appendChild(span);
+                }
+            });
+        }
+
         function normalizeCLIError(response) {
             const text = String(response || 'Unknown CLI error');
-            return /^Error \.\.\./.test(text) ? text : `Error ....${text.replace(/^%\s*/, '')}`;
+            if (/^(?:%|Error \.\.\.)/.test(text)) return text;
+            if (/^Unknown command:/i.test(text) || /^Invalid input detected/i.test(text)) return "% Invalid input detected at '^' marker.";
+            return `% ${text}`;
         }
 
         const cliCommandPatterns = [
@@ -7845,7 +8693,10 @@ Router&gt;
             { words: ['show', 'access-lists'], mode: 'exec' },
             { words: ['show', 'vlan', 'brief'], mode: 'exec' },
             { words: ['show', 'spanning-tree'], mode: 'exec' },
+            { words: ['show', 'ip', 'dhcp', 'snooping'], mode: 'exec' },
+            { words: ['show', 'spanning-tree', 'summary'], mode: 'exec' },
             { words: ['show', 'port-security', 'address'], mode: 'exec' },
+            { words: ['show', 'port-security', 'interface'], mode: 'exec', args: true },
             { words: ['show', 'cdp', 'neighbors'], mode: 'exec' },
             { words: ['show', 'lldp', 'neighbors'], mode: 'exec' },
             { words: ['show', 'vtp', 'status'], mode: 'exec' },
@@ -7871,6 +8722,7 @@ Router&gt;
             { words: ['router', 'eigrp'], mode: 'config', args: true },
             { words: ['router', 'bgp'], mode: 'config', args: true },
             { words: ['vlan'], mode: 'config', args: true },
+            { words: ['no', 'vlan'], mode: 'config', args: true },
             { words: ['ip', 'access-list', 'standard'], mode: 'config', args: true },
             { words: ['ip', 'access-list', 'extended'], mode: 'config', args: true },
             { words: ['ip', 'dhcp', 'pool'], mode: 'config', args: true },
@@ -7900,6 +8752,16 @@ Router&gt;
             { words: ['ip', 'nat', 'pool'], mode: 'config', args: true },
             { words: ['vtp'], mode: 'config', args: true },
             { words: ['spanning-tree', 'vlan'], mode: 'config', args: true },
+            { words: ['no', 'spanning-tree', 'vlan'], mode: 'config', args: true },
+            { words: ['spanning-tree', 'mode'], mode: 'config', args: true },
+            { words: ['spanning-tree', 'portfast', 'default'], mode: 'config' },
+            { words: ['no', 'spanning-tree', 'portfast', 'default'], mode: 'config' },
+            { words: ['spanning-tree', 'bpduguard', 'default'], mode: 'config' },
+            { words: ['no', 'spanning-tree', 'bpduguard', 'default'], mode: 'config' },
+            { words: ['ip', 'dhcp', 'snooping'], mode: 'config' },
+            { words: ['no', 'ip', 'dhcp', 'snooping'], mode: 'config' },
+            { words: ['ip', 'dhcp', 'snooping', 'vlan'], mode: 'config', args: true },
+            { words: ['no', 'ip', 'dhcp', 'snooping', 'vlan'], mode: 'config', args: true },
             { words: ['cdp', 'run'], mode: 'config' },
             { words: ['lldp', 'run'], mode: 'config' },
             { words: ['ntp', 'server'], mode: 'config', args: true },
@@ -7944,6 +8806,7 @@ Router&gt;
             { words: ['ip', 'policy', 'route-map'], mode: 'interface', args: true },
             { words: ['no', 'ip', 'policy', 'route-map'], mode: 'interface', args: true },
             { words: ['switchport', 'port-security'], mode: 'interface', args: true },
+            { words: ['no', 'switchport', 'port-security'], mode: 'interface', args: true },
             { words: ['encapsulation', 'dot1q'], mode: 'interface', args: true },
             { words: ['encapsulation', 'dot1q'], mode: 'subinterface', args: true },
             { words: ['ip', 'ospf'], mode: 'interface', args: true },
@@ -7952,6 +8815,11 @@ Router&gt;
             { words: ['ip', 'nat'], mode: 'interface', args: true },
             { words: ['ip', 'helper-address'], mode: 'interface', args: true },
             { words: ['spanning-tree'], mode: 'interface', args: true },
+            { words: ['no', 'spanning-tree'], mode: 'interface', args: true },
+            { words: ['ip', 'dhcp', 'snooping', 'trust'], mode: 'interface' },
+            { words: ['no', 'ip', 'dhcp', 'snooping', 'trust'], mode: 'interface' },
+            { words: ['ip', 'dhcp', 'snooping', 'limit', 'rate'], mode: 'interface', args: true },
+            { words: ['no', 'ip', 'dhcp', 'snooping', 'limit', 'rate'], mode: 'interface' },
             { words: ['cdp', 'enable'], mode: 'interface' },
             { words: ['lldp'], mode: 'interface', args: true },
             { words: ['password'], mode: 'line', args: true },
@@ -8057,7 +8925,14 @@ Router&gt;
                 });
                 return canonicalMatch || aliasMatch;
             });
-            if (!matches.length) return { command };
+            if (!matches.length) {
+                const incomplete = cliPatternsForMode().filter(pattern => tokens.length < pattern.words.length
+                    && tokens.every((token, index) => pattern.words[index]?.startsWith(token)));
+                const paths = [...new Set(incomplete.map(pattern => pattern.words.join(' ')))];
+                if (paths.length === 1) return { error: '% Incomplete command.' };
+                if (paths.length > 1 && tokens.every((token, index) => incomplete.some(pattern => pattern.words[index]?.startsWith(token)))) return { error: '% Incomplete command.' };
+                return { command };
+            }
             const exactMatches = matches.filter(pattern => pattern.words.every((word, index) => word === tokens[index])
                 || (pattern.aliases || []).some(alias => {
                     const aliasWords = Array.isArray(alias) ? alias : [alias];
@@ -8065,16 +8940,17 @@ Router&gt;
                 }));
             const candidates = exactMatches.length ? exactMatches : matches;
             const longest = Math.max(...candidates.map(pattern => pattern.words.length));
-            const bestMatches = candidates.filter(pattern => pattern.words.length === longest);
-            if (bestMatches.length > 1) return { error: '% Ambiguous command' };
-            const pattern = bestMatches[0];
+            const canonicalPaths = new Map(candidates.filter(pattern => pattern.words.length === longest).map(pattern => [pattern.words.join(' '), pattern]));
+            if (canonicalPaths.size > 1) return { error: '% Ambiguous command' };
+            const pattern = canonicalPaths.values().next().value;
             return { command: [...pattern.words, ...inputTokens.slice(pattern.words.length)].join(' ') };
         }
 
         function completeCLICommand(input) {
             const value = input.value;
             const hasTrailingSpace = /\s$/.test(value);
-            const tokens = value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+            const originalTokens = value.trim().split(/\s+/).filter(Boolean);
+            const tokens = originalTokens.map(token => token.toLowerCase());
             if (!tokens.length) return;
             const prefixTokens = hasTrailingSpace ? tokens : tokens.slice(0, -1);
             const currentPrefix = hasTrailingSpace ? '' : tokens[tokens.length - 1];
@@ -8082,15 +8958,22 @@ Router&gt;
                 if (pattern.words.length < tokens.length) return false;
                 return prefixTokens.every((token, index) => pattern.words[index]?.startsWith(token)) && pattern.words[prefixTokens.length]?.startsWith(currentPrefix);
             });
-            const uniqueCommands = [...new Set(candidates.map(pattern => pattern.words.join(' ')))].sort();
-            if (uniqueCommands.length === 1) {
-                input.value = `${uniqueCommands[0]} `;
+            const nextWords = [...new Set(candidates.map(pattern => pattern.words[prefixTokens.length]).filter(Boolean))].sort();
+            if (nextWords.length === 1) {
+                const completed = [...originalTokens.slice(0, prefixTokens.length), nextWords[0]];
+                input.value = `${completed.join(' ')}${candidates.some(pattern => pattern.words.length === completed.length) ? ' ' : ' '}`;
                 return;
             }
-            if (uniqueCommands.length > 1) {
-                const output = document.getElementById('cliOutput');
-                output.innerHTML += `\n${uniqueCommands.join('    ')}`;
-                output.scrollTop = output.scrollHeight;
+            if (nextWords.length > 1) {
+                let commonPrefix = nextWords[0];
+                nextWords.slice(1).forEach(word => {
+                    while (commonPrefix && !word.startsWith(commonPrefix)) commonPrefix = commonPrefix.slice(0, -1);
+                });
+                if (commonPrefix.length > currentPrefix.length) {
+                    input.value = [...originalTokens.slice(0, prefixTokens.length), commonPrefix].join(' ');
+                    return;
+                }
+                appendCLIOutput(document.getElementById('cliPrompt')?.textContent || '', '', nextWords.join('    '), { hideCommand: true });
             }
         }
 
@@ -8275,15 +9158,18 @@ Router&gt;
                 }
                 if (lower === 'shutdown' || lower === 'no shutdown') {
                     const shutdown = lower === 'shutdown';
+                    const messages = [];
                     interfaceNames.forEach(interfaceName => {
                         const current = selected.device.interfaces?.[interfaceName];
                         const currentValue = typeof current === 'object' && current ? current : current ? { ip: current } : {};
+                        const wasShutdown = config.interfaces?.[interfaceName]?.shutdown || currentValue.status === 'administratively down' || currentValue.status === 'down';
+                        if (wasShutdown !== shutdown) messages.push(`%LINK-5-CHANGED: Interface ${interfaceName}, changed state to ${shutdown ? 'administratively down' : 'up'}`);
                         selected.device.interfaces[interfaceName] = { ...currentValue, status: shutdown ? 'administratively down' : 'up' };
                         config.interfaces = config.interfaces || {};
                         config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), shutdown };
                     });
                     invalidateNetworkCaches();
-                    return shutdown ? 'Interface administratively down' : 'Interface enabled';
+                    return messages.length ? messages.join('\n') : (shutdown ? 'Interface administratively down' : 'Interface enabled');
                 }
                 if (lower.startsWith('description ')) {
                     interfaceNames.forEach(interfaceName => {
@@ -8307,7 +9193,11 @@ Router&gt;
                     if (!['access', 'trunk', 'dynamic auto', 'dynamic desirable'].includes(value)) return '% Invalid switchport mode';
                     if (['access', 'trunk'].includes(value) && interfaceNames.some(interfaceName => {
                         const current = selected.device.interfaces?.[interfaceName];
-                        return Boolean(typeof current === 'string' ? current : current?.ip);
+                        const interfaceConfig = config.interfaces?.[interfaceName] || {};
+                        const hasAddress = Boolean(typeof current === 'string' ? current : current?.ip);
+                        const isSVI = /^vlan\d+/i.test(interfaceName);
+                        const isRouted = interfaceConfig.switchportMode === 'routed';
+                        return isSVI || isRouted || hasAddress;
                     })) return '% Cannot configure switchport mode on a Layer 3 interface with an IPv4 address';
                     interfaceNames.forEach(interfaceName => {
                         config.interfaces = config.interfaces || {};
@@ -8385,7 +9275,7 @@ Router&gt;
                 if (lower.startsWith('switchport access vlan ')) {
                     const vlanId = parts[3];
                     if (!/^\d+$/.test(vlanId || '') || Number(vlanId) < 1 || Number(vlanId) > 4094) return '% Invalid VLAN ID (valid range: 1-4094)';
-                    if (!config.vlans?.[vlanId]) return `% VLAN ${vlanId} does not exist; create it with 'vlan ${vlanId}' first`;
+                    if (vlanId !== '1' && !config.vlans?.[vlanId]) return `% VLAN ${vlanId} does not exist; create it with 'vlan ${vlanId}' first`;
                     interfaceNames.forEach(interfaceName => {
                         config.interfaces = config.interfaces || {};
                         config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), accessVlan: vlanId };
@@ -8396,33 +9286,87 @@ Router&gt;
                 if (lower.startsWith('switchport trunk ')) {
                     const setting = parts[2]?.toLowerCase();
                     const value = parts.slice(3).join(' ');
-                    const vlanList = setting === 'allowed' && parts[3]?.toLowerCase() === 'vlan' ? parts.slice(4).join('').split(',') : [];
+                    const allowedAction = parts[4]?.toLowerCase();
+                    const vlanAction = ['add', 'remove', 'except', 'none', 'all'].includes(allowedAction) ? allowedAction : 'set';
+                    const allowedStart = vlanAction === 'set' ? 4 : 5;
+                    const rawAllowed = setting === 'allowed' && parts[3]?.toLowerCase() === 'vlan'
+                        ? parts.slice(allowedStart).join('').split(',').filter(Boolean)
+                        : [];
+                    const vlanTokens = ['none', 'all'].includes(vlanAction) ? [] : rawAllowed;
+                    const vlanList = vlanTokens.flatMap(item => {
+                        const range = item.match(/^(\d+)-(\d+)$/);
+                        if (!range) return [item];
+                        const first = Number(range[1]);
+                        const last = Number(range[2]);
+                        if (last < first || last - first > 127) return [item];
+                        return Array.from({ length: last - first + 1 }, (_, index) => String(first + index));
+                    });
                     if (setting === 'native' && (parts[3]?.toLowerCase() !== 'vlan' || !/^[1-9]\d{0,3}$/.test(parts[4] || '') || Number(parts[4]) > 4094)) return '% Usage: switchport trunk native vlan <1-4094>';
-                    if (setting === 'allowed' && (!vlanList.length || vlanList.some(vlan => !/^[1-9]\d{0,3}$/.test(vlan) || Number(vlan) > 4094))) return '% Invalid allowed VLAN list';
+                    if (setting === 'allowed' && !['none', 'all'].includes(vlanAction) && (!vlanList.length || vlanList.some(vlan => !/^[1-9]\d{0,3}$/.test(vlan) || Number(vlan) > 4094))) return '% Invalid allowed VLAN list';
                     if (!['native', 'allowed'].includes(setting)) return '% Unsupported trunk setting';
                     interfaceNames.forEach(interfaceName => {
                         config.interfaces = config.interfaces || {};
                         const current = config.interfaces[interfaceName] || {};
                         if (setting === 'native' && parts[3]?.toLowerCase() === 'vlan') current.trunkNativeVlan = parts[4];
-                        if (setting === 'allowed') current.trunkAllowedVlans = vlanList;
+                        if (setting === 'allowed') {
+                            const prior = current.trunkAllowedVlans || [];
+                            current.trunkAllowedVlans = vlanAction === 'all' ? null : vlanAction === 'none' ? []
+                                : vlanAction === 'add' ? [...new Set([...prior, ...vlanList])].sort((a, b) => Number(a) - Number(b))
+                                    : vlanAction === 'remove' ? prior.filter(vlan => !vlanList.includes(vlan))
+                                        : vlanAction === 'except' ? [...Array(4094)].map((_, index) => String(index + 1)).filter(vlan => !vlanList.includes(vlan))
+                                            : vlanList;
+                        }
                         config.interfaces[interfaceName] = { ...current, switchportMode: 'trunk', trunkSetting: value };
                     });
                     invalidateNetworkCaches();
                     return `Trunk configuration updated on ${interfaceNames.join(', ')}`;
                 }
+                if (lower.startsWith('no switchport port-security')) {
+                    const noSpecificSetting = parts.length > 3;
+                    interfaceNames.forEach(interfaceName => {
+                        const security = config.interfaces?.[interfaceName]?.portSecurity;
+                        if (!security) return;
+                        if (!noSpecificSetting) {
+                            security.enabled = false;
+                        } else if (parts[3]?.toLowerCase() === 'maximum') {
+                            security.maximum = 1;
+                        } else if (parts[3]?.toLowerCase() === 'violation') {
+                            security.violation = 'shutdown';
+                        } else if (parts[3]?.toLowerCase() === 'mac-address') {
+                            if (parts[4]?.toLowerCase() === 'sticky') security.sticky = false;
+                            else security.secureMacs = (security.secureMacs || []).filter(mac => mac !== parts[4]?.toLowerCase());
+                        }
+                    });
+                    return noSpecificSetting ? 'Port-security setting reset to default' : 'Port security disabled';
+                }
                 if (lower.startsWith('switchport port-security')) {
+                    const setting = parts[2]?.toLowerCase();
+                    const value = parts[3];
+                    const maximum = setting === 'maximum' ? Number(value) : null;
+                    const violation = setting === 'violation' ? value?.toLowerCase() : null;
+                    const staticMac = setting === 'mac-address' && value?.toLowerCase() !== 'sticky' ? value?.toLowerCase() : null;
+                    if (setting === 'maximum' && (!/^\d+$/.test(value || '') || !Number.isInteger(maximum) || maximum < 1 || maximum > 1024)) return '% Usage: switchport port-security maximum <1-1024>';
+                    if (setting === 'violation' && !['shutdown', 'restrict', 'protect'].includes(violation)) return '% Usage: switchport port-security violation {shutdown|restrict|protect}';
+                    if (setting === 'mac-address' && value?.toLowerCase() !== 'sticky' && !/^([0-9a-f]{4}\.){2}[0-9a-f]{4}$/i.test(value || '')) return '% Usage: switchport port-security mac-address sticky| xxxx.xxxx.xxxx';
+                    if (setting && !['maximum', 'violation', 'mac-address'].includes(setting)) return '% Unsupported port-security setting';
+                    if (setting === 'mac-address' && value?.toLowerCase() !== 'sticky' && parts.length > 4 && parts[4]?.toLowerCase() !== 'vlan') return '% Static secure MAC address syntax: mac-address xxxx.xxxx.xxxx [vlan <1-4094>]';
+                    if (parts[4]?.toLowerCase() === 'vlan' && (!/^\d+$/.test(parts[5] || '') || Number(parts[5]) < 1 || Number(parts[5]) > 4094)) return '% Invalid port-security VLAN (valid range: 1-4094)';
                     if (interfaceNames.some(interfaceName => config.interfaces?.[interfaceName]?.switchportMode === 'trunk')) return '% Port security is supported on access ports, not trunk ports';
                     interfaceNames.forEach(interfaceName => {
                         config.interfaces = config.interfaces || {};
                         const current = config.interfaces[interfaceName] || {};
-                        current.portSecurity = current.portSecurity || { enabled: true, maximum: 1, violation: 'shutdown', sticky: false, secureMacs: [] };
-                        if (lower === 'switchport port-security') current.portSecurity.enabled = true;
-                        else if (lower.includes(' maximum ')) current.portSecurity.maximum = Number(parts[3]) || 1;
-                        else if (lower.includes(' mac-address sticky')) current.portSecurity.sticky = true;
-                        else if (lower.includes(' violation ')) current.portSecurity.violation = parts[3];
+                        current.portSecurity = current.portSecurity || { enabled: true, maximum: 1, violation: 'shutdown', sticky: false, secureMacs: [], violations: 0 };
+                        const security = current.portSecurity;
+                        security.enabled = true;
+                        if (setting === 'maximum') security.maximum = maximum;
+                        else if (setting === 'mac-address' && value?.toLowerCase() === 'sticky') security.sticky = true;
+                        else if (setting === 'mac-address') {
+                            security.secureMacs = [...new Set([...(security.secureMacs || []), staticMac])];
+                            if (parts[4]?.toLowerCase() === 'vlan') security.secureMacVlans = { ...(security.secureMacVlans || {}), [staticMac]: Number(parts[5]) };
+                        } else if (setting === 'violation') security.violation = violation;
                         config.interfaces[interfaceName] = current;
                     });
-                    return 'Port security updated';
+                    return setting === 'maximum' ? `Port-security maximum set to ${maximum}` : setting === 'violation' ? `Port-security violation mode set to ${violation}` : setting === 'mac-address' ? (value?.toLowerCase() === 'sticky' ? 'Sticky secure MAC learning enabled' : `Secure MAC ${staticMac} added`) : 'Port security enabled';
                 }
                 if (lower.startsWith('encapsulation dot1q ')) {
                     const vlanId = parts[2];
@@ -8469,6 +9413,7 @@ Router&gt;
                     return `DHCP relay target ${parts[2]} configured`;
                 }
                 if (lower.startsWith('spanning-tree portfast')) {
+                    if (parts[2] && parts[2].toLowerCase() !== 'default') return '% Usage: spanning-tree portfast [default]';
                     interfaceNames.forEach(interfaceName => {
                         config.interfaces = config.interfaces || {};
                         config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), portfast: true };
@@ -8481,6 +9426,36 @@ Router&gt;
                         config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), bpduGuard: true };
                     });
                     return 'BPDU Guard enabled';
+                }
+                if (lower === 'no spanning-tree portfast' || lower === 'no spanning-tree bpduguard enable') {
+                    interfaceNames.forEach(interfaceName => {
+                        const current = config.interfaces?.[interfaceName];
+                        if (!current) return;
+                        if (lower.includes('portfast')) delete current.portfast;
+                        else delete current.bpduGuard;
+                    });
+                    return lower.includes('portfast') ? 'PortFast disabled' : 'BPDU Guard disabled';
+                }
+                if (lower === 'ip dhcp snooping trust' || lower === 'no ip dhcp snooping trust') {
+                    const trusted = lower.startsWith('ip ');
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), dhcpSnoopingTrust: trusted };
+                    });
+                    return `DHCP snooping trust ${trusted ? 'enabled' : 'removed'} on ${interfaceNames.join(', ')}`;
+                }
+                if (lower.startsWith('ip dhcp snooping limit rate ')) {
+                    const rate = Number(parts[5]);
+                    if (!Number.isInteger(rate) || rate < 1 || rate > 2048) return '% DHCP snooping limit rate must be an integer from 1 to 2048';
+                    interfaceNames.forEach(interfaceName => {
+                        config.interfaces = config.interfaces || {};
+                        config.interfaces[interfaceName] = { ...(config.interfaces[interfaceName] || {}), dhcpSnoopingLimitRate: rate };
+                    });
+                    return `DHCP snooping rate limit ${rate} pps configured`;
+                }
+                if (lower === 'no ip dhcp snooping limit rate') {
+                    interfaceNames.forEach(interfaceName => { if (config.interfaces?.[interfaceName]) delete config.interfaces[interfaceName].dhcpSnoopingLimitRate; });
+                    return 'DHCP snooping rate limit removed';
                 }
                 if (lower === 'cdp enable' || lower === 'lldp transmit' || lower === 'lldp receive') {
                     interfaceNames.forEach(interfaceName => {
@@ -8550,7 +9525,9 @@ Router&gt;
             }
 
             if (state.mode === CLI_MODES.VLAN_CONFIG.key && lower.startsWith('name ')) {
-                config.vlans[state.context].name = parts.slice(1).join(' ');
+                const vlanName = parts.slice(1).join(' ').trim();
+                if (!/^[\w.-]{1,32}$/.test(vlanName)) return '% VLAN name must be 1-32 characters (letters, digits, dot, underscore, hyphen)';
+                config.vlans[state.context].name = vlanName;
                 if (config.vtp?.mode === 'server') {
                     config.vtp.revision = (config.vtp.revision || 0) + 1;
                     runVtpProtocolTick();
@@ -8569,7 +9546,10 @@ Router&gt;
             if ([CLI_MODES.STANDARD_ACL_CONFIG.key, CLI_MODES.EXTENDED_ACL_CONFIG.key].includes(state.mode)) {
                 if (lower.startsWith('permit ') || lower.startsWith('deny ')) {
                     const acl = config.acls[state.context];
-                    acl.entries.push({ action: parts[0].toLowerCase(), type: state.mode === CLI_MODES.STANDARD_ACL_CONFIG.key ? 'standard' : 'extended', tokens: parts.slice(1) });
+                    const type = state.mode === CLI_MODES.STANDARD_ACL_CONFIG.key ? 'standard' : 'extended';
+                    const tokens = parts.slice(1);
+                    if (!validateAclRuleTokens(type, tokens)) return '% Invalid ACL address or wildcard mask';
+                    acl.entries.push({ action: parts[0].toLowerCase(), type, tokens });
                     return `${parts[0].toUpperCase()} rule added to ${state.context}`;
                 }
             }
@@ -8736,7 +9716,10 @@ Router&gt;
                 const listId = parts[1];
                 config.acls = config.acls || {};
                 config.acls[listId] = config.acls[listId] || { type: Number(listId) >= 100 ? 'extended' : 'standard', entries: [] };
-                config.acls[listId].entries.push({ action: parts[2]?.toLowerCase(), type: config.acls[listId].type, tokens: parts.slice(3) });
+                const aclType = config.acls[listId].type;
+                const aclTokens = parts.slice(3);
+                if (!['permit', 'deny'].includes(parts[2]?.toLowerCase()) || !validateAclRuleTokens(aclType, aclTokens)) return '% Invalid ACL action, address, wildcard mask, or protocol';
+                config.acls[listId].entries.push({ action: parts[2].toLowerCase(), type: aclType, tokens: aclTokens });
                 invalidateNetworkCaches();
                 return `Access list ${listId} rule added`;
             }
@@ -8762,10 +9745,58 @@ Router&gt;
                 runVtpProtocolTick();
                 return `VTP ${parts[1]} configured`;
             }
+            if (lower === 'spanning-tree mode rapid-pvst' || lower === 'spanning-tree mode pvst' || lower === 'spanning-tree mode mst') {
+                config.spanningTreeMode = lower.slice('spanning-tree mode '.length);
+                return `Spanning-tree mode ${config.spanningTreeMode} configured`;
+            }
+            if (lower.startsWith('spanning-tree mode ')) return '% Supported spanning-tree modes: pvst, rapid-pvst, mst';
+            if (lower === 'spanning-tree portfast default' || lower === 'no spanning-tree portfast default') {
+                config.spanningTreeDefaults = config.spanningTreeDefaults || {};
+                config.spanningTreeDefaults.portfast = !lower.startsWith('no ');
+                return `Spanning-tree PortFast default ${config.spanningTreeDefaults.portfast ? 'enabled' : 'disabled'}`;
+            }
+            if (lower === 'spanning-tree bpduguard default' || lower === 'no spanning-tree bpduguard default') {
+                config.spanningTreeDefaults = config.spanningTreeDefaults || {};
+                config.spanningTreeDefaults.bpduGuard = !lower.startsWith('no ');
+                return `Spanning-tree BPDU Guard default ${config.spanningTreeDefaults.bpduGuard ? 'enabled' : 'disabled'}`;
+            }
+            if (lower === 'ip dhcp snooping' || lower === 'no ip dhcp snooping') {
+                config.dhcpSnooping = config.dhcpSnooping || { vlans: [] };
+                config.dhcpSnooping.enabled = lower === 'ip dhcp snooping';
+                return `DHCP snooping ${config.dhcpSnooping.enabled ? 'enabled' : 'disabled'}`;
+            }
+            if (lower.startsWith('ip dhcp snooping vlan ') || lower.startsWith('no ip dhcp snooping vlan ')) {
+                config.dhcpSnooping = config.dhcpSnooping || { enabled: false, vlans: [] };
+                const removing = lower.startsWith('no ');
+                const rawVlans = parts.slice(removing ? 5 : 4).join('').split(',');
+                const vlans = rawVlans.flatMap(item => {
+                    const match = item.match(/^(\d+)(?:-(\d+))?$/);
+                    if (!match) return [];
+                    const first = Number(match[1]);
+                    const last = Number(match[2] || match[1]);
+                    if (first < 1 || last > 4094 || last < first || last - first > 127) return [];
+                    return Array.from({ length: last - first + 1 }, (_, index) => first + index);
+                });
+                if (!rawVlans.length || vlans.length === 0 || rawVlans.some(item => !/^(\d+)(?:-(\d+))?$/.test(item)) || vlans.some(vlan => vlan < 1 || vlan > 4094)) return '% Invalid VLAN list; use ip dhcp snooping vlan <1-4094[,range]>';
+                config.dhcpSnooping.vlans = config.dhcpSnooping.vlans || [];
+                config.dhcpSnooping.vlans = removing
+                    ? config.dhcpSnooping.vlans.filter(vlan => !vlans.includes(vlan))
+                    : [...new Set([...config.dhcpSnooping.vlans, ...vlans])].sort((a, b) => a - b);
+                return `DHCP snooping VLANs ${removing ? 'removed' : 'enabled'}: ${vlans.join(', ')}`;
+            }
             if (lower.startsWith('spanning-tree vlan ')) {
+                const vlan = Number(parts[2]);
+                if (!Number.isInteger(vlan) || vlan < 1 || vlan > 4094) return '% VLAN ID must be from 1 to 4094';
+                if (parts[3]?.toLowerCase() === 'priority' && (!/^\d+$/.test(parts[4] || '') || Number(parts[4]) < 0 || Number(parts[4]) > 61440 || Number(parts[4]) % 4096 !== 0)) return '% Spanning-tree priority must be a multiple of 4096 from 0 to 61440';
                 config.spanningTree = config.spanningTree || {};
-                config.spanningTree[parts[2]] = parts[3] === 'priority' ? { priority: Number(parts[4]) } : { root: parts[4] };
+                config.spanningTree[vlan] = parts[3]?.toLowerCase() === 'priority' ? { priority: Number(parts[4]) } : { root: parts[4] || 'primary' };
                 return 'Spanning-tree setting updated';
+            }
+            if (lower.startsWith('no spanning-tree vlan ')) {
+                const vlan = Number(parts[3]);
+                if (!Number.isInteger(vlan) || vlan < 1 || vlan > 4094) return '% VLAN ID must be from 1 to 4094';
+                if (config.spanningTree) delete config.spanningTree[vlan];
+                return `Spanning-tree configuration removed for VLAN ${vlan}`;
             }
             if (lower === 'cdp run') { config.discovery = config.discovery || {}; config.discovery.cdp = true; return 'CDP enabled'; }
             if (lower === 'lldp run') { config.discovery = config.discovery || {}; config.discovery.lldp = true; return 'LLDP enabled'; }
@@ -8779,7 +9810,7 @@ Router&gt;
             const trimmed = String(name || '').replace(/\s+/g, '');
             const match = trimmed.match(/^([a-z-]+)(.*)$/i);
             if (!match) return trimmed;
-            const prefixes = { g: 'GigabitEthernet', gi: 'GigabitEthernet', gigabitethernet: 'GigabitEthernet', f: 'FastEthernet', fa: 'FastEthernet', fastethernet: 'FastEthernet', s: 'Serial', se: 'Serial', serial: 'Serial', v: 'Vlan', vlan: 'Vlan' };
+            const prefixes = { g: 'GigabitEthernet', gi: 'GigabitEthernet', ge: 'GigabitEthernet', gigabitethernet: 'GigabitEthernet', f: 'FastEthernet', fa: 'FastEthernet', fastethernet: 'FastEthernet', e: 'Ethernet', eth: 'Ethernet', ethernet: 'Ethernet', t: 'TenGigabitEthernet', te: 'TenGigabitEthernet', tengigabitethernet: 'TenGigabitEthernet', s: 'Serial', se: 'Serial', serial: 'Serial', po: 'Port-channel', portchannel: 'Port-channel', v: 'Vlan', vlan: 'Vlan' };
             const canonical = `${prefixes[match[1].toLowerCase()] || match[1]}${match[2]}`;
             const existing = Object.keys(selected?.device?.interfaces || {});
             const exact = existing.find(interfaceName => interfaceName.toLowerCase() === canonical.toLowerCase());
@@ -8789,12 +9820,34 @@ Router&gt;
         }
 
             function expandInterfaceRange(range, selected) {
-                const match = String(range || '').match(/^(.*\/)(\d+)-(\d+)$/);
-                if (!match) return [normalizeInterfaceName(range, selected)];
-                const start = Number(match[2]);
-                const end = Number(match[3]);
-                if (end < start || end - start > 127) return [];
-                return Array.from({ length: end - start + 1 }, (_, index) => normalizeInterfaceName(`${match[1]}${start + index}`, selected));
+                const parts = String(range || '').split(',').map(part => part.replace(/\s+/g, '')).filter(Boolean);
+                if (!parts.length) return [];
+                const expanded = [];
+                let inheritedPrefix = '';
+                for (const part of parts) {
+                    const match = part.match(/^(.*\/)(\d+)-(\d+)$/);
+                    if (match) {
+                        inheritedPrefix = match[1];
+                        const start = Number(match[2]);
+                        const end = Number(match[3]);
+                        if (end < start || end - start > 127) return [];
+                        for (let port = start; port <= end; port++) expanded.push(normalizeInterfaceName(`${inheritedPrefix}${port}`, selected));
+                        continue;
+                    }
+                    const shortMatch = inheritedPrefix && part.match(/^(\d+)-(\d+)$/);
+                    if (shortMatch) {
+                        const start = Number(shortMatch[1]);
+                        const end = Number(shortMatch[2]);
+                        if (end < start || end - start > 127) return [];
+                        for (let port = start; port <= end; port++) expanded.push(normalizeInterfaceName(`${inheritedPrefix}${port}`, selected));
+                        continue;
+                    }
+                    const single = normalizeInterfaceName(part, selected);
+                    const singlePrefix = single.match(/^(.*\/)(\d+)$/);
+                    if (singlePrefix) inheritedPrefix = singlePrefix[1];
+                    expanded.push(single);
+                }
+                return [...new Set(expanded)];
             }
 
         function enterCLIContext(command, selected) {
@@ -8828,6 +9881,15 @@ Router&gt;
             }
 
             if (cliState.mode !== CLI_MODES.GLOBAL_CONFIG.key) return null;
+            if (first === 'no' && tokens[1]?.toLowerCase() === 'vlan') {
+                const vlanId = tokens[2];
+                if (!/^\d+$/.test(vlanId || '') || Number(vlanId) < 2 || Number(vlanId) > 4094) return '% VLAN removal requires an existing VLAN ID from 2 to 4094';
+                if (!selected.config.vlans?.[vlanId]) return `% VLAN ${vlanId} does not exist`;
+                const members = Object.entries(selected.config.interfaces || {}).filter(([, cfg]) => Number(cfg.accessVlan || 1) === Number(vlanId));
+                if (members.length) return `% VLAN ${vlanId} is in use by ${members.map(([name]) => name).join(', ')}`;
+                delete selected.config.vlans[vlanId];
+                return `VLAN ${vlanId} deleted`;
+            }
             if (first === 'interface') {
                 const isRange = tokens[1]?.toLowerCase() === 'range';
                 const name = tokens.slice(isRange ? 2 : 1).join(' ');
@@ -8887,7 +9949,8 @@ Router&gt;
             }
             if (first === 'vlan') {
                 const vlanId = tokens[1];
-                if (!vlanId || !/^\d+$/.test(vlanId)) return '% Invalid VLAN identifier';
+                if (!vlanId || !/^\d+$/.test(vlanId) || Number(vlanId) < 1 || Number(vlanId) > 4094) return '% VLAN identifier must be from 1 to 4094';
+                if (Number(vlanId) === 1002 || Number(vlanId) === 1003 || Number(vlanId) === 1004 || Number(vlanId) === 1005) return '% VLAN 1002-1005 are reserved legacy VLANs';
                 selected.config.vlans = selected.config.vlans || {};
                 const isNewVlan = !selected.config.vlans[vlanId];
                 selected.config.vlans[vlanId] = selected.config.vlans[vlanId] || { id: vlanId, name: `VLAN${vlanId}` };
@@ -8984,6 +10047,13 @@ Router&gt;
             Object.entries(config.users || {}).forEach(([name]) => lines.push(`username ${name} secret <hidden>`));
             if (config.ssh?.rsaBits) lines.push(`crypto key generate rsa modulus ${config.ssh.rsaBits}`);
             if (config.ssh?.version) lines.push(`ip ssh version ${config.ssh.version}`);
+            if (config.spanningTreeMode) lines.push(`spanning-tree mode ${config.spanningTreeMode}`);
+            if (config.spanningTreeDefaults?.portfast) lines.push('spanning-tree portfast default');
+            if (config.spanningTreeDefaults?.bpduGuard) lines.push('spanning-tree bpduguard default');
+            if (config.dhcpSnooping?.enabled) {
+                lines.push('ip dhcp snooping');
+                if (config.dhcpSnooping.vlans?.length) lines.push(`ip dhcp snooping vlan ${config.dhcpSnooping.vlans.join(',')}`);
+            }
 
             Object.entries(entry.device.interfaces || {}).forEach(([name, value]) => {
                 const interfaceConfig = config.interfaces?.[name] || {};
@@ -9000,6 +10070,10 @@ Router&gt;
                 if (interfaceConfig.routeMap) lines.push(` ip policy route-map ${interfaceConfig.routeMap}`);
                 if (interfaceConfig.servicePolicies) Object.entries(interfaceConfig.servicePolicies).forEach(([direction, policy]) => lines.push(` service-policy ${direction} ${policy}`));
                 if (interfaceConfig.switchportNonegotiate) lines.push(' switchport nonegotiate');
+                if (interfaceConfig.portfast) lines.push(' spanning-tree portfast');
+                if (interfaceConfig.bpduGuard) lines.push(' spanning-tree bpduguard enable');
+                if (interfaceConfig.dhcpSnoopingTrust) lines.push(' ip dhcp snooping trust');
+                if (interfaceConfig.dhcpSnoopingLimitRate) lines.push(` ip dhcp snooping limit rate ${interfaceConfig.dhcpSnoopingLimitRate}`);
                 if (interfaceConfig.accessVlan) lines.push(` switchport access vlan ${interfaceConfig.accessVlan}`);
                 if (interfaceConfig.trunkNativeVlan) lines.push(` switchport trunk native vlan ${interfaceConfig.trunkNativeVlan}`);
                 if (interfaceConfig.trunkAllowedVlans) lines.push(` switchport trunk allowed vlan ${interfaceConfig.trunkAllowedVlans.join(',')}`);
@@ -9008,6 +10082,10 @@ Router&gt;
                     if (interfaceConfig.portSecurity.maximum !== 1) lines.push(` switchport port-security maximum ${interfaceConfig.portSecurity.maximum}`);
                     if (interfaceConfig.portSecurity.sticky) lines.push(' switchport port-security mac-address sticky');
                     if (interfaceConfig.portSecurity.violation) lines.push(` switchport port-security violation ${interfaceConfig.portSecurity.violation}`);
+                    (interfaceConfig.portSecurity.secureMacs || []).forEach(mac => {
+                        const vlan = interfaceConfig.portSecurity.secureMacVlans?.[mac];
+                        lines.push(` switchport port-security mac-address ${mac}${vlan ? ` vlan ${vlan}` : ''}`);
+                    });
                 }
                 if (interfaceConfig.accessGroup) lines.push(` ip access-group ${interfaceConfig.accessGroup.name} ${interfaceConfig.accessGroup.direction}`);
                 if (interfaceConfig.natZone) lines.push(` ip nat ${interfaceConfig.natZone}`);
@@ -9271,7 +10349,10 @@ Router&gt;
                 response = `Port                 Name                 Status       Vlan  Duplex  Speed\n${Object.entries(selected?.device.interfaces || {}).map(([name, value]) => {
                     const config = selected.config?.interfaces?.[name] || {};
                     const down = config.shutdown || value?.status === 'administratively down';
-                    return `${name.padEnd(21)} ${(config.description || '').padEnd(21)} ${(down ? 'disabled' : 'connected').padEnd(13)} ${String(config.accessVlan || '1').padEnd(6)} ${(config.duplex || 'auto').padEnd(8)} ${config.speed || 'auto'}`;
+                    const link = simulatorState.connections.find(connection => (connection.from === selected.id || connection.to === selected.id) && getConnectionInterface(selected, connection) === name);
+                    const status = down ? (value?.status === 'err-disabled' ? 'err-disabled' : 'disabled') : link && isConnectionOperational(link) ? 'connected' : 'notconnect';
+                    const vlan = config.switchportMode === 'trunk' ? 'trunk' : String(config.accessVlan || (/^vlan1$/i.test(name) ? '1' : '1'));
+                    return `${name.padEnd(21)} ${(config.description || '').padEnd(21)} ${status.padEnd(13)} ${vlan.padEnd(6)} ${(config.duplex || 'auto').padEnd(8)} ${config.speed || 'auto'}`;
                 }).join('\n') || 'No interfaces configured'}`;
             } else if (cmdLower === 'show interfaces description') {
                 const interfaces = selected?.device.interfaces || {};
@@ -9346,16 +10427,47 @@ Router&gt;
                 const entries = Object.values(pools).filter(pool => !requestedPool || pool.name === requestedPool);
                 response = entries.map(pool => `${pool.name}: network ${pool.network || 'not set'} ${pool.mask || ''}, gateway ${(pool.defaultRouter || []).join(', ') || 'not set'}, DNS ${(pool.dnsServers || []).join(', ') || 'not set'}`).join('\n') || 'No DHCP pools configured';
             } else if (cmdLower === 'show ip nat translations') {
-                response = (selected?.config?.natTranslations || []).map(translation => `${translation.protocol} ${translation.inside} -> ${translation.outside}`).join('\n') || 'No active NAT translations';
+                ageNatTranslations();
+                response = (selected?.config?.natTranslations || []).map(translation => {
+                    const idleSeconds = translation.static ? 'static' : `${Math.max(0, Math.floor((Date.now() - (translation.lastUsedAt || translation.createdAt || Date.now())) / 1000))}s idle`;
+                    return `${translation.protocol} ${translation.inside} -> ${translation.outside} (${idleSeconds})`;
+                }).join('\n') || 'No active NAT translations';
             } else if (cmdLower === 'show access-lists') {
                 const lists = selected?.config?.acls || {};
                 response = Object.entries(lists).flatMap(([name, acl]) => acl.entries.map(entry => `${name} ${entry.action} ${entry.tokens.join(' ')}`)).join('\n') || 'No access lists configured';
             } else if (cmdLower === 'show vlan brief') {
                 const vlans = selected?.config?.vlans || {};
-                response = Object.values(vlans).map(vlan => `${String(vlan.id).padEnd(8)} ${vlan.name}`).join('\n') || 'No VLANs configured';
+                const vlanRows = new Map([[1, { id: 1, name: 'default' }]]);
+                Object.values(vlans).forEach(vlan => vlanRows.set(Number(vlan.id), vlan));
+                Object.entries(selected?.config?.interfaces || {}).forEach(([, interfaceConfig]) => {
+                    const id = Number(interfaceConfig.accessVlan || 1);
+                    if (!vlanRows.has(id)) vlanRows.set(id, { id, name: `VLAN${id}` });
+                });
+                response = `VLAN  Name                             Status    Ports\n${[...vlanRows.values()].sort((a, b) => a.id - b.id).map(vlan => {
+                    const ports = Object.entries(selected?.config?.interfaces || {}).filter(([, cfg]) => Number(cfg.accessVlan || 1) === Number(vlan.id)).map(([name]) => name);
+                    return `${String(vlan.id).padEnd(6)} ${String(vlan.name).padEnd(32)} active    ${ports.join(', ')}`;
+                }).join('\n')}`;
             } else if (cmdLower === 'show spanning-tree') {
                 const trees = selected?.config?.spanningTree || {};
                 response = Object.entries(trees).map(([vlan, tree]) => `VLAN${vlan}: ${tree.root || `priority ${tree.priority || 32768}`}`).join('\n') || 'Spanning tree is using default settings';
+            } else if (cmdLower === 'show spanning-tree summary') {
+                const defaults = selected?.config?.spanningTreeDefaults || {};
+                response = `Switch is in ${selected?.config?.spanningTreeMode || 'pvst'} mode\nExtended system ID is enabled\nPortFast Default is ${defaults.portfast ? 'enabled' : 'disabled'}\nBPDU Guard Default is ${defaults.bpduGuard ? 'enabled' : 'disabled'}\nConfigured STP VLANs: ${Object.keys(selected?.config?.spanningTree || {}).join(', ') || '1'}`;
+            } else if (cmdLower === 'show ip dhcp snooping') {
+                const snooping = selected?.config?.dhcpSnooping || {};
+                const trusted = Object.entries(selected?.config?.interfaces || {}).filter(([, cfg]) => cfg.dhcpSnoopingTrust).map(([name]) => name);
+                response = `Switch DHCP snooping is ${snooping.enabled ? 'enabled' : 'disabled'}\nConfigured VLANs: ${(snooping.vlans || []).join(', ') || 'none'}\nTrusted Interfaces: ${trusted.join(', ') || 'none'}`;
+            } else if (cmdLower.startsWith('show port-security interface')) {
+                const requested = resolvedCommand.split(/\s+/).slice(3).join(' ');
+                const interfaces = selected?.device?.interfaces || {};
+                const entries = Object.entries(interfaces).filter(([name]) => !requested || name === normalizeInterfaceName(requested, selected));
+                response = entries.map(([name]) => {
+                    const security = selected?.config?.interfaces?.[name]?.portSecurity;
+                    if (!security?.enabled) return `Port Security              : Disabled\nPort                     : ${name}`;
+                    const secureMacs = security.secureMacs || [];
+                    const status = selected.config.interfaces[name].shutdown ? 'Secure-shutdown' : 'Secure-up';
+                    return `Port Security              : Enabled\nPort                     : ${name}\nPort Status              : ${status}\nViolation Mode           : ${security.violation || 'shutdown'}\nAging Time               : 0 mins\nMaximum MAC Addresses    : ${security.maximum || 1}\nTotal MAC Addresses      : ${secureMacs.length}${security.sticky ? ' (Sticky)' : ''}\nConfigured MAC Addresses: ${secureMacs.join(', ') || 'None'}\nSecurity Violation Count : ${security.violations || 0}`;
+                }).join('\n\n') || 'No interfaces configured';
             } else if (cmdLower === 'show port-security address') {
                 const secured = Object.entries(selected?.config?.interfaces || {}).filter(([, value]) => value.portSecurity?.enabled);
                 response = secured.map(([name, value]) => `${name}: maximum ${value.portSecurity.maximum}, secure MACs ${(value.portSecurity.secureMacs || []).join(', ') || 'none'}, violations ${value.portSecurity.violations || 0}, action ${value.portSecurity.violation}`).join('\n') || 'No secure addresses configured';
@@ -9433,9 +10545,9 @@ Success rate is ${successes * 20} percent (${successes}/5)${successes ? ', round
         // CMD 終端
         function showCMDTerminal() {
             const selected = simulatorState.activeDevices.find(device => device.id === simulatorState.selectedDevice);
-            const endpoint = selected && ['pc', 'laptop', 'server'].includes(selected.device.type)
+            const endpoint = selected && ['pc', 'laptop', 'server', 'web-server', 'db-server', 'storage', 'load-balancer'].includes(selected.device.type)
                 ? selected
-                : simulatorState.activeDevices.find(device => ['pc', 'laptop', 'server'].includes(device.device.type));
+                : simulatorState.activeDevices.find(device => ['pc', 'laptop', 'server', 'web-server', 'db-server', 'storage', 'load-balancer'].includes(device.device.type));
             if (!endpoint) return showHint('CMD 終端', '請先將 PC、Laptop 或 Server 放入工作區，再開啟 Command Prompt。');
             showDesktopCommandPrompt(endpoint.id);
         }
@@ -9967,8 +11079,10 @@ Success rate is ${successes * 20} percent (${successes}/5)${successes ? ', round
 
         function applyZoom() {
             const canvas = document.getElementById('workspaceCanvas');
-            canvas.style.transform = `scale(${canvasZoom})`;
+            canvas.style.transform = 'none';
             canvas.style.transformOrigin = 'top left';
+            canvas.style.zoom = String(canvasZoom);
+            renderMiniMap();
         }
 
         function fitToScreen() {
