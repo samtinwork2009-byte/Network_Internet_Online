@@ -42,9 +42,6 @@
         }
         
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
             font-family: var(--font-ui);
             font-weight: 400;
         }
@@ -2941,6 +2938,426 @@
             .control-panel { max-height: 18dvh; }
             .mini-map { width: 116px; height: 84px; }
         }
+
+        /* Liquid glass: cool water ambience, optical depth, and soft specular edges. */
+        :root {
+            --glass-edge: rgba(224, 248, 255, 0.3);
+            --glass-highlight: rgba(255, 255, 255, 0.72);
+            --glass-tint: rgba(117, 211, 255, 0.075);
+            --glass-shadow: 0 18px 48px rgba(0, 5, 20, 0.34), 0 0 28px rgba(36, 178, 232, 0.09);
+        }
+
+        body {
+            background: radial-gradient(ellipse at 50% 0%, #142d4b 0%, #091426 42%, #050a16 100%);
+        }
+
+        .cyber-background {
+            opacity: 1;
+            overflow: hidden;
+            background:
+                radial-gradient(ellipse at 12% 18%, rgba(12, 176, 214, 0.16), transparent 38%),
+                radial-gradient(ellipse at 86% 30%, rgba(89, 87, 226, 0.13), transparent 35%),
+                linear-gradient(145deg, rgba(7, 17, 34, 0.62), rgba(8, 11, 28, 0.82));
+        }
+
+        .cyber-background::before,
+        .cyber-background::after {
+            content: "";
+            position: absolute;
+            inset: -22%;
+            pointer-events: none;
+        }
+
+        .cyber-background::before {
+            background:
+                radial-gradient(ellipse at 25% 35%, rgba(27, 207, 225, 0.13), transparent 25%),
+                radial-gradient(ellipse at 70% 65%, rgba(74, 112, 255, 0.13), transparent 29%),
+                radial-gradient(ellipse at 52% 12%, rgba(136, 91, 255, 0.08), transparent 26%);
+            filter: blur(42px);
+            animation: liquid-drift 24s ease-in-out infinite alternate;
+        }
+
+        .cyber-background::after {
+            inset: 0;
+            opacity: 0.38;
+            background-image: linear-gradient(rgba(164, 221, 255, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(164, 221, 255, 0.025) 1px, transparent 1px);
+            background-size: 52px 52px;
+            mask-image: linear-gradient(to bottom, black, transparent 82%);
+        }
+
+        .cyber-header,
+        .simulator-header,
+        .tool-panel,
+        .control-panel,
+        .cyber-card,
+        .mode-switcher,
+        .quick-toolbar,
+        .smart-hint,
+        .mini-map,
+        .modal-content,
+        .guide-window,
+        .flowchart-window,
+        .packet-analyzer-window,
+        .cli-terminal-window,
+        .context-menu,
+        .guided-tutorial-panel {
+            -webkit-backdrop-filter: blur(20px) saturate(145%);
+            backdrop-filter: blur(20px) saturate(145%);
+            border-color: var(--glass-edge);
+            box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 1px 0 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .cyber-header {
+            background: linear-gradient(110deg, rgba(12, 27, 48, 0.82), rgba(11, 20, 39, 0.76));
+            border-bottom-color: rgba(209, 241, 255, 0.22);
+        }
+
+        .simulator-interface {
+            background: radial-gradient(ellipse at 50% 0%, #132641 0%, #091426 58%, #060b17 100%);
+        }
+
+        .simulator-header {
+            background: linear-gradient(110deg, rgba(16, 34, 57, 0.88), rgba(11, 20, 39, 0.8));
+            border-bottom-color: rgba(209, 241, 255, 0.2);
+        }
+
+        .tool-panel,
+        .control-panel {
+            background: linear-gradient(155deg, rgba(19, 38, 61, 0.78), rgba(10, 20, 37, 0.8));
+        }
+
+        .main-workspace {
+            background: radial-gradient(ellipse at 50% 45%, rgba(32, 113, 157, 0.08), transparent 60%);
+        }
+
+        .workspace-canvas {
+            background-color: rgba(8, 19, 35, 0.54);
+            background-image:
+                radial-gradient(ellipse at 18% 12%, rgba(36, 190, 218, 0.09), transparent 40%),
+                radial-gradient(ellipse at 84% 78%, rgba(83, 106, 255, 0.075), transparent 42%),
+                radial-gradient(rgba(147, 220, 255, 0.12) 1px, transparent 1px);
+            background-size: auto, auto, 20px 20px;
+            border-color: rgba(197, 237, 255, 0.22);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 0 42px rgba(0, 9, 25, 0.36), 0 0 24px rgba(30, 151, 196, 0.07);
+        }
+
+        .workspace-canvas.physical-workspace {
+            background-image:
+                linear-gradient(rgba(255, 190, 95, 0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 190, 95, 0.07) 1px, transparent 1px),
+                radial-gradient(rgba(255, 215, 150, 0.14) 1px, transparent 1px),
+                radial-gradient(ellipse at 18% 12%, rgba(255, 183, 92, 0.06), transparent 40%);
+            background-size: 80px 80px, 80px 80px, 20px 20px, auto;
+        }
+
+        .network-node {
+            background: linear-gradient(145deg, rgba(39, 67, 94, 0.84), rgba(13, 28, 48, 0.9));
+            border-color: rgba(198, 238, 255, 0.26);
+            border-radius: 12px;
+            box-shadow: 0 10px 24px rgba(0, 4, 18, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(83, 188, 236, 0.1);
+            -webkit-backdrop-filter: blur(14px) saturate(140%);
+            backdrop-filter: blur(14px) saturate(140%);
+        }
+
+        .network-node:hover {
+            border-color: rgba(163, 232, 255, 0.58);
+            box-shadow: 0 14px 32px rgba(0, 5, 20, 0.42), 0 0 22px rgba(45, 193, 230, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.32);
+        }
+
+        /* Living transmission paths: restrained glow keeps the topology readable. */
+        .connection-line {
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vector-effect: non-scaling-stroke;
+            animation: connection-lumen 3.2s ease-in-out infinite alternate;
+        }
+
+        .connection-line[stroke-dasharray] {
+            animation: connection-lumen 3.2s ease-in-out infinite alternate, connection-flow 1.8s linear infinite;
+        }
+
+        .data-packet {
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -2px 4px rgba(0, 0, 0, 0.18);
+            animation: packetPulse 0.5s ease-in-out infinite alternate, packet-lumen 1.6s ease-in-out infinite;
+        }
+
+        .packet-trail {
+            width: 28px;
+            height: 5px;
+            background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--packet-color, #4dc3ff) 58%, transparent), var(--packet-color, #4dc3ff));
+            filter: blur(1.2px) drop-shadow(0 0 5px var(--packet-color, #4dc3ff));
+            transform-origin: 100% 50%;
+            border-radius: 999px;
+            opacity: 0.72;
+        }
+
+        @keyframes connection-lumen {
+            from { opacity: 0.72; }
+            to { opacity: 1; }
+        }
+
+        @keyframes connection-flow {
+            to { stroke-dashoffset: -30; }
+        }
+
+        @keyframes packet-lumen {
+            0%, 100% { filter: drop-shadow(0 0 5px var(--packet-color, #4dc3ff)); }
+            50% { filter: drop-shadow(0 0 11px var(--packet-color, #4dc3ff)) drop-shadow(0 0 18px color-mix(in srgb, var(--packet-color, #4dc3ff) 45%, transparent)); }
+        }
+
+        .quick-toolbar,
+        .mode-switcher {
+            touch-action: pan-x;
+        }
+
+        .mini-map-stage,
+        .mini-map-viewport {
+            touch-action: none;
+        }
+
+        .quick-toolbar,
+        .mode-switcher {
+            background: linear-gradient(145deg, rgba(29, 51, 74, 0.78), rgba(11, 23, 41, 0.82));
+            border: 1px solid rgba(208, 242, 255, 0.25);
+            border-radius: 14px;
+        }
+
+        .quick-tool-btn,
+        .mode-btn {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(122, 202, 239, 0.025));
+            border-color: rgba(213, 244, 255, 0.16);
+            border-radius: 9px;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, rgba(20, 132, 198, 0.84), rgba(13, 187, 208, 0.58));
+            border-color: rgba(177, 239, 255, 0.58);
+            box-shadow: 0 0 18px rgba(31, 175, 217, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .mini-map {
+            background: linear-gradient(145deg, rgba(27, 49, 72, 0.82), rgba(8, 19, 35, 0.86));
+            border-color: rgba(205, 241, 255, 0.28);
+            border-radius: 14px;
+        }
+
+        .mini-map-stage {
+            background: rgba(7, 18, 33, 0.66);
+            border-color: rgba(171, 224, 248, 0.2);
+            border-radius: 7px;
+        }
+
+        .cli-terminal-window,
+        .modal-content,
+        .guide-window,
+        .flowchart-window,
+        .packet-analyzer-window {
+            background: linear-gradient(145deg, rgba(24, 45, 68, 0.91), rgba(8, 17, 32, 0.94));
+            border: 1px solid rgba(207, 240, 255, 0.3);
+            border-radius: 16px;
+            box-shadow: 0 28px 86px rgba(0, 4, 18, 0.56), 0 0 36px rgba(34, 168, 211, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        }
+
+        .cli-terminal-header {
+            background: linear-gradient(100deg, rgba(40, 70, 96, 0.82), rgba(17, 35, 57, 0.78));
+            border-bottom-color: rgba(202, 239, 255, 0.18);
+        }
+
+        .cli-terminal-body {
+            background: linear-gradient(135deg, rgba(4, 15, 26, 0.3), rgba(13, 36, 45, 0.16));
+        }
+
+        .smart-hint,
+        .guided-tutorial-panel {
+            background: linear-gradient(145deg, rgba(31, 55, 79, 0.9), rgba(11, 25, 44, 0.9));
+            border-color: rgba(204, 239, 255, 0.28);
+            border-radius: 14px;
+        }
+
+        .status-indicator {
+            background: linear-gradient(145deg, rgba(178, 232, 255, 0.1), rgba(32, 108, 146, 0.08));
+            border: 1px solid rgba(207, 240, 255, 0.16);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+            .cyber-header,
+            .simulator-header,
+            .tool-panel,
+            .control-panel,
+            .cyber-card,
+            .network-node,
+            .quick-toolbar,
+            .mode-switcher,
+            .mini-map,
+            .cli-terminal-window {
+                background-color: rgba(12, 27, 46, 0.96);
+            }
+        }
+
+        .hero-cyber {
+            isolation: isolate;
+        }
+
+        .hero-cyber::before {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            width: min(660px, 85vw);
+            height: 220px;
+            left: 50%;
+            top: 18%;
+            transform: translateX(-50%);
+            border-radius: 50%;
+            background: rgba(52, 174, 231, 0.12);
+            filter: blur(85px);
+            pointer-events: none;
+        }
+
+        .cyber-card {
+            --pointer-x: 50%;
+            --pointer-y: 10%;
+            background:
+                radial-gradient(ellipse at var(--pointer-x) var(--pointer-y), rgba(167, 234, 255, 0.13), transparent 48%),
+                linear-gradient(145deg, rgba(35, 61, 88, 0.66), rgba(13, 27, 48, 0.74));
+            border: 1px solid rgba(220, 247, 255, 0.2);
+            border-radius: 18px;
+            box-shadow: 0 14px 36px rgba(0, 4, 18, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(112, 208, 255, 0.08);
+            transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+            transition: transform 420ms cubic-bezier(0.2, 0.75, 0.25, 1), border-color 300ms ease, box-shadow 420ms ease, background-color 300ms ease;
+            will-change: transform;
+        }
+
+        .cyber-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            background: linear-gradient(122deg, rgba(255,255,255,0.12), transparent 24%, transparent 72%, rgba(126,218,255,0.08));
+            opacity: 0.7;
+        }
+
+        .cyber-card:hover {
+            transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateY(-7px) scale(1.012);
+            border-color: rgba(183, 238, 255, 0.52);
+            box-shadow: 0 24px 58px rgba(0, 5, 20, 0.42), 0 0 32px rgba(45, 193, 230, 0.17), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+        }
+
+        .cyber-card:active {
+            transform: perspective(900px) rotateX(0) rotateY(0) translateY(-2px) scale(0.99);
+            transition-duration: 120ms;
+        }
+
+        .card-icon-cyber,
+        .card-title-cyber,
+        .card-desc-cyber,
+        .card-features,
+        .card-badge,
+        .card-tip {
+            position: relative;
+            z-index: 1;
+        }
+
+        .control-btn,
+        .tool-item,
+        .device-type-btn,
+        .mode-tab,
+        .quick-tool-btn,
+        .action-btn,
+        .btn {
+            border-color: rgba(220, 247, 255, 0.19);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            transition: transform 220ms cubic-bezier(0.2, 0.75, 0.25, 1), background-color 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+        }
+
+        .control-btn:hover,
+        .tool-item:hover,
+        .device-type-btn:hover,
+        .mode-tab:hover,
+        .quick-tool-btn:hover,
+        .action-btn:hover,
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(0, 10, 28, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+        }
+
+        .control-btn:active,
+        .tool-item:active,
+        .device-type-btn:active,
+        .mode-tab:active,
+        .quick-tool-btn:active,
+        .action-btn:active,
+        .btn:active {
+            transform: translateY(0) scale(0.97);
+        }
+
+        @keyframes liquid-drift {
+            from { transform: translate3d(-2%, -1%, 0) rotate(-4deg) scale(1); }
+            to { transform: translate3d(2%, 1.5%, 0) rotate(4deg) scale(1.08); }
+        }
+
+        @media (max-width: 768px) {
+            .network-node {
+                -webkit-backdrop-filter: none;
+                backdrop-filter: none;
+            }
+
+            .quick-toolbar,
+            .mode-switcher {
+                max-width: calc(100% - 1rem);
+                border-radius: 12px;
+            }
+
+            .quick-tool-btn,
+            .mode-btn {
+                min-width: 44px;
+                min-height: 44px;
+            }
+
+            .connection-line[stroke-dasharray] {
+                animation-duration: 4.5s, 3s;
+            }
+
+            .cyber-header,
+            .simulator-header,
+            .tool-panel,
+            .control-panel,
+            .cyber-card,
+            .mode-switcher,
+            .quick-toolbar,
+            .smart-hint,
+            .mini-map,
+            .modal-content,
+            .guide-window,
+            .flowchart-window,
+            .packet-analyzer-window,
+            .cli-terminal-window,
+            .context-menu,
+            .guided-tutorial-panel {
+                -webkit-backdrop-filter: blur(14px) saturate(135%);
+                backdrop-filter: blur(14px) saturate(135%);
+            }
+
+            .cyber-card { transform: none; }
+            .cyber-card:hover { transform: translateY(-3px); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .cyber-background::before { animation: none; }
+            .connection-line,
+            .connection-line[stroke-dasharray],
+            .data-packet {
+                animation: none;
+            }
+            .network-node {
+                -webkit-backdrop-filter: none;
+                backdrop-filter: none;
+            }
+            .cyber-card { transform: none; will-change: auto; }
+            .cyber-card:hover { transform: translateY(-2px); }
+        }
     </style>
 </head>
 <body>
@@ -2972,20 +3389,20 @@
                 <div class="logo-icon">
                     <i class="fas fa-network-wired"></i>
                 </div>
-                <div class="logo-text">Network Packet Tracer <span class="app-version" data-app-version></span></div>
+                <div class="logo-text">Network Packet Tracer Beta 3.0.1 Version <span class="app-version" data-app-version></span></div>
             </div>
         </header>
         
         <section class="hero-cyber">
-            <h1 class="main-title-cyber">Network Packet Tracer</h1>
-            <div class="hero-version">CCNA Network</div>
-            <p class="subtitle-cyber">
+            <h1 class="main-title-cyber"> CCNA Network 網絡實作  </h1>
+            <h1 class="hero-version">CCNA Network 3.0.1 Version</h1>
+            <P class="subtitle-cyber">
                 專業級網絡模擬器，提供真實的網絡設備配置、封包傳輸模擬及故障排除環境。
                 支援從基礎到進階的網絡技術實作，為網絡工程師及學習者提供接近實境的練習平台。
             </p>
             <div class="quick-launch">
                 <button class="launch-btn primary" onclick="showSimulator('core')">
-                    <i class="fas fa-cogs"></i> 啟動模擬器
+                    <i class="fas fa-cogs"></i> 啟動模擬器 Start Up 
                 </button>
                 <button class="launch-btn" onclick="showGuide()">
                     <i class="fas fa-book-open"></i> 操作說明指南
@@ -3117,16 +3534,10 @@
         <section class="copyright-area">
             <div class="simulator-notice">
                 <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
-                此平台為專業級網絡模擬器，採用純前端技術實現所有網絡設備、協議及數據傳輸的模擬。
-                所有模擬操作均為虛擬環境中的練習，並非真實的網絡接駁。真正的網絡部署需要專業設備及實體佈線。
+               © 2026 Create By【 Sam. T 】
+                Copyright © 2026 Sam. T. All rights reserved.
             </div>
-            <div class="copyright-notice">
-                <div class="copyright-logo">PACKET TRACER SIMULATOR</div>
-                <h2><strong>© 2026 Create By【 Sam. T 】</strong></h2>
-                <h2>Copyright © 2026 Sam. T. All rights reserved.</h2>
-            </div>
-        </section>
-    </div>
+           
     
     <div id="simulatorInterface" class="simulator-interface">
         <div class="simulator-header">
@@ -3157,6 +3568,9 @@
                 
                 <button class="control-btn back" onclick="backToPrevious()">
                     <i class="fas fa-arrow-left"></i> 上一步
+                </button>
+                <button class="control-btn primary" onclick="nextSimulatorStep()">
+                    下一步 <i class="fas fa-arrow-right"></i>
                 </button>
                 <button class="control-btn home" onclick="hideSimulator()">
                     <i class="fas fa-home"></i> 主頁
@@ -3217,6 +3631,12 @@
                         </button>
                         <button class="device-type-btn" onclick="switchSimulatorMode('iot')" data-mode="iot">
                             <i class="fas fa-satellite-dish"></i> IoT
+                        </button>
+                        <button class="device-type-btn" onclick="switchSimulatorMode('wireless')" data-mode="wireless">
+                            <i class="fas fa-wifi"></i> 無線
+                        </button>
+                        <button class="device-type-btn" onclick="switchSimulatorMode('datacenter')" data-mode="datacenter">
+                            <i class="fas fa-database"></i> 資料中心
                         </button>
                         <button class="device-type-btn" onclick="switchSimulatorMode('cloud')" data-mode="cloud">
                             <i class="fas fa-cloud"></i> 雲網絡
@@ -3547,10 +3967,10 @@
         <div class="topology-content" id="topologyContent"></div>
     </div>
     
-    <div class="device-details-modal" id="deviceDetailsModal">
+    <div class="device-details-modal" id="deviceDetailsModal" onclick="if(event.target===this)hideDeviceDetails()" role="dialog" aria-modal="true" aria-labelledby="deviceDetailsTitle">
         <div class="modal-header">
-            <h3 style="color: var(--interface-blue); font-weight: 500;">設備工作區</h3>
-            <button class="modal-close" onclick="hideDeviceDetails()">
+            <h3 id="deviceDetailsTitle" style="color: var(--interface-blue); font-weight: 500;">設備工作區</h3>
+            <button class="modal-close" aria-label="關閉設備工作區" onclick="hideDeviceDetails()">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -4019,6 +4439,60 @@ Router&gt;
             }
         };
 
+        // Incremental engine/view boundary: model operations publish immutable event details;
+        // renderers subscribe instead of polling or reaching into engine mutation internals.
+        const simulatorStateSubscribers = new Set();
+        let simulatorRevision = 0;
+        function subscribeSimulatorState(subscriber) {
+            if (typeof subscriber !== 'function') return () => {};
+            simulatorStateSubscribers.add(subscriber);
+            return () => simulatorStateSubscribers.delete(subscriber);
+        }
+
+        function publishSimulatorStateChange(type, detail = {}) {
+            const event = Object.freeze({ type, revision: ++simulatorRevision, detail: Object.freeze({ ...detail }), timestamp: Date.now() });
+            simulatorStateSubscribers.forEach(subscriber => {
+                try { subscriber(event); } catch (error) { console.error('Simulator view subscriber failed.', error); }
+            });
+        }
+
+        function setupSimulatorViewSubscriptions() {
+            if (document.documentElement.dataset.simulatorViewSubscribed) return;
+            document.documentElement.dataset.simulatorViewSubscribed = 'true';
+            subscribeSimulatorState(event => {
+                if (['device:add', 'device:remove', 'connection:add', 'connection:remove', 'network:change'].includes(event.type)) {
+                    updateDeviceCount();
+                    renderMiniMap();
+                    updatePortLeds();
+                }
+                if (event.type === 'network:change') updateNetworkTables();
+                if (['device:add', 'device:remove', 'network:change'].includes(event.type)) {
+                    simulatorState.activeDevices.forEach(entry => {
+                        const node = document.getElementById(entry.id);
+                        if (!node) return;
+                        const name = node.querySelector('.node-name');
+                        const address = node.querySelector('.node-ip');
+                        if (name) name.textContent = entry.device.name;
+                        if (address) address.textContent = entry.device.ip || getPrimaryAddress(entry) || 'unassigned';
+                    });
+                }
+                if (event.type === 'mode:change') renderDeviceLibrary(event.detail.mode);
+                if (event.type === 'device:add' && ['wireless','devices','iot','5g'].includes(event.detail.mode)) {
+                    const entry = simulatorState.activeDevices.find(item => item.id === event.detail.deviceId);
+                    if (entry && ['ap','mesh'].includes(entry.device.type)) {
+                        const radio = entry.config?.radio || {};
+                        addAP(entry.id, radio.txPower || entry.device.txPower || 18, radio.channel || entry.device.channel || 1, radio.band || entry.device.band || 'dual');
+                    }
+                }
+                if (event.type === 'device:remove') {
+                    simulatorState.wireless.aps = simulatorState.wireless.aps.filter(ap => ap.id !== event.detail.deviceId);
+                    scheduleWirelessRender();
+                    const modal = document.getElementById('deviceDetailsModal');
+                    if (document.getElementById('deviceDetailsContent')?.dataset.deviceId === event.detail.deviceId) modal.style.display = 'none';
+                }
+            });
+        }
+
         function createChart(ctx, config) {
             if (typeof Chart === 'function') return new Chart(ctx, config);
             return {
@@ -4111,7 +4585,9 @@ Router&gt;
                 { id: 'laptop1', name: 'Laptop', type: 'laptop', icon: 'fa-laptop', ip: '192.168.1.103/24', ports: 1, model: 'Generic Laptop', desc: '筆記型電腦' },
                 { id: 'server1', name: 'Server', type: 'server', icon: 'fa-server', ip: '192.168.1.101/24', ports: 2, model: 'Generic Server', desc: '伺服器' },
                 { id: 'phone1', name: 'IP Phone', type: 'phone', icon: 'fa-phone', ip: '192.168.1.110/24', ports: 1, model: 'Cisco IP Phone', desc: 'VoIP電話' },
-                { id: 'printer1', name: 'Printer', type: 'printer', icon: 'fa-print', ip: '192.168.1.120/24', ports: 1, model: 'Network Printer', desc: '網絡打印機' }
+                { id: 'printer1', name: 'Printer', type: 'printer', icon: 'fa-print', ip: '192.168.1.120/24', ports: 1, model: 'Network Printer', desc: '網絡打印機' },
+                { id: 'tablet1', name: 'Tablet', type: 'tablet', icon: 'fa-tablet-screen-button', ip: '192.168.1.121/24', ports: 1, model: 'Wireless Tablet', desc: '行動終端與應用測試' },
+                { id: 'voip1', name: 'Softphone Client', type: 'softphone', icon: 'fa-headset', ip: '192.168.1.122/24', ports: 1, model: 'VoIP Softphone', desc: '語音服務與 QoS 終端' }
             ],
             // 安全模式專用
             security: [
@@ -4162,23 +4638,32 @@ Router&gt;
                 { id: 'dc-lb', name: 'Load Balancer', type: 'load-balancer', icon: 'fa-balance-scale', ip: '10.0.10.1/24', ports: 4, model: 'Load Balancer', desc: '資料中心負載平衡器' },
                 { id: 'dc-spine', name: 'Spine Switch', type: 'switch', icon: 'fa-sitemap', ip: '10.0.0.1/24', ports: 32, model: 'Spine Switch', desc: 'Spine-Leaf 核心交換器' },
                 { id: 'dc-leaf', name: 'Leaf Switch', type: 'switch', icon: 'fa-sitemap', ip: '10.0.0.2/24', ports: 48, model: 'Leaf Switch', desc: 'Spine-Leaf 接入交換器' }
+            ],
+            cloudStorage: [
+                { id: 'cloud-drive', name: 'Cloud Drive', nameZh: '雲端硬碟', type: 'cloud-drive', icon: 'fa-cloud-arrow-up', ip: '10.40.0.10/24', ports: 1, model: 'Cloud Drive Service', desc: '容量、檔案、分享與同步狀態模擬' },
+                { id: 'cloud-object-store', name: 'Object Storage', nameZh: '物件儲存', type: 'cloud-storage', icon: 'fa-box-archive', ip: '10.40.0.11/24', ports: 1, model: 'S3-compatible Object Store', desc: 'Bucket、容量與存取政策模擬' }
+            ],
+            cellular: [
+                { id: 'cell-tower-1', name: 'Cell Tower 1', nameZh: '蜂巢式基地台 1', type: 'cell-tower', icon: 'fa-tower-cell', ip: '10.50.0.11/24', ports: 2, model: 'LTE / 5G gNodeB', desc: 'Cell 1：無線覆蓋、頻段與 UE 接入' },
+                { id: 'cell-tower-2', name: 'Cell Tower 2', nameZh: '蜂巢式基地台 2', type: 'cell-tower', icon: 'fa-tower-cell', ip: '10.50.0.12/24', ports: 2, model: 'LTE / 5G gNodeB', desc: 'Cell 2：鄰區與交接測試' },
+                { id: 'cell-tower-3', name: 'Cell Tower 3', nameZh: '蜂巢式基地台 3', type: 'cell-tower', icon: 'fa-tower-cell', ip: '10.50.0.13/24', ports: 2, model: 'LTE / 5G gNodeB', desc: 'Cell 3：多站點覆蓋與容量測試' }
             ]
         };
 
         // 模式對應的設備類別配置
         const modeDeviceConfig = {
             core: ['routers', 'switches', 'endpoints'],
-            devices: ['routers', 'switches', 'endpoints', 'security', 'wireless', 'iot', 'protocols', 'automation', 'datacenter', 'cloud', 'sdwan', '5g'],
+            devices: ['routers', 'switches', 'endpoints', 'security', 'wireless', 'iot', 'protocols', 'automation', 'datacenter', 'cloudStorage', 'cellular', 'cloud', 'sdwan', '5g'],
             protocols: ['protocols', 'routers', 'switches'],
             security: ['security', 'routers', 'switches', 'endpoints'],
             automation: ['automation', 'routers', 'switches', 'endpoints'],
-            iot: ['iot', 'routers', 'switches'],
+            iot: ['iot', 'cellular', 'routers', 'switches'],
             quickstart: ['routers', 'switches', 'endpoints'],
-            wireless: ['wireless', 'endpoints', 'iot'],
-            datacenter: ['datacenter', 'protocols', 'switches'],
-            cloud: ['cloud', 'routers', 'endpoints'],
+            wireless: ['wireless', 'endpoints', 'iot', 'cellular'],
+            datacenter: ['datacenter', 'cloudStorage', 'protocols', 'switches'],
+            cloud: ['cloud', 'cloudStorage', 'routers', 'endpoints'],
             sdwan: ['sdwan', 'routers'],
-            '5g': ['5g', 'wireless', 'endpoints']
+            '5g': ['5g', 'cellular', 'wireless', 'endpoints']
         };
 
         // 當前設備類別
@@ -4233,6 +4718,7 @@ Router&gt;
         // 初始化函數
         function init() {
             document.title = `CCNA Network SIMULATOR ${APP_VERSION}`;
+            setupSimulatorViewSubscriptions();
             document.querySelectorAll('[data-app-version]').forEach(element => {
                 element.textContent = `SIMULATOR ${APP_VERSION}`;
             });
@@ -4820,14 +5306,14 @@ Router&gt;
                 protocols: '協議設備',
                 automation: '自動化工具',
                 hubs: '集線器',
-                datacenter: '資料中心設備',
+                datacenter: '資料中心設備', cloudStorage: '雲端硬碟與儲存', cellular: '蜂巢式基地台',
                 cloud: '雲端節點', sdwan: 'SD-WAN 設備', '5g': '5G 設備'
             };
 
             const categoryNamesEn = {
                 routers: 'Routers', switches: 'Switches', endpoints: 'End devices', security: 'Security',
                 wireless: 'Wireless', iot: 'IoT', protocols: 'Protocols', automation: 'Automation', hubs: 'Hubs', datacenter: 'Data Center',
-                cloud: 'Cloud', sdwan: 'SD-WAN', '5g': '5G'
+                cloud: 'Cloud', cloudStorage: 'Cloud Storage', cellular: 'Cellular Sites', sdwan: 'SD-WAN', '5g': '5G'
             };
 
             // 按類別分組顯示
@@ -4876,7 +5362,12 @@ Router&gt;
                 firewall: '防火牆', ap: '無線基地台', wlc: '無線控制器', mesh: 'Mesh 無線節點',
                 hub: '集線器', sensor: '感測器', camera: '網絡攝影機', smart: '智能設備',
                 controller: '無線控制器', client: '無線客戶端', gateway: '閘道器',
-                'web-server': 'Web 伺服器', 'db-server': '資料庫伺服器', storage: '儲存設備', 'load-balancer': '負載平衡器'
+                'web-server': 'Web 伺服器', 'db-server': '資料庫伺服器', storage: '儲存設備', 'load-balancer': '負載平衡器',
+                tablet: '平板電腦', softphone: '軟體電話', camera: 'IP 攝影機', 'cloud-drive': '雲端硬碟', 'cloud-storage': '物件儲存',
+                'cell-tower': '蜂巢式基地台', 'cloud-vpc': '雲端 VPC', aws: 'AWS VPC', azure: 'Azure VNet', gcp: 'Google Cloud',
+                '5g-bs': '5G 基地台', upf: '5G UPF', edge: '邊緣伺服器', '5g-device': '5G 終端',
+                'sdwan-hub': 'SD-WAN Hub', mpls: 'MPLS 網路', internet: 'Internet 網路', branch: 'SD-WAN 分支',
+                ips: '入侵防禦系統', vpn: 'VPN 閘道', nac: '網絡准入控制'
             };
             const chinese = device?.nameZh || translations[device?.type] || '網絡設備';
             const english = device?.name || device?.model || 'Device';
@@ -4886,7 +5377,7 @@ Router&gt;
         function updateWirelessControlsVisibility(mode = simulatorState.currentMode) {
             const controls = document.getElementById('wirelessControls');
             if (!controls) return;
-            const visible = mode === 'wireless' || mode === 'devices';
+            const visible = ['wireless', 'devices', 'iot', '5g'].includes(mode);
             controls.hidden = !visible;
             const title = document.getElementById('wirelessControlsTitle');
             if (title) title.textContent = mode === 'devices' ? '🧰 設備管理工具 / Wireless RF Tools' : '📶 RF Coverage / 無線分析工具';
@@ -4928,7 +5419,11 @@ Router&gt;
                     case 'x': selectTool('cross'); break;
                     case 'c': selectTool('console'); break;
                     case 'r': switchMode('realtime'); break;
-                    case 'escape': hideSimulator(); break;
+                    case 'escape':
+                        if (getComputedStyle(document.getElementById('deviceDetailsModal')).display !== 'none') hideDeviceDetails();
+                        else if (getComputedStyle(document.getElementById('cliTerminal')).display !== 'none') closeCLI();
+                        else hideSimulator();
+                        break;
                     case 'delete': 
                         if (simulatorState.selectedDevice) {
                             deleteDevice(simulatorState.selectedDevice);
@@ -5089,9 +5584,8 @@ Router&gt;
             if (['wireless', 'devices'].includes(simulatorState.currentMode) && deviceInstance.type === 'ap') {
                 addAP(nodeId, deviceInstance.txPower || 18, deviceInstance.channel || 1, deviceInstance.band || 'dual');
             }
-            updatePortLeds();
-            renderMiniMap();
             updateProgress(1);
+            publishSimulatorStateChange('device:add', { deviceId: nodeId, type: deviceInstance.type, mode: simulatorState.currentMode });
             showHint('設備添加', `${deviceInstance.name} 已添加到工作區。`);
             updateGuidedTutorial();
             return entry;
@@ -5140,6 +5634,10 @@ Router&gt;
             // 終端設備。
             if (['pc', 'laptop', 'phone', 'printer'].includes(type)) {
                 return [type === 'pc' || type === 'laptop' ? 'FastEthernet0' : 'GigabitEthernet0'];
+            }
+
+            if (['cloud-drive', 'cloud-storage', 'cloud-vpc', 'cell-tower', 'tablet', 'softphone', 'camera', 'aws', 'azure', 'gcp', '5g-bs', 'upf', 'edge', '5g-device', 'sdwan-hub', 'mpls', 'internet', 'branch', 'ips', 'vpn', 'nac'].includes(type)) {
+                return Array.from({ length: count }, (_, index) => `GigabitEthernet0/${index}`);
             }
 
             return ['GigabitEthernet0/0'];
@@ -5733,8 +6231,7 @@ Router&gt;
             drawConnection(connection);
             fromDevice.connections.push(connId);
             toDevice.connections.push(connId);
-            updatePortLeds();
-            renderMiniMap();
+            publishSimulatorStateChange('connection:add', { connectionId: connId, fromId, toId, fromInterface, toInterface });
             return true;
         }
 
@@ -5833,8 +6330,7 @@ Router&gt;
             });
             
             simulatorState.connections = simulatorState.connections.filter(c => c.id !== connId);
-            updatePortLeds();
-            renderMiniMap();
+            publishSimulatorStateChange('connection:remove', { connectionId: connId, fromId: conn.from, toId: conn.to });
             showHint('連線刪除', '連線已成功刪除');
         }
 
@@ -5852,15 +6348,13 @@ Router&gt;
             if (node) node.remove();
             
             simulatorState.activeDevices = simulatorState.activeDevices.filter(d => d.id !== nodeId);
-            if (simulatorState.wireless?.aps) simulatorState.wireless.aps = simulatorState.wireless.aps.filter(ap => ap.id !== nodeId);
             if (simulatorState.wireless?.roamTimers?.[nodeId]) {
                 clearInterval(simulatorState.wireless.roamTimers[nodeId]);
                 delete simulatorState.wireless.roamTimers[nodeId];
             }
             simulatorState.selectedDevice = null;
-            updatePortLeds();
-            renderMiniMap();
             scheduleWirelessRender();
+            publishSimulatorStateChange('device:remove', { deviceId: nodeId, type: device.device.type });
             showHint('設備刪除', `${device.device.name} 已從工作區移除`);
         }
 
@@ -6146,6 +6640,9 @@ Router&gt;
             trail.className = 'packet-trail';
             trail.style.left = packet.style.left;
             trail.style.top = packet.style.top;
+            trail.style.setProperty('--packet-color', typeConfig.color);
+            const packetHeading = Math.atan2(to.y - from.y, to.x - from.x) * (180 / Math.PI);
+            trail.style.transform = `translate(-25px, 6px) rotate(${packetHeading}deg)`;
             canvas.appendChild(trail);
             
             const duration = 800 + Math.random() * 400;
@@ -6256,6 +6753,9 @@ Router&gt;
 
         function hideSimulator() {
             cancelTempConnection();
+            hideDeviceDetails();
+            closeCLI();
+            document.getElementById('moduleSwitchDialog')?.remove();
             document.getElementById('simulatorInterface').style.display = 'none';
             document.getElementById('homePage').style.display = 'block';
             stopPacketAnimation();
@@ -6279,6 +6779,52 @@ Router&gt;
             workspacePresetTimer = null;
             workspacePresetFrame = null;
             workspacePresetGeneration++;
+        }
+
+        function connectPresetTopology(mode) {
+            const devices = simulatorState.activeDevices;
+            if (devices.length < 2 || simulatorState.connections.length) return;
+            const find = name => devices.find(entry => entry.device.name === name);
+            const connect = (first, second, cable = 'auto') => {
+                if (first && second && first.id !== second.id) createConnection(first.id, second.id, cable);
+            };
+            const byType = type => devices.filter(entry => entry.device.type === type);
+            const centerSwitch = byType('switch').sort((a, b) => Object.keys(b.device.interfaces || {}).length - Object.keys(a.device.interfaces || {}).length)[0];
+
+            if (mode === 'core' || mode === 'quickstart') {
+                const router = byType('router')[0];
+                connect(router, centerSwitch);
+                devices.filter(entry => entry !== router && entry !== centerSwitch).forEach(entry => connect(centerSwitch, entry));
+            } else if (mode === 'datacenter') {
+                const spine = find('Spine-1');
+                const leaf1 = find('Leaf-1');
+                const leaf2 = find('Leaf-2');
+                connect(spine, leaf1, 'fiber');
+                connect(spine, leaf2, 'fiber');
+                ['Load-Balancer', 'Web-Server-1', 'Cloud Drive 1'].forEach(name => connect(leaf1, find(name)));
+                ['Web-Server-2', 'DB-Server', 'Object Store 1'].forEach(name => connect(leaf2, find(name)));
+            } else if (mode === 'cloud') {
+                const router = find('Edge-Router');
+                devices.filter(entry => entry !== router).forEach(entry => connect(router, entry));
+            } else if (mode === 'sdwan') {
+                const hub = find('SD-WAN-Hub');
+                devices.filter(entry => entry !== hub).forEach(entry => connect(hub, entry));
+            } else if (mode === '5g') {
+                const upf = find('UPF-Core');
+                devices.filter(entry => entry !== upf).forEach(entry => connect(upf, entry));
+            } else if (mode === 'wireless') {
+                const controller = byType('wlc')[0];
+                devices.filter(entry => entry !== controller).forEach(entry => connect(controller, entry));
+            } else if (centerSwitch) {
+                devices.filter(entry => entry !== centerSwitch).forEach(entry => connect(centerSwitch, entry));
+            } else {
+                const anchor = byType('router')[0] || devices[0];
+                devices.filter(entry => entry !== anchor).forEach(entry => connect(anchor, entry));
+            }
+            updateAllConnections();
+            updatePortLeds();
+            renderMiniMap();
+            updateNetworkTables();
         }
 
         function initWorkspace(mode) {
@@ -6331,13 +6877,13 @@ Router&gt;
 
             simulatorState.activeDevices = [];
             simulatorState.connections = [];
-            updateProgress(1);
+                updateProgress(1);
 
-            // 重新渲染設備庫 - 根據當前模式
-            renderDeviceLibrary(mode);
+                // Mode changes publish to the subscribed view renderer.
+                publishSimulatorStateChange('mode:change', { mode });
             ['wirelessOverlaySvg', 'wirelessHeatmapSvg'].forEach(id => {
                 const layer = document.getElementById(id);
-                if (layer) layer.style.display = mode === 'wireless' || mode === 'devices' ? 'block' : 'none';
+                if (layer) layer.style.display = ['wireless', 'devices', 'iot', '5g'].includes(mode) ? 'block' : 'none';
             });
 
             updateWirelessControlsVisibility(mode);
@@ -6449,6 +6995,8 @@ Router&gt;
                         addDevice({ ...deviceLibrary.datacenter[0], name: 'Web-Server-1', ip: '10.0.10.10/24' }, 150, 420);
                         addDevice({ ...deviceLibrary.datacenter[0], name: 'Web-Server-2', ip: '10.0.10.11/24' }, 450, 420);
                         addDevice({ ...deviceLibrary.datacenter[1], name: 'DB-Server' }, 300, 520);
+                        addDevice({ ...deviceLibrary.cloudStorage[0], name: 'Cloud Drive 1' }, 150, 540);
+                        addDevice({ ...deviceLibrary.cloudStorage[1], name: 'Object Store 1' }, 450, 540);
                         showHint('資料中心', '已載入現代化資料中心拓撲：\n• Spine-Leaf 架構\n• 負載平衡器 (LB)\n• Web 伺服器叢集\n• 關聯式資料庫');
                         break;
 
@@ -6472,7 +7020,8 @@ Router&gt;
                         addDevice({ ...newDeviceLibraries['5g'][1], name: 'UPF-Core' }, 300, 180);
                         addDevice({ ...newDeviceLibraries['5g'][2], name: 'Edge-Cloud' }, 450, 180);
                         addDevice({ ...newDeviceLibraries['5g'][3], name: '5G-UE' }, 150, 300);
-                        showHint('5G 網絡', '已載入 5G 核心網拓撲：\n• 5G 基地台\n• UPF 用戶平面\n• 邊緣運算伺服器');
+                        deviceLibrary.cellular.forEach((site, index) => addDevice({ ...site, name: `Cell Tower ${index + 1}` }, 80 + index * 190, 390));
+                        showHint('5G 網絡', '已載入 5G 核心網拓撲：\n• gNodeB 與 UPF\n• Edge Compute 與 UE\n• Cell Tower 1 / 2 / 3');
                         break;
 
                     case 'quickstart':
@@ -6485,6 +7034,7 @@ Router&gt;
                         showHint('快速開始指南', '歡迎使用模擬器！\n\n步驟1️⃣: 從左側拖放設備\n步驟2️⃣: 選擇連線工具連接\n步驟3️⃣: 右側配置參數\n步驟4️⃣: 測試網絡連通性');
                         break;
                 }
+                    connectPresetTopology(mode);
                 };
                 let layoutAttempts = 0;
                 const waitForCanvasLayout = () => {
@@ -6524,6 +7074,19 @@ Router&gt;
                 const steps = ['設備部署', '連線配置', '協議設定', '測試驗證'];
                 showHint('步驟跳轉', `已跳轉到: ${steps[step-1]}`);
             }
+        }
+
+        function nextSimulatorStep() {
+            const next = Math.min(4, Number(simulatorState.currentStep || 1) + 1);
+            if (next === simulatorState.currentStep) return showHint('流程完成', '已在最後一步；可執行診斷或 Ping 驗證。');
+            updateProgress(next);
+            const messages = {
+                2: `連線配置：目前有 ${simulatorState.connections.length} 條鏈路。選擇左側線材，或使用已連線的預設拓撲。`,
+                3: '協議設定：選取 Router / Switch 設定 IPv4、IPv6、VLAN、Trunk 或路由協議。',
+                4: '測試驗證：執行 Ping、封包分析或網絡診斷，確認鏈路與位址。'
+            };
+            showHint('下一步', messages[next] || '繼續配置網絡。');
+            if (next === 4 && simulatorState.activeDevices.length > 1) showNetworkDiagnostics();
         }
 
         function backToPrevious() {
@@ -6887,11 +7450,6 @@ Router&gt;
             entry.config.routing.learnedRoutes = [];
             entry.config.routing.connectedRoutes = getDeviceAddressRecords(entry).map(record => ({ destination: record.prefix, interface: record.interface, protocol: 'C', metric: 0 }));
             invalidateNetworkCaches();
-            const node = document.getElementById(entry.id);
-            if (node) {
-                const ipLabel = node.querySelector('.node-ip');
-                if (ipLabel && entry.device.ip) ipLabel.textContent = entry.device.ip;
-            }
             return `IP address ${parsed.ip} ${mask} assigned to ${interfaceName}`;
         }
 
@@ -7024,8 +7582,7 @@ Router&gt;
             simulatorState.activeDevices.forEach(entry => {
                 if (entry.config?.routing) entry.config.routing.learnedRoutes = [];
             });
-            updateNetworkTables();
-            updatePortLeds();
+            publishSimulatorStateChange('network:change', { deviceCount: simulatorState.activeDevices.length, connectionCount: simulatorState.connections.length });
         }
 
         function getConnectionInterface(entry, connection) {
@@ -7092,7 +7649,7 @@ Router&gt;
         }
 
         function isBridgeDevice(entry) {
-            return ['switch', 'bridge', 'hub', 'ap', 'mesh'].includes(entry?.device?.type);
+            return ['switch', 'bridge', 'hub', 'ap', 'mesh', 'cloud-vpc', 'cloud-drive', 'cloud-storage', 'aws', 'azure', 'gcp', 'cell-tower', '5g-bs', 'upf', 'edge', '5g-device', 'sdwan-hub', 'mpls', 'internet', 'branch'].includes(entry?.device?.type);
         }
 
         function getPortVlanProfile(entry, connection) {
@@ -7396,6 +7953,7 @@ Router&gt;
                     const toId = segment.nodes[index + 1];
                     for (const endpoint of [{ id: fromId, direction: 'out' }, { id: toId, direction: 'in' }]) {
                         const entry = simulatorState.activeDevices.find(device => device.id === endpoint.id);
+                        if (['firewall', 'ips', 'nac', 'vpn'].includes(entry?.device?.type) && entry.config?.firewall?.enabled === false) continue;
                         const interfaceName = entry && getConnectionInterface(entry, connection);
                         const binding = entry?.config?.interfaces?.[interfaceName]?.accessGroup;
                         if (!binding || binding.direction !== endpoint.direction) continue;
@@ -7660,14 +8218,29 @@ Router&gt;
             const type = entry?.device?.type;
             if (type === 'hub') return 'layer1';
             if (['router', 'switch', 'bridge', 'firewall', 'wlc'].includes(type)) return 'network';
-            if (['pc', 'laptop', 'server', 'web-server', 'db-server', 'storage', 'load-balancer', 'client'].includes(type)) return 'endpoint';
+            if (['pc', 'laptop', 'tablet', 'softphone', 'phone', 'printer', 'server', 'web-server', 'db-server', 'storage', 'load-balancer', 'client'].includes(type)) return 'endpoint';
             return 'appliance';
         }
+
+        const SPECIALIZED_DEVICE_WORKSPACES = {
+            camera: ['IP Camera', 'fa-video'], 'cloud-drive': ['Cloud Drive', 'fa-cloud-arrow-up'], 'cloud-storage': ['Object Storage', 'fa-box-archive'],
+            'cell-tower': ['Cell Site', 'fa-tower-cell'], firewall: ['Firewall', 'fa-shield-halved'], ips: ['IPS', 'fa-user-shield'],
+            nac: ['Network Access Control', 'fa-id-card'], vpn: ['VPN Gateway', 'fa-lock'], aws: ['Cloud VPC', 'fa-cloud'],
+            azure: ['Cloud VNet', 'fa-cloud'], gcp: ['Cloud Network', 'fa-cloud'], 'cloud-vpc': ['Cloud VPC', 'fa-cloud'],
+            '5g-bs': ['5G Base Station', 'fa-tower-broadcast'], upf: ['5G UPF', 'fa-server'], edge: ['Edge Compute', 'fa-microchip'],
+            '5g-device': ['5G Device', 'fa-mobile-screen-button'], 'sdwan-hub': ['SD-WAN Control', 'fa-diagram-project'],
+            mpls: ['WAN Circuit', 'fa-link'], internet: ['Internet Circuit', 'fa-globe'], branch: ['Branch Edge', 'fa-building'],
+            'db-server': ['Database', 'fa-database'], storage: ['Storage Array', 'fa-hard-drive'], 'load-balancer': ['Load Balancer', 'fa-scale-balanced'],
+            ap: ['Access Point Radio', 'fa-wifi'], mesh: ['Mesh Radio', 'fa-diagram-project'], sensor: ['Sensor Telemetry', 'fa-gauge'],
+            smart: ['Smart Device', 'fa-lightbulb'], mcu: ['Microcontroller', 'fa-microchip'], gateway: ['IoT Gateway', 'fa-ethernet'],
+            printer: ['Printer Queue', 'fa-print'], phone: ['VoIP Phone', 'fa-phone'], softphone: ['Softphone Client', 'fa-headset']
+        };
 
         function getDefaultDeviceTab(entry) {
             const category = getDeviceCategory(entry);
             if (category === 'layer1') return 'physical';
-            if (category === 'network') return 'cli';
+            if (SPECIALIZED_DEVICE_WORKSPACES[entry?.device?.type]) return 'workspace';
+            if (category === 'network') return 'desktop';
             if (category === 'endpoint') return 'desktop';
             return 'config';
         }
@@ -7676,11 +8249,6 @@ Router&gt;
             const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
             if (!entry) return;
             simulatorState.selectedDevice = entry.id;
-            const category = getDeviceCategory(entry);
-            if (category === 'network') {
-                showCLITerminal();
-                return;
-            }
             showDeviceDetails(entry.id);
         }
 
@@ -7696,9 +8264,15 @@ Router&gt;
                 : category === 'endpoint'
                     ? [{ id: 'physical', label: 'Physical', icon: 'fa-microchip' }]
                     : [{ id: 'config', label: 'Config', icon: 'fa-sliders' }, { id: 'physical', label: 'Physical', icon: 'fa-microchip' }];
-            if (networkDeviceTypes.includes(type)) tabs.push({ id: 'cli', label: 'CLI', icon: 'fa-terminal' });
-            if (['pc', 'laptop', ...serverTypes, 'client'].includes(type)) tabs.push({ id: 'desktop', label: 'Desktop', icon: 'fa-desktop' });
+            if (networkDeviceTypes.includes(type)) {
+                tabs.push({ id: 'desktop', label: 'Device Apps', icon: 'fa-table-cells-large' });
+                tabs.push({ id: 'ports', label: 'Live Ports', icon: 'fa-ethernet' });
+                tabs.push({ id: 'cli', label: 'CLI', icon: 'fa-terminal' });
+            }
+            if (SPECIALIZED_DEVICE_WORKSPACES[type]) tabs.push({ id: 'network', label: 'Network / IP', icon: 'fa-network-wired' });
+            if (!networkDeviceTypes.includes(type) && category !== 'layer1' && !SPECIALIZED_DEVICE_WORKSPACES[type]) tabs.push({ id: 'desktop', label: 'Desktop', icon: 'fa-desktop' });
             if (serverTypes.includes(type)) tabs.push({ id: 'services', label: 'Services', icon: 'fa-server' });
+            if (SPECIALIZED_DEVICE_WORKSPACES[type]) tabs.push({ id: 'workspace', label: SPECIALIZED_DEVICE_WORKSPACES[type][0], icon: SPECIALIZED_DEVICE_WORKSPACES[type][1] });
             const selectedTab = tabs.some(tab => tab.id === activeTab) ? activeTab : 'config';
             content.innerHTML = `
                 <div class="device-detail-tabs">
@@ -7719,12 +8293,749 @@ Router&gt;
             if (tab === 'physical') renderPhysicalDevicePanel(entry, panel);
             if (tab === 'config') renderDeviceConfigPanel(entry, panel);
             if (tab === 'desktop') renderDeviceDesktopPanel(entry, panel);
+            if (tab === 'network') renderDesktopIPConfig(entry.id);
+            if (tab === 'ports') renderDevicePortsPanel(entry, panel);
             if (tab === 'services') renderServerServicesPanel(entry, panel);
             if (tab === 'cli') renderDeviceCLILauncher(entry, panel);
+            if (tab === 'workspace') renderSpecializedDeviceWorkspace(entry, panel);
         }
 
         function renderDeviceCLILauncher(entry, panel) {
             panel.innerHTML = `<div class="detail-card" style="max-width:560px;margin:1rem auto;text-align:center;padding:2rem"><div class="service-card-icon" style="width:64px;height:64px;margin:0 auto 1rem;font-size:1.5rem"><i class="fas fa-terminal"></i></div><h3 style="color:var(--hologram-text);margin-bottom:.45rem">Secure device console</h3><p style="color:var(--cyber-gray);margin:0 auto 1.2rem;max-width:420px">啟動互動式終端，使用 IOS 風格命令配置 ${escapeHtml(entry.device.name)}。</p><button class="action-btn primary" style="margin:auto;justify-content:center;min-width:190px" onclick="openDeviceCLI('${entry.id}')"><i class="fas fa-play"></i> 啟動 CLI 終端</button></div>`;
+        }
+
+        function renderSpecializedDeviceWorkspace(entry, panel) {
+            const type = entry.device.type;
+            entry.config = entry.config || {};
+            const ip = getPrimaryAddress(entry) || '未配置 IP';
+            if (type === 'camera') {
+                const state = entry.config.camera || (entry.config.camera = { powered: true, streaming: false, recording: false, motionDetection: true, quality: '1080p', motionEvents: 0 });
+                const storage = simulatorState.activeDevices.filter(item => ['cloud-drive', 'cloud-storage', 'storage', 'server'].includes(item.device.type));
+                panel.innerHTML = `<div class="detail-card"><h3>📷 IP Camera · ${escapeHtml(entry.device.name)}</h3><p>攝影機工作區（非 Router CLI）：影像狀態、錄影、動態偵測與儲存同步。</p><div class="detail-card-grid"><label class="form-label">Stream quality<select id="cameraQuality" class="control-select" onchange="setCameraOption('${entry.id}','quality',this.value)">${['720p','1080p','1440p','4K'].map(value => `<option ${state.quality === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label><label class="form-label">Recording destination<select id="cameraStorage" class="control-select" onchange="setCameraOption('${entry.id}','storageId',this.value)"><option value="">Local camera storage</option>${storage.map(item => `<option value="${item.id}" ${state.storageId === item.id ? 'selected' : ''}>${escapeHtml(item.device.name)}</option>`).join('')}</select></label></div><div style="display:flex;gap:.45rem;flex-wrap:wrap;margin:.6rem 0"><button class="action-btn ${state.streaming ? 'primary' : ''}" onclick="toggleCameraActivity('${entry.id}','streaming')">${state.streaming ? 'Stop live stream' : 'Start live stream'}</button><button class="action-btn ${state.recording ? 'primary' : ''}" onclick="toggleCameraActivity('${entry.id}','recording')">${state.recording ? 'Stop recording' : 'Start recording'}</button><button class="action-btn ${state.motionDetection ? 'primary' : ''}" onclick="setCameraOption('${entry.id}','motionDetection',${!state.motionDetection})">Motion detection ${state.motionDetection ? 'ON' : 'OFF'}</button><button class="action-btn" onclick="simulateCameraMotion('${entry.id}')">Simulate motion event</button></div><div class="detail-card"><strong>Camera status</strong><p>Power: ${state.powered ? 'ON' : 'OFF'} · Stream: ${state.streaming ? 'LIVE' : 'IDLE'} · Record: ${state.recording ? 'REC' : 'STOPPED'}</p><p>Network: ${escapeHtml(ip)} · Motion events: ${state.motionEvents || 0}</p><p>Storage: ${escapeHtml(storage.find(item => item.id === state.storageId)?.device.name || 'Local')}</p><p id="cameraStatus" role="status">${escapeHtml(state.lastEvent || 'Ready')}</p></div></div>`;
+                return;
+            }
+            if (['ap', 'mesh'].includes(type)) {
+                const radio = entry.config.radio || (entry.config.radio = { enabled: true, ssid: 'Lab-WiFi', band: entry.device.band || 'dual', channel: entry.device.channel || 1, txPower: entry.device.txPower || 18, security: 'WPA2-PSK' });
+                const ap = simulatorState.wireless.aps.find(item => item.id === entry.id);
+                panel.innerHTML = `<div class="detail-card"><h3><i class="fas ${type === 'mesh' ? 'fa-diagram-project' : 'fa-wifi'}"></i> ${type === 'mesh' ? 'Mesh Radio' : 'Access Point'} · ${escapeHtml(entry.device.name)}</h3><p>Radio and SSID management. Associated wireless clients can be monitored below.</p><div class="detail-card-grid"><label class="form-label">SSID<input class="control-input" value="${escapeHtml(radio.ssid)}" onchange="setAccessPointOption('${entry.id}','ssid',this.value)"></label><label class="form-label">Band<select class="control-select" onchange="setAccessPointOption('${entry.id}','band',this.value)">${['2.4','5','dual'].map(band => `<option ${radio.band === band ? 'selected' : ''}>${band}</option>`).join('')}</select></label><label class="form-label">Channel<input class="control-input" type="number" min="1" max="196" value="${Number(radio.channel) || 1}" onchange="setAccessPointOption('${entry.id}','channel',this.value)"></label><label class="form-label">Tx Power (dBm)<input class="control-input" type="number" min="1" max="30" value="${Number(radio.txPower) || 18}" onchange="setAccessPointOption('${entry.id}','txPower',this.value)"></label><label class="form-label">Security<select class="control-select" onchange="setAccessPointOption('${entry.id}','security',this.value)">${['Open','WPA2-PSK','WPA3-SAE','802.1X'].map(value => `<option ${radio.security === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label><label class="form-label">Radio<select class="control-select" onchange="setAccessPointOption('${entry.id}','enabled',this.value==='true')"><option value="true" ${radio.enabled ? 'selected' : ''}>On</option><option value="false" ${!radio.enabled ? 'selected' : ''}>Off</option></select></label></div><p>Management IPv4: ${escapeHtml(ip)} · RF simulator: ${ap ? 'Registered' : 'Not registered'}</p><button class="action-btn primary" onclick="registerAccessPoint('${entry.id}')">${ap ? 'Refresh RF registration' : 'Register in RF simulator'}</button><button class="action-btn" onclick="openDeviceUtility('${entry.id}','wireless')">Scan nearby APs</button></div>`;
+                return;
+            }
+            if (type === 'sensor') {
+                const state = entry.config.telemetry || (entry.config.telemetry = { enabled: true, kind: entry.device.model?.includes('Humidity') ? 'Humidity' : entry.device.model?.includes('PIR') ? 'Motion' : 'Temperature', value: 22.4, unit: '°C', intervalSeconds: 30, samples: [] });
+                panel.innerHTML = `<div class="detail-card"><h3><i class="fas fa-gauge"></i> Sensor Telemetry · ${escapeHtml(entry.device.name)}</h3><p>Live simulated readings and telemetry publishing; data stays in simulator state.</p><div style="font-size:2rem;color:var(--interface-blue);margin:.7rem 0">${Number(state.value).toFixed(1)} ${escapeHtml(state.unit || '')}</div><div class="detail-card-grid"><label class="form-label">Sensor type<select class="control-select" onchange="setSensorOption('${entry.id}','kind',this.value)">${['Temperature','Humidity','Motion','Power'].map(kind => `<option ${state.kind === kind ? 'selected' : ''}>${kind}</option>`).join('')}</select></label><label class="form-label">Sample interval (seconds)<input class="control-input" type="number" min="1" value="${Number(state.intervalSeconds) || 30}" onchange="setSensorOption('${entry.id}','intervalSeconds',this.value)"></label><label class="form-label">Telemetry state<select class="control-select" onchange="setSensorOption('${entry.id}','enabled',this.value==='true')"><option value="true" ${state.enabled ? 'selected' : ''}>Publishing</option><option value="false" ${!state.enabled ? 'selected' : ''}>Paused</option></select></label></div><button class="action-btn primary" onclick="sampleIoTSensor('${entry.id}')">Take sample / publish</button><p>${escapeHtml(ip)} · ${state.samples?.length || 0} samples stored</p><pre id="sensorOutput" style="white-space:pre-wrap;max-height:150px;overflow:auto">${escapeHtml((state.samples || []).slice(-5).map(sample => `${new Date(sample.at).toLocaleTimeString()}  ${sample.value} ${sample.unit}`).join('\n') || 'No samples yet')}</pre></div>`;
+                return;
+            }
+            if (type === 'smart' || type === 'mcu') {
+                renderSmartDeviceWorkspace(entry, panel);
+                return;
+            }
+            if (type === 'gateway') {
+                const state = entry.config.iotGateway || (entry.config.iotGateway = { enabled: true, protocols: ['MQTT','CoAP'], devices: [] });
+                const children = simulatorState.activeDevices.filter(item => item.id !== entry.id && ['sensor','camera','smart','mcu'].includes(item.device.type));
+                panel.innerHTML = `<div class="detail-card"><h3><i class="fas fa-ethernet"></i> IoT Gateway · ${escapeHtml(entry.device.name)}</h3><p>Local device registry and MQTT / CoAP bridge status.</p><label class="form-label">Gateway status<select class="control-select" onchange="setIoTGatewayOption('${entry.id}','enabled',this.value==='true')"><option value="true" ${state.enabled ? 'selected' : ''}>Online</option><option value="false" ${!state.enabled ? 'selected' : ''}>Offline</option></select></label><label class="form-label">Protocol<select id="iotProtocol" class="control-select"><option>MQTT</option><option>CoAP</option></select></label><label class="form-label">Register device<select id="iotChild" class="control-select">${children.map(child => `<option value="${child.id}">${escapeHtml(child.device.name)}</option>`).join('')}</select></label><button class="action-btn primary" onclick="registerIoTChild('${entry.id}')">Register / publish</button><div class="detail-card">Registered devices: ${(state.devices || []).map(escapeHtml).join(', ') || 'None'}<p>${escapeHtml(ip)} · ${state.enabled ? 'Broker online' : 'Broker offline'}</p></div></div>`;
+                return;
+            }
+            if (type === 'printer') {
+                renderPrinterWorkspace(entry, panel);
+                return;
+            }
+            if (type === 'phone') {
+                renderPhoneWorkspace(entry, panel);
+                return;
+            }
+            if (type === 'cloud-drive' || type === 'cloud-storage') {
+                const state = entry.config.cloudDrive || (entry.config.cloudDrive = { capacityGB: 100, files: [], buckets: [], shareEnabled: true });
+                const used = (state.files || []).reduce((total, file) => total + Number(file.sizeMB || 0), 0) / 1024;
+                const files = (state.files || []).map((file, index) => `<tr><td>${escapeHtml(file.name)}</td><td>${Number(file.sizeMB || 0).toFixed(1)} MB</td><td>${escapeHtml(file.state || 'LOCAL')}</td><td><button class="action-btn" onclick="removeCloudFile('${entry.id}',${index})">Remove</button></td></tr>`).join('');
+                const buckets = (state.buckets || []).map((bucket, index) => `<span class="card-tip">${escapeHtml(bucket)} <button class="action-btn" onclick="removeCloudBucket('${entry.id}',${index})">×</button></span>`).join('');
+                const extra = type === 'cloud-storage' ? `<div class="detail-card"><h4>Object-store buckets</h4><div style="display:flex;gap:.4rem"><input id="cloudBucketName" class="control-input" placeholder="bucket-name"><button class="action-btn primary" onclick="addCloudBucket('${entry.id}')">Create bucket</button></div><div>${buckets || 'No buckets created'}</div></div>` : `<div class="detail-card"><h4>Cloud Drive files</h4><div style="display:flex;gap:.4rem"><input id="cloudFileName" class="control-input" placeholder="report.txt"><input id="cloudFileSize" class="control-input" type="number" min="0.1" value="1" aria-label="File size MB"><button class="action-btn primary" onclick="addCloudFile('${entry.id}')">Add file</button></div><div style="overflow:auto"><table class="packet-table"><thead><tr><th>Name</th><th>Size</th><th>Sync</th><th></th></tr></thead><tbody>${files || '<tr><td colspan="4">Drive is empty</td></tr>'}</tbody></table></div></div>`;
+                panel.innerHTML = `<div class="detail-card"><h3><i class="fas ${type === 'cloud-drive' ? 'fa-cloud-arrow-up' : 'fa-box-archive'}"></i> ${type === 'cloud-drive' ? 'Cloud Drive' : 'Object Storage'} · ${escapeHtml(entry.device.name)}</h3><p>Local cloud-service simulation. Files and bucket metadata stay in this browser session.</p><div class="detail-card-grid"><label class="form-label">Service status<select class="control-select" onchange="setCloudStorageOption('${entry.id}','enabled',this.value==='true')"><option value="true" ${state.enabled !== false ? 'selected' : ''}>Online</option><option value="false" ${state.enabled === false ? 'selected' : ''}>Offline</option></select></label><label class="form-label">Capacity (GB)<input class="control-input" type="number" min="1" value="${Number(state.capacityGB) || 100}" onchange="setCloudStorageOption('${entry.id}','capacityGB',this.value)"></label></div><p>Used: ${used.toFixed(2)} GB / ${Number(state.capacityGB) || 100} GB · ${escapeHtml(ip)}</p>${extra}<button class="action-btn" onclick="syncCloudStorage('${entry.id}')"><i class="fas fa-rotate"></i> Sync through simulated network</button><span id="cloudStorageStatus" role="status">${escapeHtml(state.lastSync || 'Ready')}</span></div>`;
+                return;
+            }
+            if (['cell-tower', '5g-bs'].includes(type)) {
+                const state = entry.config.cellSite || (entry.config.cellSite = { enabled: true, band: 'n78 (3.5 GHz)', txPower: 46, cellId: entry.id.slice(-4), connectedUEs: [] });
+                const clients = simulatorState.activeDevices.filter(item => ['5g-device', 'client', 'phone', 'laptop'].includes(item.device.type));
+                const assigned = clients.filter(client => client.config?.mobileNetwork?.cellId === entry.id);
+                const peerTowers = simulatorState.activeDevices.filter(item => ['cell-tower', '5g-bs'].includes(item.device.type) && item.id !== entry.id);
+                panel.innerHTML = `<div class="detail-card"><h3><i class="fas fa-tower-cell"></i> Cellular Site · ${escapeHtml(entry.device.name)}</h3><p>Base-station workspace: radio config, UE attachment and handover across Cell 1 / 2 / 3.</p><div class="detail-card-grid"><label class="form-label">Radio<select class="control-select" onchange="setCellSiteOption('${entry.id}','band',this.value)">${['n78 (3.5 GHz)','n41 (2.5 GHz)','B3 (1800 MHz)','B7 (2600 MHz)'].map(value => `<option ${state.band === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label><label class="form-label">Tx Power (dBm)<input class="control-input" type="number" min="0" max="60" value="${Number(state.txPower) || 46}" onchange="setCellSiteOption('${entry.id}','txPower',this.value)"></label><label class="form-label">Cell ID<input class="control-input" value="${escapeHtml(state.cellId || '')}" onchange="setCellSiteOption('${entry.id}','cellId',this.value)"></label><label class="form-label">Site status<select class="control-select" onchange="setCellSiteOption('${entry.id}','enabled',this.value==='true')"><option value="true" ${state.enabled ? 'selected' : ''}>On Air</option><option value="false" ${!state.enabled ? 'selected' : ''}>Offline</option></select></label></div><label class="form-label">Attach UE<select id="cellUESelect" class="control-select"><option value="">Select device…</option>${clients.map(client => `<option value="${client.id}">${escapeHtml(client.device.name)} · ${client.config?.mobileNetwork?.cellId === entry.id ? 'Attached here' : 'Available'}</option>`).join('')}</select></label><button class="action-btn primary" onclick="attachCellularUE('${entry.id}')">Attach / move UE</button><div class="detail-card"><h4>Connected UEs (${assigned.length})</h4>${assigned.map(client => `<p>${escapeHtml(client.device.name)} · ${escapeHtml(getPrimaryAddress(client) || 'no IPv4')} ${peerTowers.length ? peerTowers.map(tower => `<button class="action-btn" onclick="handoverCellularUE('${client.id}','${tower.id}')">Handover → ${escapeHtml(tower.device.name)}</button>`).join('') : ''}</p>`).join('') || '<p>No UE attached.</p>'}<p id="cellSiteStatus" role="status">${escapeHtml(state.lastEvent || 'Ready')}</p></div></div>`;
+                return;
+            }
+            if (type === '5g-device') {
+                renderMobileUESpace(entry, panel);
+                return;
+            }
+            if (['sdwan-hub', 'mpls', 'internet', 'branch'].includes(type)) {
+                renderWANLinkWorkspace(entry, panel);
+                return;
+            }
+            if (type === 'db-server') {
+                renderDatabaseWorkspace(entry, panel);
+                return;
+            }
+            if (type === 'storage') {
+                renderStorageWorkspace(entry, panel);
+                return;
+            }
+            if (type === 'load-balancer') {
+                renderLoadBalancerWorkspace(entry, panel);
+                return;
+            }
+            if (type === 'firewall' || type === 'ips' || type === 'nac' || type === 'vpn') {
+                renderSecurityApplianceWorkspace(entry, panel);
+                return;
+            }
+            renderCloudNetworkWorkspace(entry, panel);
+        }
+
+        function renderDatabaseWorkspace(entry, panel) {
+            const db = entry.config.database || (entry.config.database = { enabled: true, engine: 'PostgreSQL', schemas: { public: { devices: [] } }, queryHistory: [] });
+            const tables = Object.entries(db.schemas?.public || {}).map(([name, rows]) => `<tr><td>${escapeHtml(name)}</td><td>${Array.isArray(rows) ? rows.length : 0}</td><td><button class="action-btn" onclick="runDatabaseQuery('${entry.id}','SELECT * FROM ${escapeHtml(name)}')">Browse</button></td></tr>`).join('');
+            panel.innerHTML = `<div class="detail-card"><h3><i class="fas fa-database"></i> Database Console · ${escapeHtml(entry.device.name)}</h3><p>Local in-browser database simulation. CRUD operations only modify this device's simulator data.</p><div class="detail-card-grid"><label class="form-label">Engine<select class="control-select" onchange="setDatabaseOption('${entry.id}','engine',this.value)">${['PostgreSQL','MySQL','MongoDB'].map(engine => `<option ${db.engine === engine ? 'selected' : ''}>${engine}</option>`).join('')}</select></label><label class="form-label">Service<select class="control-select" onchange="setDatabaseOption('${entry.id}','enabled',this.value==='true')"><option value="true" ${db.enabled ? 'selected' : ''}>Online</option><option value="false" ${!db.enabled ? 'selected' : ''}>Offline</option></select></label></div><div class="detail-card"><h4>Schema · public</h4><div style="display:flex;gap:.4rem"><input id="dbTableName" class="control-input" placeholder="table_name"><button class="action-btn primary" onclick="createDatabaseTable('${entry.id}')">Create table</button></div><table class="packet-table"><thead><tr><th>Table</th><th>Rows</th><th></th></tr></thead><tbody>${tables || '<tr><td colspan="3">No tables</td></tr>'}</tbody></table></div><div class="detail-card"><h4>SQL Query</h4><textarea id="dbQuery" class="control-input" rows="3" placeholder="SELECT * FROM devices"></textarea><button class="action-btn primary" onclick="runDatabaseQuery('${entry.id}')">Run query</button><pre id="dbQueryResult" style="white-space:pre-wrap;max-height:220px;overflow:auto" role="status">${escapeHtml(db.lastResult || 'Ready')}</pre></div><p>Endpoint: ${escapeHtml(ip)} · SQL execution is restricted to this local simulated schema.</p></div>`;
+        }
+
+        function setDatabaseOption(deviceId, key, value) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            entry.config.database = { ...(entry.config.database || {}), [key]: key === 'enabled' ? Boolean(value) : value };
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function createDatabaseTable(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const name = document.getElementById('dbTableName')?.value.trim();
+            if (!entry || !/^[a-zA-Z_][\w-]{0,62}$/.test(name || '')) return showHint('Database', 'Table names must begin with a letter or underscore.');
+            const db = entry.config.database || (entry.config.database = { enabled: true, schemas: { public: {} } });
+            db.schemas = db.schemas || { public: {} };
+            db.schemas.public = db.schemas.public || {};
+            if (Object.hasOwn(db.schemas.public, name)) return showHint('Database', 'Table already exists.');
+            db.schemas.public[name] = [];
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function runDatabaseQuery(deviceId, preset = '') {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const query = (preset || document.getElementById('dbQuery')?.value || '').trim();
+            const db = entry?.config?.database;
+            if (!entry || !db) return;
+            let result;
+            if (!db.enabled) result = 'ERROR: database service is offline';
+            else if (/^show\s+tables;?$/i.test(query)) result = Object.keys(db.schemas?.public || {}).join('\n') || 'No tables';
+            else {
+                const select = query.match(/^select\s+\*\s+from\s+([\w-]+);?$/i);
+                const insert = query.match(/^insert\s+into\s+([\w-]+)\s+values\s+(\{[\s\S]*\}|\[[\s\S]*\]);?$/i);
+                if (select) {
+                    const rows = db.schemas?.public?.[select[1]];
+                    result = Array.isArray(rows) ? JSON.stringify(rows, null, 2) : `ERROR: relation "${select[1]}" does not exist`;
+                } else if (insert) {
+                    const rows = db.schemas?.public?.[insert[1]];
+                    try {
+                        const values = JSON.parse(insert[2]);
+                        if (!Array.isArray(rows)) result = `ERROR: relation "${insert[1]}" does not exist`;
+                        else { rows.push(values); result = `INSERT 0 1 · ${rows.length} row(s) in ${insert[1]}`; }
+                    } catch { result = 'ERROR: VALUES must be valid JSON object/array'; }
+                } else result = 'Supported simulation queries: SHOW TABLES; · SELECT * FROM table_name; · INSERT INTO table_name VALUES {"key":"value"}';
+            }
+            db.lastResult = result;
+            db.queryHistory = [...(db.queryHistory || []), { query, result, at: Date.now() }].slice(-30);
+            const output = document.getElementById('dbQueryResult');
+            if (output) output.textContent = result;
+            if (preset) {
+                const editor = document.getElementById('dbQuery');
+                if (editor) editor.value = preset;
+            }
+        }
+
+        function renderStorageWorkspace(entry, panel) {
+            const state = entry.config.storage || (entry.config.storage = { online: true, capacityTB: 10, volumes: [{ name: 'volume1', sizeTB: 2, protocol: 'NFS', clients: [] }] });
+            const volumes = (state.volumes || []).map((volume, index) => `<tr><td>${escapeHtml(volume.name)}</td><td>${volume.sizeTB} TB</td><td>${escapeHtml(volume.protocol)}</td><td>${escapeHtml((volume.clients || []).join(', ') || 'No clients')}</td><td><button class="action-btn" onclick="removeStorageVolume('${entry.id}',${index})">Remove</button></td></tr>`).join('');
+            const peers = simulatorState.activeDevices.filter(item => item.id !== entry.id && ['server','web-server','db-server','cloud-drive','cloud-storage'].includes(item.device.type));
+            panel.innerHTML = `<div class="detail-card"><h3><i class="fas fa-hard-drive"></i> Storage Array · ${escapeHtml(entry.device.name)}</h3><p>Volume provisioning and simulated NFS/iSCSI mounts.</p><label class="form-label">Capacity (TB)<input class="control-input" type="number" min="1" value="${Number(state.capacityTB) || 10}" onchange="setStorageCapacity('${entry.id}',this.value)"></label><div class="detail-card-grid"><label class="form-label">Volume name<input id="storageVolumeName" class="control-input" placeholder="volume2"></label><label class="form-label">Size TB<input id="storageVolumeSize" class="control-input" type="number" min="0.1" step="0.1" value="1"></label><label class="form-label">Protocol<select id="storageProtocol" class="control-select"><option>NFS</option><option>iSCSI</option><option>SMB</option></select></label></div><button class="action-btn primary" onclick="createStorageVolume('${entry.id}')">Provision volume</button><table class="packet-table"><thead><tr><th>Volume</th><th>Size</th><th>Protocol</th><th>Mounted clients</th><th></th></tr></thead><tbody>${volumes || '<tr><td colspan="5">No volumes</td></tr>'}</tbody></table><div class="detail-card"><h4>Mount a client</h4><select id="storageClient" class="control-select">${peers.map(peer => `<option value="${peer.id}">${escapeHtml(peer.device.name)}</option>`).join('')}</select><select id="storageVolume" class="control-select">${(state.volumes || []).map(volume => `<option value="${escapeHtml(volume.name)}">${escapeHtml(volume.name)} · ${escapeHtml(volume.protocol)}</option>`).join('')}</select><button class="action-btn" onclick="mountStorageVolume('${entry.id}')">Mount over topology</button><span id="storageStatus" role="status">${escapeHtml(state.lastEvent || 'Ready')}</span></div></div>`;
+        }
+
+        function createStorageVolume(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const name = document.getElementById('storageVolumeName')?.value.trim();
+            const sizeTB = Number(document.getElementById('storageVolumeSize')?.value);
+            const protocol = document.getElementById('storageProtocol')?.value;
+            const state = entry?.config?.storage;
+            if (!entry || !state || !/^[\w-]{1,32}$/.test(name || '') || !Number.isFinite(sizeTB) || sizeTB <= 0) return showHint('Storage', 'Enter a valid volume name and positive size.');
+            const allocated = state.volumes.reduce((sum, volume) => sum + Number(volume.sizeTB || 0), 0);
+            if (allocated + sizeTB > Number(state.capacityTB)) return showHint('Storage', 'Provisioning exceeds array capacity.');
+            if (state.volumes.some(volume => volume.name === name)) return showHint('Storage', 'Volume already exists.');
+            state.volumes.push({ name, sizeTB, protocol, clients: [] });
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function removeStorageVolume(deviceId, index) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry?.config?.storage?.volumes?.[index]) return;
+            entry.config.storage.volumes.splice(index, 1);
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function setStorageCapacity(deviceId, value) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const capacityTB = Math.max(1, Number(value) || 1);
+            if (!entry?.config?.storage) return;
+            if (entry.config.storage.volumes.reduce((sum, volume) => sum + Number(volume.sizeTB || 0), 0) > capacityTB) return showHint('Storage', 'Capacity cannot be lower than allocated volumes.');
+            entry.config.storage.capacityTB = capacityTB;
+        }
+
+        function mountStorageVolume(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const client = simulatorState.activeDevices.find(item => item.id === document.getElementById('storageClient')?.value);
+            const volume = entry?.config?.storage?.volumes?.find(item => item.name === document.getElementById('storageVolume')?.value);
+            if (!entry || !client || !volume) return showHint('Storage', 'Select a client and provisioned volume.');
+            const link = simulateNetworkPing(client, entry, 'tcp', false);
+            const status = document.getElementById('storageStatus');
+            if (!link.success) { if (status) status.textContent = `Mount failed: ${link.reason}`; return; }
+            volume.clients = [...new Set([...(volume.clients || []), client.device.name])];
+            client.config = client.config || {};
+            client.config.mounts = [...(client.config.mounts || []).filter(mount => mount.storageId !== entry.id || mount.volume !== volume.name), { storageId: entry.id, volume: volume.name, protocol: volume.protocol, mountedAt: Date.now() }];
+            simulateNetworkPing(client, entry, 'tcp', true);
+            entry.config.storage.lastEvent = `${volume.name} mounted on ${client.device.name}`;
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function renderLoadBalancerWorkspace(entry, panel) {
+            const state = entry.config.loadBalancer || (entry.config.loadBalancer = { enabled: true, algorithm: 'round-robin', members: [] });
+            const endpoints = simulatorState.activeDevices.filter(item => item.id !== entry.id && ['server','web-server','db-server'].includes(item.device.type));
+            const members = (state.members || []).map((id, index) => {
+                const server = simulatorState.activeDevices.find(item => item.id === id);
+                const healthy = server && simulateNetworkPing(entry, server, 'tcp', false).success;
+                return `<tr><td>${escapeHtml(server?.device.name || 'Removed server')}</td><td>${escapeHtml(getPrimaryAddress(server) || '—')}</td><td style="color:${healthy ? 'var(--online)' : 'var(--offline)'}">${healthy ? 'HEALTHY' : 'UNREACHABLE'}</td><td><button class="action-btn" onclick="removeLoadBalancerMember('${entry.id}',${index})">Remove</button></td></tr>`;
+            }).join('');
+            panel.innerHTML = `<div class="detail-card"><h3><i class="fas fa-scale-balanced"></i> Load Balancer · ${escapeHtml(entry.device.name)}</h3><p>Configure a simulated backend pool; health checks use the current topology and address reachability.</p><div class="detail-card-grid"><label class="form-label">Algorithm<select class="control-select" onchange="setLoadBalancerAlgorithm('${entry.id}',this.value)">${['round-robin','least-connections','weighted'].map(value => `<option ${state.algorithm === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label><label class="form-label">Backend member<select id="lbMember" class="control-select">${endpoints.filter(server => !state.members.includes(server.id)).map(server => `<option value="${server.id}">${escapeHtml(server.device.name)} · ${escapeHtml(getPrimaryAddress(server) || 'unaddressed')}</option>`).join('')}</select></label></div><button class="action-btn primary" onclick="addLoadBalancerMember('${entry.id}')">Add backend</button><button class="action-btn" onclick="checkLoadBalancerHealth('${entry.id}')">Run health checks</button><table class="packet-table"><thead><tr><th>Backend</th><th>IPv4</th><th>Status</th><th></th></tr></thead><tbody>${members || '<tr><td colspan="4">No backend members</td></tr>'}</tbody></table><p id="lbStatus" role="status">Virtual address: ${escapeHtml(ip)}</p></div>`;
+        }
+
+        function setLoadBalancerAlgorithm(deviceId, algorithm) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry || !['round-robin','least-connections','weighted'].includes(algorithm)) return;
+            entry.config.loadBalancer = { ...(entry.config.loadBalancer || {}), algorithm };
+        }
+
+        function addLoadBalancerMember(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const server = simulatorState.activeDevices.find(item => item.id === document.getElementById('lbMember')?.value);
+            if (!entry || !server) return showHint('Load Balancer', 'Select a backend device.');
+            const state = entry.config.loadBalancer || (entry.config.loadBalancer = { enabled: true, algorithm: 'round-robin', members: [] });
+            state.members = [...new Set([...(state.members || []), server.id])];
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function removeLoadBalancerMember(deviceId, index) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry?.config?.loadBalancer?.members) return;
+            entry.config.loadBalancer.members.splice(index, 1);
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function checkLoadBalancerHealth(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            const results = (entry.config.loadBalancer?.members || []).map(id => {
+                const server = simulatorState.activeDevices.find(item => item.id === id);
+                return `${server?.device.name || id}: ${server && simulateNetworkPing(entry, server, 'tcp', true).success ? 'HEALTHY' : 'UNREACHABLE'}`;
+            });
+            entry.config.loadBalancer.lastHealthCheck = Date.now();
+            const status = document.getElementById('lbStatus');
+            if (status) status.textContent = results.join(' · ') || 'No backend members configured';
+        }
+
+        function setAccessPointOption(deviceId, key, value) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            entry.config.radio = entry.config.radio || { enabled: true, ssid: 'Lab-WiFi', band: 'dual', channel: 1, txPower: 18, security: 'WPA2-PSK' };
+            const normalized = ['channel','txPower'].includes(key) ? Number(value) : key === 'enabled' ? Boolean(value) : value;
+            entry.config.radio[key] = normalized;
+            if (['band','channel','txPower'].includes(key)) entry.device[key] = normalized;
+            const ap = simulatorState.wireless.aps.find(item => item.id === entry.id);
+            if (ap) Object.assign(ap, { band: entry.config.radio.band, channel: entry.config.radio.channel, txPower: entry.config.radio.txPower });
+            if (key === 'enabled' && !entry.config.radio.enabled) simulatorState.wireless.aps = simulatorState.wireless.aps.filter(item => item.id !== entry.id);
+            if (key === 'enabled' && entry.config.radio.enabled && !simulatorState.wireless.aps.some(item => item.id === entry.id)) addAP(entry.id, entry.config.radio.txPower, entry.config.radio.channel, entry.config.radio.band);
+            scheduleWirelessRender();
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function registerAccessPoint(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry || !['ap','mesh'].includes(entry.device.type)) return;
+            const radio = entry.config.radio || (entry.config.radio = { enabled: true, band: entry.device.band || 'dual', channel: entry.device.channel || 1, txPower: entry.device.txPower || 18 });
+            if (!radio.enabled) return showHint('Access Point', 'Turn the radio on before registering it.');
+            const existing = simulatorState.wireless.aps.find(ap => ap.id === entry.id);
+            if (existing) Object.assign(existing, { band: radio.band, channel: radio.channel, txPower: radio.txPower });
+            else addAP(entry.id, radio.txPower, radio.channel, radio.band);
+            scheduleWirelessRender();
+            showHint('Access Point', `${entry.device.name} is registered in the RF simulator.`);
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function setSensorOption(deviceId, key, value) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            const state = entry.config.telemetry || (entry.config.telemetry = { enabled: true, value: 22.4, unit: '°C', samples: [] });
+            state[key] = key === 'enabled' ? Boolean(value) : key === 'intervalSeconds' ? Math.max(1, Number(value) || 30) : value;
+            if (key === 'kind') state.unit = value === 'Temperature' ? '°C' : value === 'Humidity' ? '%' : value === 'Power' ? 'W' : 'event';
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function sampleIoTSensor(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            const state = entry.config.telemetry || (entry.config.telemetry = { enabled: true, kind: 'Temperature', value: 22.4, unit: '°C', samples: [] });
+            if (!state.enabled) return showHint('Sensor', 'Telemetry publishing is paused.');
+            if (state.kind === 'Motion') state.value = Math.random() > 0.6 ? 1 : 0;
+            else if (state.kind === 'Humidity') state.value = Math.max(20, Math.min(90, Number(state.value || 50) + (Math.random() * 8 - 4)));
+            else if (state.kind === 'Power') state.value = Math.max(10, Math.min(200, Number(state.value || 90) + (Math.random() * 12 - 6)));
+            else state.value = Math.max(-10, Math.min(55, Number(state.value || 22) + (Math.random() * 2 - 1)));
+            state.samples = [...(state.samples || []), { value: Number(state.value.toFixed(1)), unit: state.unit, at: Date.now() }].slice(-100);
+            const gateway = simulatorState.activeDevices.find(item => item.device.type === 'gateway');
+            const result = gateway ? simulateNetworkPing(entry, gateway, 'tcp', false) : { success: false };
+            state.lastPublish = result.success ? `Published to ${gateway.device.name}` : 'Sample stored locally · gateway unavailable';
+            if (result.success) simulateNetworkPing(entry, gateway, 'tcp', true);
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function renderSmartDeviceWorkspace(entry, panel) {
+            if (entry.device.type === 'smart') {
+                const state = entry.config.actuator || (entry.config.actuator = { enabled: true, on: false, brightness: 70, events: [] });
+                panel.innerHTML = `<div class="detail-card"><h3><i class="fas ${entry.device.icon}"></i> Smart Device · ${escapeHtml(entry.device.name)}</h3><p>Actuator control and event history, managed through the simulated IoT network.</p><div class="detail-card-grid"><label class="form-label">Power<select class="control-select" onchange="setSmartDeviceOption('${entry.id}','on',this.value==='true')"><option value="true" ${state.on ? 'selected' : ''}>ON</option><option value="false" ${!state.on ? 'selected' : ''}>OFF</option></select></label><label class="form-label">Brightness / level<input class="control-input" type="range" min="0" max="100" value="${Number(state.brightness) || 0}" oninput="setSmartDeviceOption('${entry.id}','brightness',this.value)"></label></div><p>Status: ${state.on ? 'ACTIVE' : 'IDLE'} · Level: ${Number(state.brightness) || 0}% · ${escapeHtml(getPrimaryAddress(entry) || 'unaddressed')}</p><button class="action-btn primary" onclick="setSmartDeviceOption('${entry.id}','on',${!state.on})">${state.on ? 'Turn off' : 'Turn on'}</button><button class="action-btn" onclick="sendSmartDeviceCommand('${entry.id}')">Send control command</button><pre>${escapeHtml((state.events || []).slice(-5).map(event => `${new Date(event.at).toLocaleTimeString()} ${event.action}`).join('\n') || 'No recent events')}</pre></div>`;
+                return;
+            }
+            const mcu = entry.config.mcu || (entry.config.mcu = { program: 'pinMode(13, OUTPUT);\ndigitalWrite(13, HIGH);', pins: {}, output: 'Ready', running: false });
+            panel.innerHTML = `<div class="detail-card"><h3><i class="fas fa-microchip"></i> Microcontroller · ${escapeHtml(entry.device.name)}</h3><p>Restricted Arduino-like GPIO sandbox. No JavaScript or host code is executed.</p><label class="form-label">Program<textarea id="mcuProgram" class="control-input" rows="8">${escapeHtml(mcu.program)}</textarea></label><button class="action-btn primary" onclick="runMCUProgram('${entry.id}')"><i class="fas fa-play"></i> Compile & run</button><h4>Serial monitor / GPIO</h4><pre id="mcuOutput">${escapeHtml(mcu.output || 'Ready')}</pre><p>${Object.entries(mcu.pins || {}).map(([pin, value]) => `D${pin}: ${value}`).join(' · ') || 'No outputs configured'}</p></div>`;
+        }
+
+        function setSmartDeviceOption(deviceId, key, value) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            const state = entry.config.actuator || (entry.config.actuator = { enabled: true, on: false, brightness: 70, events: [] });
+            state[key] = key === 'brightness' ? Math.max(0, Math.min(100, Number(value) || 0)) : Boolean(value);
+            state.events.push({ action: `${key}=${state[key]}`, at: Date.now() });
+            state.events = state.events.slice(-50);
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function sendSmartDeviceCommand(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const gateway = simulatorState.activeDevices.find(item => item.device.type === 'gateway');
+            const success = Boolean(entry && gateway && simulateNetworkPing(entry, gateway, 'tcp', false).success);
+            if (success) simulateNetworkPing(entry, gateway, 'tcp', true);
+            if (entry?.config.actuator) entry.config.actuator.lastCommand = success ? `Command delivered to ${gateway.device.name}` : 'Gateway unreachable; command saved locally.';
+            showHint('Smart Device', entry?.config?.actuator?.lastCommand || 'Command failed');
+        }
+
+        function runMCUProgram(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const source = document.getElementById('mcuProgram')?.value || '';
+            if (!entry) return;
+            const state = entry.config.mcu || (entry.config.mcu = { pins: {} });
+            state.program = source.slice(0, 4000);
+            const output = [];
+            const lines = source.split(/[;\n]+/).map(line => line.trim()).filter(Boolean);
+            for (const line of lines) {
+                let match = line.match(/^pinMode\s*\(\s*(\d+)\s*,\s*(OUTPUT|INPUT)\s*\)$/i);
+                if (match) { state.pins[match[1]] = state.pins[match[1]] || (match[2].toUpperCase() === 'OUTPUT' ? 'LOW' : 'INPUT'); continue; }
+                match = line.match(/^digitalWrite\s*\(\s*(\d+)\s*,\s*(HIGH|LOW)\s*\)$/i);
+                if (match) { state.pins[match[1]] = match[2].toUpperCase(); output.push(`D${match[1]} => ${match[2].toUpperCase()}`); continue; }
+                match = line.match(/^analogWrite\s*\(\s*(\d+)\s*,\s*(\d{1,3})\s*\)$/i);
+                if (match && Number(match[2]) <= 255) { state.pins[match[1]] = `PWM ${match[2]}/255`; output.push(`D${match[1]} => PWM ${match[2]}`); continue; }
+                match = line.match(/^Serial\.println\s*\(\s*['"]([^'"]{0,200})['"]\s*\)$/i);
+                if (match) { output.push(match[1]); continue; }
+                state.output = `Compile error: unsupported statement: ${line}`;
+                renderDeviceDetailTabs(entry, 'workspace');
+                return showHint('MCU Compile', state.output);
+            }
+            state.output = output.join('\n') || 'Program completed · no output';
+            state.running = true;
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function renderPrinterWorkspace(entry, panel) {
+            const state = entry.config.printer || (entry.config.printer = { enabled: true, jobs: [], pagesPrinted: 0 });
+            const jobs = (state.jobs || []).map((job, index) => `<tr><td>${escapeHtml(job.name)}</td><td>${Number(job.pages)} pages</td><td>${escapeHtml(job.status)}</td><td><button class="action-btn" onclick="cancelPrintJob('${entry.id}',${index})">Cancel</button></td></tr>`).join('');
+            const sources = simulatorState.activeDevices.filter(item => item.id !== entry.id && ['pc','laptop','tablet','server'].includes(item.device.type));
+            panel.innerHTML = `<div class="detail-card"><h3><i class="fas fa-print"></i> Network Printer · ${escapeHtml(entry.device.name)}</h3><p>Print queue, page count and simulated network submission.</p><label class="form-label">Submit from<select id="printerSource" class="control-select">${sources.map(source => `<option value="${source.id}">${escapeHtml(source.device.name)}</option>`).join('')}</select></label><div class="detail-card-grid"><label class="form-label">Document<input id="printJobName" class="control-input" placeholder="document.pdf"></label><label class="form-label">Pages<input id="printJobPages" class="control-input" type="number" min="1" value="1"></label></div><button class="action-btn primary" onclick="submitPrintJob('${entry.id}')">Submit print job</button><p>Printer status: ${state.enabled ? 'READY' : 'OFFLINE'} · Pages printed: ${state.pagesPrinted || 0} · ${escapeHtml(getPrimaryAddress(entry) || 'unaddressed')}</p><table class="packet-table"><thead><tr><th>Job</th><th>Pages</th><th>Status</th><th></th></tr></thead><tbody>${jobs || '<tr><td colspan="4">Queue empty</td></tr>'}</tbody></table></div>`;
+        }
+
+        function submitPrintJob(deviceId) {
+            const printer = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const source = simulatorState.activeDevices.find(item => item.id === document.getElementById('printerSource')?.value);
+            const name = document.getElementById('printJobName')?.value.trim();
+            const pages = Math.max(1, Number(document.getElementById('printJobPages')?.value) || 1);
+            if (!printer || !source || !name) return showHint('Printer', 'Select a source and document name.');
+            const result = simulateNetworkPing(source, printer, 'tcp', false);
+            if (!result.success) return showHint('Printer', `Print submission failed: ${result.reason}`);
+            printer.config.printer = printer.config.printer || { enabled: true, jobs: [], pagesPrinted: 0 };
+            const state = printer.config.printer;
+            state.jobs.push({ name, pages, status: 'QUEUED', sourceId: source.id, at: Date.now() });
+            simulateNetworkPing(source, printer, 'tcp', true);
+            setTimeout(() => {
+                const job = state.jobs.find(item => item.name === name && item.status === 'QUEUED');
+                if (!job) return;
+                job.status = 'PRINTED';
+                state.pagesPrinted += pages;
+                renderDeviceDetailTabs(printer, 'workspace');
+            }, 350);
+            renderDeviceDetailTabs(printer, 'workspace');
+        }
+
+        function cancelPrintJob(deviceId, index) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry?.config?.printer?.jobs?.[index]) return;
+            entry.config.printer.jobs.splice(index, 1);
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function renderPhoneWorkspace(entry, panel) {
+            const state = entry.config.voip || (entry.config.voip = { extension: '1001', registered: true, calls: [] });
+            const peers = simulatorState.activeDevices.filter(item => item.id !== entry.id && item.device.type === 'phone');
+            panel.innerHTML = `<div class="detail-card"><h3><i class="fas fa-phone"></i> VoIP Phone · ${escapeHtml(entry.device.name)}</h3><p>Extension registration and simulated calls over the configured topology.</p><label class="form-label">Extension<input class="control-input" value="${escapeHtml(state.extension)}" onchange="setPhoneExtension('${entry.id}',this.value)"></label><label class="form-label">Call destination<select id="phonePeer" class="control-select">${peers.map(peer => `<option value="${peer.id}">${escapeHtml(peer.device.name)} · ext ${escapeHtml(peer.config?.voip?.extension || 'unassigned')}</option>`).join('')}</select></label><button class="action-btn primary" onclick="placeVoIPCall('${entry.id}')">Place call</button><p>Registration: ${state.registered ? 'REGISTERED' : 'NOT REGISTERED'} · ${escapeHtml(getPrimaryAddress(entry) || 'unaddressed')}</p><pre>${escapeHtml((state.calls || []).slice(-8).map(call => `${new Date(call.at).toLocaleTimeString()} ${call.result}`).join('\n') || 'No calls')}</pre></div>`;
+        }
+
+        function setPhoneExtension(deviceId, extension) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry || !/^\d{3,8}$/.test(extension)) return showHint('VoIP Phone', 'Extension must be 3–8 digits.');
+            entry.config.voip = { ...(entry.config.voip || {}), extension, registered: true };
+        }
+
+        function placeVoIPCall(deviceId) {
+            const caller = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const callee = simulatorState.activeDevices.find(item => item.id === document.getElementById('phonePeer')?.value);
+            if (!caller || !callee) return showHint('VoIP', 'No other IP Phone is available.');
+            const result = simulateNetworkPing(caller, callee, 'tcp', false);
+            const call = { at: Date.now(), result: result.success ? `CONNECTED ${caller.config?.voip?.extension || '—'} → ${callee.config?.voip?.extension || '—'}` : `FAILED · ${result.reason}` };
+            caller.config.voip = caller.config.voip || { extension: '1001', calls: [] };
+            caller.config.voip.calls = [...(caller.config.voip.calls || []), call];
+            if (result.success) simulateNetworkPing(caller, callee, 'tcp', true);
+            renderDeviceDetailTabs(caller, 'workspace');
+        }
+
+        function setIoTGatewayOption(deviceId, key, value) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            entry.config.iotGateway = { ...(entry.config.iotGateway || {}), [key]: Boolean(value) };
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function registerIoTChild(deviceId) {
+            const gateway = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const child = simulatorState.activeDevices.find(item => item.id === document.getElementById('iotChild')?.value);
+            const protocol = document.getElementById('iotProtocol')?.value;
+            if (!gateway || !child) return showHint('IoT Gateway', 'No IoT endpoint selected.');
+            if (!gateway.config.iotGateway?.enabled) return showHint('IoT Gateway', 'Gateway is offline.');
+            const connected = simulateNetworkPing(child, gateway, 'tcp', false).success;
+            if (!connected) return showHint('IoT Gateway', 'Device cannot reach this gateway; check topology and addressing.');
+            gateway.config.iotGateway.devices = [...new Set([...(gateway.config.iotGateway.devices || []), `${child.device.name} (${protocol})`])];
+            simulateNetworkPing(child, gateway, 'tcp', true);
+            renderDeviceDetailTabs(gateway, 'workspace');
+        }
+
+        function setCameraOption(deviceId, key, value) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            entry.config.camera = { ...(entry.config.camera || {}), [key]: value };
+            const status = document.getElementById('cameraStatus');
+            if (status) status.textContent = `${key} updated`;
+        }
+
+        function toggleCameraActivity(deviceId, key) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            const state = entry.config.camera || (entry.config.camera = {});
+            const enabling = !state[key];
+            const target = simulatorState.activeDevices.find(item => item.id === state.storageId);
+            if (enabling && target && !simulateNetworkPing(entry, target, 'tcp', false).success) {
+                state.lastEvent = 'Storage path unavailable; check addressing, links and VLANs.';
+                return showHint('IP Camera', state.lastEvent);
+            }
+            state[key] = enabling;
+            state.lastEvent = `${key === 'streaming' ? 'Live stream' : 'Recording'} ${enabling ? 'started' : 'stopped'}`;
+            if (enabling && target) simulateNetworkPing(entry, target, 'tcp', true);
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function simulateCameraMotion(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            const state = entry.config.camera || (entry.config.camera = {});
+            if (!state.motionDetection) return showHint('IP Camera', 'Enable motion detection before simulating an event.');
+            state.motionEvents = (state.motionEvents || 0) + 1;
+            state.lastEvent = `Motion event #${state.motionEvents} · ${new Date().toLocaleTimeString()}`;
+            const storage = simulatorState.activeDevices.find(item => item.id === state.storageId);
+            if (storage) simulateNetworkPing(entry, storage, 'tcp', true);
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function addCloudFile(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const name = document.getElementById('cloudFileName')?.value.trim();
+            const sizeMB = Number(document.getElementById('cloudFileSize')?.value);
+            if (!entry || !name || !Number.isFinite(sizeMB) || sizeMB <= 0) return showHint('Cloud Drive', 'Enter a file name and positive size.');
+            const state = entry.config.cloudDrive || (entry.config.cloudDrive = { capacityGB: 100, files: [] });
+            const used = state.files.reduce((sum, file) => sum + Number(file.sizeMB || 0), 0);
+            if (used + sizeMB > (Number(state.capacityGB) || 100) * 1024) return showHint('Cloud Drive', 'Storage capacity exceeded.');
+            state.files.push({ name, sizeMB, state: 'LOCAL', createdAt: Date.now() });
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function removeCloudFile(deviceId, index) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry?.config?.cloudDrive?.files) return;
+            entry.config.cloudDrive.files.splice(index, 1);
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function addCloudBucket(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const name = document.getElementById('cloudBucketName')?.value.trim().toLowerCase();
+            if (!entry || !/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(name || '')) return showHint('Object Storage', 'Bucket names need 3–63 lowercase letters, digits, dots or hyphens.');
+            const state = entry.config.cloudDrive || (entry.config.cloudDrive = { capacityGB: 100, buckets: [] });
+            state.buckets = state.buckets || [];
+            if (state.buckets.includes(name)) return showHint('Object Storage', 'Bucket already exists.');
+            state.buckets.push(name);
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function removeCloudBucket(deviceId, index) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry?.config?.cloudDrive?.buckets) return;
+            entry.config.cloudDrive.buckets.splice(index, 1);
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function setCloudStorageOption(deviceId, key, value) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            const state = entry.config.cloudDrive || (entry.config.cloudDrive = { capacityGB: 100, files: [], buckets: [] });
+            state[key] = key === 'capacityGB' ? Math.max(1, Number(value) || 1) : Boolean(value);
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function syncCloudStorage(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            const state = entry.config.cloudDrive || (entry.config.cloudDrive = { files: [], buckets: [] });
+            if (state.enabled === false) return showHint('Cloud Storage', 'Service is offline.');
+            const peer = simulatorState.activeDevices.find(item => item.id !== entry.id && ['cloud-drive', 'cloud-storage'].includes(item.device.type));
+            if (peer) {
+                const result = simulateNetworkPing(entry, peer, 'tcp', false);
+                if (!result.success) return showHint('Cloud Storage', `Sync failed: ${result.reason}`);
+                const destination = peer.config.cloudDrive || (peer.config.cloudDrive = { capacityGB: 100, files: [], buckets: [] });
+                const sourceFiles = state.files || [];
+                const copiedBytes = sourceFiles.reduce((sum, file) => sum + Number(file.sizeMB || 0), 0);
+                const destinationBytes = (destination.files || []).reduce((sum, file) => sum + Number(file.sizeMB || 0), 0);
+                if ((destinationBytes + copiedBytes) / 1024 > (Number(destination.capacityGB) || 100)) return showHint('Cloud Storage', `${peer.device.name} has insufficient capacity for sync.`);
+                destination.files = destination.files || [];
+                sourceFiles.forEach(file => {
+                    const copy = destination.files.find(existing => existing.name === file.name);
+                    if (copy) Object.assign(copy, { ...file, state: 'SYNCED', syncedAt: Date.now(), sourceDevice: entry.id });
+                    else destination.files.push({ ...file, state: 'SYNCED', syncedAt: Date.now(), sourceDevice: entry.id });
+                });
+                destination.buckets = [...new Set([...(destination.buckets || []), ...(state.buckets || [])])];
+                simulateNetworkPing(entry, peer, 'tcp', true);
+            }
+            (state.files || []).forEach(file => { file.state = 'SYNCED'; file.syncedAt = Date.now(); });
+            state.lastSync = `Sync complete · ${new Date().toLocaleTimeString()}${peer ? ` · ${peer.device.name}` : ' · local service'}`;
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function setCellSiteOption(deviceId, key, value) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            const state = entry.config.cellSite || (entry.config.cellSite = { enabled: true, connectedUEs: [] });
+            state[key] = key === 'txPower' ? Math.max(0, Math.min(60, Number(value) || 0)) : key === 'enabled' ? Boolean(value) : value;
+            if (!state.enabled) state.lastEvent = 'Site offline';
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function attachCellularUE(towerId) {
+            const tower = simulatorState.activeDevices.find(item => item.id === towerId);
+            const ue = simulatorState.activeDevices.find(item => item.id === document.getElementById('cellUESelect')?.value);
+            if (!tower || !ue) return showHint('Cellular', 'Choose a UE/device to attach.');
+            const site = tower.config.cellSite || (tower.config.cellSite = { enabled: true, connectedUEs: [] });
+            if (!site.enabled) return showHint('Cellular', 'This cell site is offline.');
+            if (!simulateNetworkPing(ue, tower, 'tcp', false).success) return showHint('Cellular', 'UE cannot reach this site in the current topology; check links and addressing.');
+            ue.config = ue.config || {};
+            ue.config.mobileNetwork = { ...(ue.config.mobileNetwork || {}), cellId: tower.id, attachedAt: Date.now() };
+            site.connectedUEs = [...new Set([...(site.connectedUEs || []), ue.id])];
+            site.lastEvent = `${ue.device.name} attached to ${site.cellId}`;
+            simulateNetworkPing(ue, tower, 'tcp', true);
+            renderDeviceDetailTabs(tower, 'workspace');
+        }
+
+        function handoverCellularUE(ueId, targetTowerId) {
+            const ue = simulatorState.activeDevices.find(item => item.id === ueId);
+            const target = simulatorState.activeDevices.find(item => item.id === targetTowerId);
+            const sourceId = ue?.config?.mobileNetwork?.cellId;
+            const source = simulatorState.activeDevices.find(item => item.id === sourceId);
+            if (!ue || !target || !source) return showHint('Cellular Handover', 'UE must be attached to a source cell first.');
+            if (!target.config?.cellSite?.enabled || !simulateNetworkPing(ue, target, 'tcp', false).success) return showHint('Cellular Handover', 'Target cell is unavailable from the current topology.');
+            source.config.cellSite.connectedUEs = (source.config.cellSite.connectedUEs || []).filter(id => id !== ue.id);
+            target.config.cellSite = target.config.cellSite || { enabled: true, connectedUEs: [] };
+            target.config.cellSite.connectedUEs.push(ue.id);
+            ue.config.mobileNetwork.cellId = target.id;
+            ue.config.mobileNetwork.handoverAt = Date.now();
+            target.config.cellSite.lastEvent = `Handover complete: ${source.device.name} → ${target.device.name}`;
+            simulateNetworkPing(ue, target, 'tcp', true);
+            renderDeviceDetailTabs(target, 'workspace');
+        }
+
+        function renderMobileUESpace(entry, panel) {
+            const state = entry.config.mobileNetwork || (entry.config.mobileNetwork = { sim: 'SIM-001', apn: 'lab.mnc001.mcc001.gprs', enabled: true });
+            const sites = simulatorState.activeDevices.filter(item => ['cell-tower', '5g-bs'].includes(item.device.type));
+            const current = simulatorState.activeDevices.find(item => item.id === state.cellId);
+            const calls = state.sessions || [];
+            panel.innerHTML = `<div class="detail-card"><h3><i class="fas fa-mobile-screen-button"></i> 5G UE · ${escapeHtml(entry.device.name)}</h3><p>Subscriber/SIM, APN, cell attachment and session status.</p><div class="detail-card-grid"><label class="form-label">SIM identity<input class="control-input" value="${escapeHtml(state.sim || '')}" onchange="setMobileUEOption('${entry.id}','sim',this.value)"></label><label class="form-label">APN<input class="control-input" value="${escapeHtml(state.apn || '')}" onchange="setMobileUEOption('${entry.id}','apn',this.value)"></label><label class="form-label">Radio<select class="control-select" onchange="setMobileUEOption('${entry.id}','enabled',this.value==='true')"><option value="true" ${state.enabled !== false ? 'selected' : ''}>Enabled</option><option value="false" ${state.enabled === false ? 'selected' : ''}>Airplane mode</option></select></label><label class="form-label">Attach to cell<select id="ueCellSelect" class="control-select"><option value="">Select cell…</option>${sites.map(site => `<option value="${site.id}" ${state.cellId === site.id ? 'selected' : ''}>${escapeHtml(site.device.name)} · ${escapeHtml(site.config?.cellSite?.band || 'n78')}</option>`).join('')}</select></label></div><button class="action-btn primary" onclick="attachMobileUE('${entry.id}')">Attach / handover</button><div class="detail-card"><strong>Registration:</strong> ${current ? `ATTACHED · ${escapeHtml(current.device.name)}` : 'NOT ATTACHED'}<p>UE IPv4: ${escapeHtml(getPrimaryAddress(entry) || 'unassigned')} · Sessions: ${calls.length}</p><pre>${escapeHtml(calls.slice(-6).map(call => `${new Date(call.at).toLocaleTimeString()} ${call.result}`).join('\n') || 'No data sessions')}</pre></div><button class="action-btn" onclick="startMobileDataSession('${entry.id}')">Start data session</button></div>`;
+        }
+
+        function setMobileUEOption(deviceId, key, value) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            entry.config.mobileNetwork = { ...(entry.config.mobileNetwork || {}), [key]: key === 'enabled' ? Boolean(value) : value };
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function attachMobileUE(deviceId) {
+            const ue = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const tower = simulatorState.activeDevices.find(item => item.id === document.getElementById('ueCellSelect')?.value);
+            if (!ue || !tower) return showHint('5G UE', 'Select a cell site first.');
+            const state = ue.config.mobileNetwork || (ue.config.mobileNetwork = { enabled: true });
+            if (state.enabled === false || tower.config?.cellSite?.enabled === false) return showHint('5G UE', 'UE radio or target cell is offline.');
+            if (!simulateNetworkPing(ue, tower, 'tcp', false).success) return showHint('5G UE', 'No topology path to this cell. Check the UPF/backhaul links.');
+            const previous = simulatorState.activeDevices.find(item => item.id === state.cellId);
+            if (previous?.config?.cellSite) previous.config.cellSite.connectedUEs = (previous.config.cellSite.connectedUEs || []).filter(id => id !== ue.id);
+            tower.config.cellSite = tower.config.cellSite || { enabled: true, connectedUEs: [] };
+            tower.config.cellSite.connectedUEs = [...new Set([...(tower.config.cellSite.connectedUEs || []), ue.id])];
+            state.cellId = tower.id;
+            state.attachedAt = Date.now();
+            simulateNetworkPing(ue, tower, 'tcp', true);
+            renderDeviceDetailTabs(ue, 'workspace');
+        }
+
+        function startMobileDataSession(deviceId) {
+            const ue = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const tower = simulatorState.activeDevices.find(item => item.id === ue?.config?.mobileNetwork?.cellId);
+            const upf = simulatorState.activeDevices.find(item => item.device.type === 'upf');
+            if (!ue || !tower || !upf) return showHint('5G Session', 'Attach to a cell and add a UPF before opening a data session.');
+            const first = simulateNetworkPing(ue, upf, 'tcp', false);
+            if (!first.success) return showHint('5G Session', `Session failed: ${first.reason}`);
+            simulateNetworkPing(ue, upf, 'tcp', true);
+            const state = ue.config.mobileNetwork;
+            state.sessions = [...(state.sessions || []), { at: Date.now(), result: `PDU session ACTIVE · APN ${state.apn} · UPF ${upf.device.name}` }].slice(-50);
+            renderDeviceDetailTabs(ue, 'workspace');
+        }
+
+        function renderWANLinkWorkspace(entry, panel) {
+            const state = entry.config.wanLink || (entry.config.wanLink = { enabled: true, bandwidthMbps: entry.device.type === 'mpls' ? 1000 : 500, latencyMs: 20, lossPercent: 0, slaTargetMs: 100 });
+            const peers = simulatorState.activeDevices.filter(item => item.id !== entry.id && item.device.type !== 'hub');
+            const connections = simulatorState.connections.filter(connection => connection.from === entry.id || connection.to === entry.id);
+            const health = entry.config.powered === false || !state.enabled ? 'DOWN' : connections.some(isConnectionOperational) ? 'UP' : 'NO LINK';
+            panel.innerHTML = `<div class="detail-card"><h3><i class="fas ${entry.device.type === 'sdwan-hub' ? 'fa-diagram-project' : 'fa-link'}"></i> ${escapeHtml(SPECIALIZED_DEVICE_WORKSPACES[entry.device.type]?.[0] || 'WAN Link')} · ${escapeHtml(entry.device.name)}</h3><p>Configure a simulated WAN overlay/circuit, SLA and topology peers.</p><div class="detail-card-grid"><label class="form-label">Status<select class="control-select" onchange="setWANOption('${entry.id}','enabled',this.value==='true')"><option value="true" ${state.enabled ? 'selected' : ''}>Up</option><option value="false" ${!state.enabled ? 'selected' : ''}>Down</option></select></label><label class="form-label">Bandwidth Mbps<input class="control-input" type="number" min="1" value="${Number(state.bandwidthMbps) || 500}" onchange="setWANOption('${entry.id}','bandwidthMbps',this.value)"></label><label class="form-label">Latency ms<input class="control-input" type="number" min="1" value="${Number(state.latencyMs) || 20}" onchange="setWANOption('${entry.id}','latencyMs',this.value)"></label><label class="form-label">Loss %<input class="control-input" type="number" min="0" max="100" value="${Number(state.lossPercent) || 0}" onchange="setWANOption('${entry.id}','lossPercent',this.value)"></label><label class="form-label">SLA latency target ms<input class="control-input" type="number" min="1" value="${Number(state.slaTargetMs) || 100}" onchange="setWANOption('${entry.id}','slaTargetMs',this.value)"></label></div><p>Link: <strong style="color:${health === 'UP' ? 'var(--online)' : 'var(--offline)'}">${health}</strong> · ${connections.length} physical connection(s) · ${escapeHtml(getPrimaryAddress(entry) || 'unaddressed')}</p><h4>Peer reachability</h4><div class="user-list">${peers.map(peer => { const link = simulateNetworkPing(entry, peer, 'tcp', false); return `<div class="user-row"><span>${escapeHtml(peer.device.name)} · ${escapeHtml(getPrimaryAddress(peer) || 'no IPv4')}</span><span style="color:${link.success ? 'var(--online)' : 'var(--offline)'}">${link.success ? 'REACHABLE' : escapeHtml(link.reason)}</span><button class="action-btn" onclick="testWANPeer('${entry.id}','${peer.id}')">Test</button></div>`; }).join('') || 'No peer devices'}<div id="wanStatus" role="status">${escapeHtml(state.lastTest || 'SLA target')} ${Number(state.slaTargetMs) || 100} ms</div></div></div>`;
+        }
+
+        function setWANOption(deviceId, key, value) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            entry.config.wanLink = entry.config.wanLink || {};
+            const numeric = ['bandwidthMbps','latencyMs','lossPercent','slaTargetMs'].includes(key);
+            entry.config.wanLink[key] = numeric ? Math.max(key === 'lossPercent' ? 0 : 1, Number(value) || 0) : Boolean(value);
+            if (key === 'enabled') {
+                entry.config.powered = entry.config.wanLink.enabled;
+                invalidateNetworkCaches();
+            }
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function testWANPeer(deviceId, peerId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const peer = simulatorState.activeDevices.find(item => item.id === peerId);
+            if (!entry || !peer) return;
+            const state = entry.config.wanLink || {};
+            const result = state.enabled === false ? { success: false, reason: 'WAN link is disabled' } : simulateNetworkPing(entry, peer, 'tcp', true);
+            state.lastTest = `${new Date().toLocaleTimeString()} · ${peer.device.name}: ${result.success ? `PASS · ${state.latencyMs || 20} ms${Number(state.latencyMs || 20) <= Number(state.slaTargetMs || 100) ? ' · SLA OK' : ' · SLA BREACH'}` : `FAIL · ${result.reason}`}`;
+            const output = document.getElementById('wanStatus');
+            if (output) output.textContent = state.lastTest;
+        }
+
+        function renderSecurityApplianceWorkspace(entry, panel) {
+            entry.config = entry.config || {};
+            const firewall = entry.config.firewall || (entry.config.firewall = { enabled: true, aclName: 'FW-IN' });
+            const interfaces = Object.keys(entry.device.interfaces || {});
+            const acl = entry.config.acls?.[firewall.aclName] || { entries: [] };
+            const rules = (acl.entries || []).map((rule, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(rule.action.toUpperCase())}</td><td>${escapeHtml(rule.tokens.join(' '))}</td><td><button class="action-btn" onclick="removeFirewallRule('${entry.id}',${index})">Remove</button></td></tr>`).join('');
+            const peers = simulatorState.activeDevices.filter(item => item.id !== entry.id && getPrimaryAddress(item));
+            panel.innerHTML = `<div class="detail-card"><h3><i class="fas fa-shield-halved"></i> ${escapeHtml(entry.device.type.toUpperCase())} · ${escapeHtml(entry.device.name)}</h3><p>Security appliance controls. Inbound policy is enforced by the simulator when packets cross the selected interface.</p><label class="form-label">Protection<select class="control-select" onchange="setFirewallEnabled('${entry.id}',this.value==='true')"><option value="true" ${firewall.enabled ? 'selected' : ''}>Enabled</option><option value="false" ${!firewall.enabled ? 'selected' : ''}>Monitor only / Disabled</option></select></label><div class="detail-card-grid"><label class="form-label">Apply inbound policy on<select id="firewallInterface" class="control-select">${interfaces.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('')}</select></label><label class="form-label">Destination device<select id="firewallTarget" class="control-select">${peers.map(item => `<option value="${item.id}">${escapeHtml(item.device.name)} · ${escapeHtml(getPrimaryAddress(item))}</option>`).join('')}</select></label><label class="form-label">Action<select id="firewallAction" class="control-select"><option value="deny">Deny</option><option value="permit">Permit</option></select></label></div><button class="action-btn primary" onclick="addFirewallRule('${entry.id}')"><i class="fas fa-plus"></i> Add inbound rule</button><div style="overflow:auto"><table class="packet-table"><thead><tr><th>#</th><th>Action</th><th>Rule</th><th></th></tr></thead><tbody>${rules || '<tr><td colspan="4">No rules configured</td></tr>'}</tbody></table></div><p style="color:var(--cyber-gray)">Interfaces: ${interfaces.map(escapeHtml).join(', ')} · ${escapeHtml(getPrimaryAddress(entry) || 'No management IPv4')}</p><button class="action-btn" onclick="openDeviceCLI('${entry.id}')"><i class="fas fa-terminal"></i> Open CLI</button></div>`;
+        }
+
+        function setFirewallEnabled(deviceId, enabled) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            entry.config.firewall = { ...(entry.config.firewall || {}), enabled: Boolean(enabled) };
+            invalidateNetworkCaches();
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function addFirewallRule(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const interfaceName = document.getElementById('firewallInterface')?.value;
+            const target = simulatorState.activeDevices.find(item => item.id === document.getElementById('firewallTarget')?.value);
+            const action = document.getElementById('firewallAction')?.value;
+            if (!entry || !interfaceName || !target || !['permit', 'deny'].includes(action)) return showHint('Firewall', 'Select a real interface, target and action.');
+            const targetIp = getPrimaryAddress(target);
+            if (!ipv4Details(targetIp)) return showHint('Firewall', 'Target needs a valid IPv4 address.');
+            const aclName = entry.config.firewall.aclName || 'FW-IN';
+            entry.config.acls = entry.config.acls || {};
+            const acl = entry.config.acls[aclName] || (entry.config.acls[aclName] = { type: 'extended', entries: [] });
+            acl.entries.push({ action, type: 'extended', tokens: ['ip', 'any', 'host', targetIp] });
+            entry.config.interfaces = entry.config.interfaces || {};
+            entry.config.interfaces[interfaceName] = { ...(entry.config.interfaces[interfaceName] || {}), accessGroup: { name: aclName, direction: 'in' } };
+            invalidateNetworkCaches();
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function removeFirewallRule(deviceId, index) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const rules = entry?.config?.acls?.[entry?.config?.firewall?.aclName]?.entries;
+            if (!rules || index < 0 || index >= rules.length) return;
+            rules.splice(index, 1);
+            invalidateNetworkCaches();
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function renderCloudNetworkWorkspace(entry, panel) {
+            entry.config = entry.config || {};
+            const cloud = entry.config.cloudNetwork || (entry.config.cloudNetwork = { enabled: true, subnets: [], routes: [] });
+            const subnets = (cloud.subnets || []).map((subnet, index) => `<tr><td>${escapeHtml(subnet.name)}</td><td>${escapeHtml(subnet.cidr)}</td><td><button class="action-btn" onclick="removeCloudSubnet('${entry.id}',${index})">Remove</button></td></tr>`).join('');
+            panel.innerHTML = `<div class="detail-card"><h3><i class="fas fa-cloud"></i> Cloud Network · ${escapeHtml(entry.device.name)}</h3><p>Manage simulated VPC/VNet segments and gateways. Connect this node to routers or servers to carry topology traffic.</p><label class="form-label">Network status<select class="control-select" onchange="setCloudNetworkEnabled('${entry.id}',this.value==='true')"><option value="true" ${cloud.enabled ? 'selected' : ''}>Available</option><option value="false" ${!cloud.enabled ? 'selected' : ''}>Disabled</option></select></label><div class="detail-card-grid"><label class="form-label">Subnet name<input id="cloudSubnetName" class="control-input" placeholder="private-a"></label><label class="form-label">IPv4 CIDR<input id="cloudSubnetCIDR" class="control-input" placeholder="10.40.1.0/24"></label></div><button class="action-btn primary" onclick="addCloudSubnet('${entry.id}')">Add subnet</button><table class="packet-table"><thead><tr><th>Subnet</th><th>CIDR</th><th></th></tr></thead><tbody>${subnets || '<tr><td colspan="3">No subnets configured</td></tr>'}</tbody></table><p>Gateway address: ${escapeHtml(getPrimaryAddress(entry) || 'unassigned')} · ${Object.keys(entry.device.interfaces || {}).length} virtual uplink(s)</p></div>`;
+        }
+
+        function setCloudNetworkEnabled(deviceId, enabled) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry) return;
+            entry.config.cloudNetwork = { ...(entry.config.cloudNetwork || {}), enabled: Boolean(enabled) };
+            invalidateNetworkCaches();
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function addCloudSubnet(deviceId) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            const name = document.getElementById('cloudSubnetName')?.value.trim();
+            const cidr = document.getElementById('cloudSubnetCIDR')?.value.trim();
+            const details = ipv4Details(cidr);
+            if (!entry || !name || !details || details.ip !== details.networkAddress || details.prefix > 30) return showHint('Cloud Network', 'Enter a subnet network address with a valid IPv4 CIDR, e.g. 10.40.1.0/24.');
+            const cloud = entry.config.cloudNetwork || (entry.config.cloudNetwork = { enabled: true, subnets: [] });
+            cloud.subnets = cloud.subnets || [];
+            if (cloud.subnets.some(subnet => subnet.name === name || subnet.cidr === details.key)) return showHint('Cloud Network', 'Subnet name or CIDR already exists.');
+            cloud.subnets.push({ name, cidr: details.key });
+            renderDeviceDetailTabs(entry, 'workspace');
+        }
+
+        function removeCloudSubnet(deviceId, index) {
+            const entry = simulatorState.activeDevices.find(item => item.id === deviceId);
+            if (!entry?.config?.cloudNetwork?.subnets) return;
+            entry.config.cloudNetwork.subnets.splice(index, 1);
+            renderDeviceDetailTabs(entry, 'workspace');
         }
 
         function renderPhysicalDevicePanel(entry, panel) {
@@ -7791,6 +9102,71 @@ Router&gt;
             showHint('Hub Port', `${interfaceName} ${shutdown ? '已關閉' : '已開啟'}`);
         }
 
+        function renderDevicePortsPanel(entry, panel) {
+            const interfaces = Object.keys(entry.device.interfaces || {});
+            const rows = interfaces.map(name => {
+                const value = entry.device.interfaces[name];
+                const config = entry.config?.interfaces?.[name] || {};
+                const link = simulatorState.connections.find(connection => (connection.from === entry.id || connection.to === entry.id) && getConnectionInterface(entry, connection) === name);
+                const peerId = link && (link.from === entry.id ? link.to : link.from);
+                const peer = simulatorState.activeDevices.find(device => device.id === peerId);
+                const down = entry.config?.powered === false || config.shutdown || value?.status === 'administratively down' || value?.status === 'down';
+                const up = Boolean(link && isConnectionOperational(link));
+                const address = typeof value === 'string' ? value : value?.ip || '';
+                const vlan = config.switchportMode === 'trunk' ? `Trunk / native ${config.trunkNativeVlan || 1} / ${config.trunkAllowedVlans?.join(',') || 'all'}` : `Access / VLAN ${config.accessVlan || 1}`;
+                return `<tr data-port-row data-port-name="${escapeHtml(name.toLowerCase())}" data-port-interface="${escapeHtml(name)}"><td>${escapeHtml(name)}<div>${escapeHtml(config.description || '')}</div></td><td data-port-status style="color:${down ? 'var(--offline)' : up ? 'var(--online)' : 'var(--cyber-gray)'}">${down ? 'ADMIN DOWN' : link ? up ? 'CONNECTED' : 'LINK DOWN' : 'NOT CONNECTED'}</td><td data-port-vlan>${escapeHtml(vlan)}</td><td data-port-peer>${escapeHtml(peer?.device.name || '—')}</td><td data-port-address>${escapeHtml(address || '—')}</td><td><button class="action-btn" onclick="toggleNetworkInterface('${entry.id}','${escapeHtml(name)}')">${down ? 'Enable' : 'Disable'}</button></td></tr>`;
+            }).join('');
+            panel.innerHTML = `<h3>Live Interface Status</h3><input class="control-input" placeholder="Filter ports (Fa0/3, Gi0/1…)" oninput="filterDevicePorts(this)"><div style="overflow:auto"><table class="packet-table"><thead><tr><th>Port</th><th>Status</th><th>VLAN</th><th>Peer</th><th>Address</th><th>Control</th></tr></thead><tbody>${rows || '<tr><td colspan="6">No interfaces available</td></tr>'}</tbody></table></div><div class="detail-card"><strong>Port range example</strong><pre>${'enable → configure terminal\\ninterface range fa0/3-9, fa0/11-23\\nswitchport mode access\\nswitchport access vlan 999\\nshutdown'}</pre><small>Create VLAN 999 first, then name BLACKHOLE.</small></div>`;
+        }
+
+        function filterDevicePorts(input) {
+            const query = input.value.trim().toLowerCase();
+            input.closest('.device-detail-panel')?.querySelectorAll('[data-port-row]').forEach(row => row.hidden = Boolean(query && !row.dataset.portName.includes(query)));
+        }
+
+        function refreshDevicePortStatuses(entry) {
+            const panel = document.getElementById('deviceDetailPanel');
+            if (!panel) return;
+            panel.querySelectorAll('[data-port-row]').forEach(row => {
+                const name = row.dataset.portInterface;
+                const value = entry.device.interfaces?.[name];
+                const config = entry.config?.interfaces?.[name] || {};
+                const link = simulatorState.connections.find(connection => (connection.from === entry.id || connection.to === entry.id) && getConnectionInterface(entry, connection) === name);
+                const peerId = link && (link.from === entry.id ? link.to : link.from);
+                const peer = simulatorState.activeDevices.find(device => device.id === peerId);
+                const down = entry.config?.powered === false || config.shutdown || value?.status === 'administratively down' || value?.status === 'down';
+                const up = Boolean(link && isConnectionOperational(link));
+                const status = row.querySelector('[data-port-status]');
+                if (status) {
+                    status.textContent = down ? 'ADMIN DOWN' : link ? up ? 'CONNECTED' : 'LINK DOWN' : 'NOT CONNECTED';
+                    status.style.color = down ? 'var(--offline)' : up ? 'var(--online)' : 'var(--cyber-gray)';
+                }
+                const vlan = config.switchportMode === 'trunk' ? `Trunk / native ${config.trunkNativeVlan || 1} / ${config.trunkAllowedVlans?.join(',') || 'all'}` : `Access / VLAN ${config.accessVlan || 1}`;
+                const vlanCell = row.querySelector('[data-port-vlan]');
+                const peerCell = row.querySelector('[data-port-peer]');
+                const addressCell = row.querySelector('[data-port-address]');
+                if (vlanCell) vlanCell.textContent = vlan;
+                if (peerCell) peerCell.textContent = peer?.device.name || '—';
+                if (addressCell) addressCell.textContent = typeof value === 'string' ? value : value?.ip || '—';
+                const button = row.querySelector('button');
+                if (button) button.textContent = down ? 'Enable' : 'Disable';
+            });
+        }
+
+        function toggleNetworkInterface(deviceId, interfaceName) {
+            const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
+            if (!entry || !Object.prototype.hasOwnProperty.call(entry.device.interfaces || {}, interfaceName)) return;
+            entry.config = entry.config || {};
+            entry.config.interfaces = entry.config.interfaces || {};
+            const config = entry.config.interfaces[interfaceName] || {};
+            const shutdown = !config.shutdown;
+            entry.config.interfaces[interfaceName] = { ...config, shutdown };
+            const value = entry.device.interfaces[interfaceName];
+            entry.device.interfaces[interfaceName] = { ...(typeof value === 'object' && value ? value : value ? { ip: value } : {}), status: shutdown ? 'administratively down' : 'up' };
+            invalidateNetworkCaches();
+            renderDevicePortsPanel(entry, document.getElementById('deviceDetailPanel'));
+        }
+
         function refreshOpenHubPortPanel() {
             const modal = document.getElementById('deviceDetailsModal');
             const content = document.getElementById('deviceDetailsContent');
@@ -7798,6 +9174,8 @@ Router&gt;
             const entry = simulatorState.activeDevices.find(device => device.id === content.dataset.deviceId);
             if (entry?.device.type === 'hub' && content.querySelector('[data-tab="physical"]')?.classList.contains('active')) {
                 renderPhysicalDevicePanel(entry, document.getElementById('deviceDetailPanel'));
+            } else if (entry && content.querySelector('[data-tab="ports"]')?.classList.contains('active')) {
+                refreshDevicePortStatuses(entry);
             }
         }
 
@@ -7872,14 +9250,92 @@ Router&gt;
                 { label: 'Command Prompt', icon: 'fa-terminal', action: `showDesktopCommandPrompt('${entry.id}','cmd')` },
                 { label: 'PowerShell', icon: 'fa-terminal', action: `showDesktopCommandPrompt('${entry.id}','powershell')` },
                 { label: 'Web Browser', icon: 'fa-globe', action: `showDesktopBrowser('${entry.id}')` },
-                ...(isServer ? [{ label: 'Network Services', icon: 'fa-server', action: "switchDeviceDetailTab('services')" }, { label: 'User Manager', icon: 'fa-users', action: "switchDeviceDetailTab('services')" }] : [
-                    { label: 'Wireless Utility', icon: 'fa-wifi', action: `showHint('Desktop','無線網卡狀態與可用網路掃描工具。')` },
-                    { label: 'DHCP Client', icon: 'fa-arrow-down-wide-short', action: `acquireServerDhcpLease('${entry.id}')` },
-                    { label: 'VPN Client', icon: 'fa-shield-alt', action: `showHint('Desktop','VPN Client 模擬器已就緒，可在安全模組建立 VPN 拓撲。')` },
-                    { label: 'Text Editor', icon: 'fa-file-lines', action: `showHint('Desktop','文字編輯器已就緒。')` }
-                ])
+                { label: 'Wireless Utility', icon: 'fa-wifi', action: `openDeviceUtility('${entry.id}','wireless')` },
+                { label: 'DHCP Client', icon: 'fa-arrow-down-wide-short', action: `showDeviceDHCPClient('${entry.id}')` },
+                { label: 'VPN Client', icon: 'fa-shield-alt', action: `openDeviceUtility('${entry.id}','vpn')` },
+                { label: 'Text Editor', icon: 'fa-file-lines', action: `openDeviceUtility('${entry.id}','editor')` },
+                ...(isServer ? [{ label: 'Network Services', icon: 'fa-server', action: "switchDeviceDetailTab('services')" }, { label: 'User Manager', icon: 'fa-users', action: "switchDeviceDetailTab('services')" }] : [])
             ];
-            panel.innerHTML = `<div class="desktop-shell"><div class="desktop-topbar"><span><i class="fab fa-windows"></i> ${escapeHtml(entry.device.name)} · Network OS</span><span><i class="fas fa-wifi"></i> ${escapeHtml(getPrimaryAddress(entry) || '未配置 IP')}</span></div><div class="desktop-wallpaper">${apps.map(app => `<button class="desktop-app-card" onclick="${app.action}"><i class="fas ${app.icon}"></i><span>${app.label}</span></button>`).join('')}</div><div class="desktop-taskbar"><button class="action-btn" onclick="renderDesktopIPConfig('${entry.id}')"><i class="fas fa-gear"></i></button><button class="action-btn" onclick="showDesktopCommandPrompt('${entry.id}','cmd')"><i class="fas fa-terminal"></i></button><button class="action-btn" onclick="showDesktopCommandPrompt('${entry.id}','powershell')"><i class="fab fa-windows"></i></button><span style="color:var(--cyber-gray);font-size:.72rem;align-self:center;margin-left:.35rem">${isServer ? 'Server workspace' : 'Desktop workspace'} · ${escapeHtml(entry.device.model || entry.device.type)}</span></div></div><div class="detail-card" style="margin-top:.8rem;display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap"><span><i class="fas fa-circle" style="color:var(--online);font-size:.65rem"></i> 系統狀態：就緒</span><span style="color:var(--cyber-gray);font-size:.75rem">模擬桌面，不會執行外部程式或存取真實網路</span></div>`;
+            const networkDevice = ['router', 'switch', 'bridge', 'firewall', 'wlc'].includes(entry.device.type);
+            panel.innerHTML = `<div class="desktop-shell"><div class="desktop-topbar"><span><i class="${networkDevice ? 'fas fa-network-wired' : 'fab fa-windows'}"></i> ${escapeHtml(entry.device.name)} · ${networkDevice ? 'Device Workspace' : 'Network OS'}</span><span><i class="fas fa-wifi"></i> ${escapeHtml(getPrimaryAddress(entry) || '未配置 IP')}</span></div><div class="desktop-wallpaper">${apps.map(app => `<button class="desktop-app-card" onclick="${app.action}"><i class="fas ${app.icon}"></i><span>${app.label}</span></button>`).join('')}</div><div class="desktop-taskbar"><button class="action-btn" onclick="renderDesktopIPConfig('${entry.id}')"><i class="fas fa-gear"></i></button><button class="action-btn" onclick="showDesktopCommandPrompt('${entry.id}','cmd')"><i class="fas fa-terminal"></i></button><button class="action-btn" onclick="showDesktopCommandPrompt('${entry.id}','powershell')"><i class="fab fa-windows"></i></button>${networkDevice ? `<button class="action-btn primary" onclick="openDeviceCLI('${entry.id}')"><i class="fas fa-terminal"></i> IOS CLI</button>` : ''}<span style="color:var(--cyber-gray);font-size:.72rem;align-self:center;margin-left:.35rem">${isServer ? 'Server workspace' : networkDevice ? 'Router / Switch workspace' : 'Desktop workspace'} · ${escapeHtml(entry.device.model || entry.device.type)}</span></div></div><div class="detail-card" style="margin-top:.8rem;display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap"><span><i class="fas fa-circle" style="color:var(--online);font-size:.65rem"></i> 系統狀態：${entry.config?.powered === false ? '關機' : '就緒'}</span><span style="color:var(--cyber-gray);font-size:.75rem">模擬工作區，不會執行外部程式或存取真實網路</span></div>`;
+        }
+
+        function showDeviceDHCPClient(deviceId) {
+            const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
+            const interfaces = Object.keys(entry?.device.interfaces || {}).filter(name => !name.includes('.') && !/^vlan/i.test(name));
+            if (!entry || !interfaces.length) return showHint('DHCP Client', '此設備沒有可用的實體介面。');
+            const modalId = `dhcpClient_${Date.now()}`;
+            document.body.insertAdjacentHTML('beforeend', `<div class="modal-overlay" id="${modalId}" onclick="if(event.target===this)this.remove()"><div class="modal-content" style="max-width:520px"><div class="modal-header"><h3><i class="fas fa-arrow-down-wide-short"></i> DHCP Client · ${escapeHtml(entry.device.name)}</h3><button class="close-btn" onclick="document.getElementById('${modalId}').remove()">×</button></div><div class="modal-body"><label class="form-label">Interface<select id="${modalId}_interface" class="control-select">${interfaces.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('')}</select></label><p style="color:var(--cyber-gray)">Request a lease from a reachable simulated DHCP server. No real network is contacted.</p><button class="action-btn primary" onclick="requestDeviceDHCPLease('${deviceId}','${modalId}')"><i class="fas fa-play"></i> Request Lease</button><div id="${modalId}_result" role="status" style="margin-top:.7rem;white-space:pre-wrap"></div></div></div></div>`);
+        }
+
+        function requestDeviceDHCPLease(deviceId, modalId) {
+            const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
+            const interfaceName = document.getElementById(`${modalId}_interface`)?.value;
+            const result = entry && interfaceName ? requestDHCPLease(entry, interfaceName) : '% No device or interface selected';
+            const output = document.getElementById(`${modalId}_result`);
+            if (output) {
+                output.textContent = result;
+                output.style.color = result.startsWith('%') ? 'var(--offline)' : 'var(--online)';
+            }
+            if (!result.startsWith('%')) {
+                entry.config = entry.config || {};
+                entry.config.networkMode = 'dhcp';
+                updateNetworkTables();
+                const node = document.getElementById(entry.id);
+                if (node?.querySelector('.node-ip')) node.querySelector('.node-ip').textContent = entry.device.ip || getPrimaryAddress(entry) || 'unassigned';
+            }
+        }
+
+        function openDeviceUtility(deviceId, utility) {
+            const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
+            if (!entry) return;
+            const modalId = `deviceUtility_${Date.now()}`;
+            const title = utility === 'wireless' ? 'Wireless Utility' : utility === 'vpn' ? 'VPN Client' : 'Text Editor';
+            let body = '';
+            if (utility === 'wireless') {
+                const aps = simulatorState.wireless?.aps || [];
+                const radios = Object.keys(entry.device.interfaces || {}).filter(name => /wireless|radio|wifi/i.test(name));
+                const rows = aps.map(ap => {
+                    const target = simulatorState.activeDevices.find(device => device.id === ap.id);
+                    return `<tr><td>${escapeHtml(target?.device.name || 'Access Point')}</td><td>${escapeHtml(ap.band || 'dual')}</td><td>${escapeHtml(ap.channel || 'auto')}</td><td>${escapeHtml(ap.txPower || 18)} dBm</td><td>${target ? 'Available' : 'Offline'}</td></tr>`;
+                }).join('');
+                body = `<div class="detail-card"><p>無線介面：${radios.length ? radios.map(escapeHtml).join(', ') : '此設備沒有無線介面；可檢視模擬環境中的 AP。'}</p><p style="margin-top:.4rem;color:var(--cyber-gray)">掃描到 ${aps.length} 個模擬 AP。此工具不會連接真實無線網路。</p></div><div style="overflow:auto;margin-top:.7rem"><table class="packet-table"><thead><tr><th>AP</th><th>Band</th><th>Channel</th><th>Power</th><th>Status</th></tr></thead><tbody>${rows || '<tr><td colspan="5">No access points found</td></tr>'}</tbody></table></div>`;
+            } else if (utility === 'vpn') {
+                const peers = simulatorState.activeDevices.filter(device => device.id !== entry.id && ['router', 'firewall'].includes(device.device.type));
+                const vpn = entry.config?.vpn || {};
+                body = `<div class="detail-card"><p>Educational VPN tunnel simulation. Only the local topology state is changed.</p><label class="form-label">VPN peer<select id="${modalId}_peer" class="control-select">${peers.map(peer => `<option value="${peer.id}" ${vpn.peerId === peer.id ? 'selected' : ''}>${escapeHtml(peer.device.name)} · ${escapeHtml(getPrimaryAddress(peer) || 'unaddressed')}</option>`).join('')}</select></label><div id="${modalId}_status" class="service-state ${vpn.connected ? 'on' : 'off'}">● ${vpn.connected ? `CONNECTED · ${escapeHtml(vpn.peerName || 'peer')}` : 'DISCONNECTED'}</div><button class="action-btn primary" style="margin-top:.7rem" onclick="toggleSimulatedVPN('${deviceId}','${modalId}')">${vpn.connected ? 'Disconnect tunnel' : 'Connect tunnel'}</button></div>`;
+            } else {
+                body = `<label class="form-label">Local notes<textarea id="${modalId}_text" class="control-input" rows="12" placeholder="Write device notes or configuration snippets…">${escapeHtml(entry.config?.textEditorContent || '')}</textarea></label><button class="action-btn primary" onclick="saveDeviceText('${deviceId}','${modalId}')"><i class="fas fa-save"></i> Save locally</button><span id="${modalId}_saved" style="margin-left:.6rem;color:var(--online)"></span>`;
+            }
+            document.body.insertAdjacentHTML('beforeend', `<div class="modal-overlay" id="${modalId}" onclick="if(event.target===this)this.remove()"><div class="modal-content" style="max-width:760px"><div class="modal-header"><h3><i class="fas ${utility === 'wireless' ? 'fa-wifi' : utility === 'vpn' ? 'fa-shield-halved' : 'fa-file-lines'}"></i> ${title} · ${escapeHtml(entry.device.name)}</h3><button class="close-btn" onclick="document.getElementById('${modalId}').remove()">×</button></div><div class="modal-body">${body}</div></div></div>`);
+        }
+
+        function toggleSimulatedVPN(deviceId, modalId) {
+            const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
+            const peerId = document.getElementById(`${modalId}_peer`)?.value;
+            const peer = simulatorState.activeDevices.find(device => device.id === peerId);
+            if (!entry || !peer) return showHint('VPN Client', '請先新增一台可用的 Router 或 Firewall 作為 VPN peer。');
+            entry.config = entry.config || {};
+            if (entry.config.vpn?.connected) {
+                entry.config.vpn = { ...entry.config.vpn, connected: false, disconnectedAt: Date.now() };
+                showHint('VPN Client', '模擬 VPN tunnel 已中斷。');
+            } else {
+                const test = simulateNetworkPing(entry, peer, 'tcp', false);
+                if (!test.success) return showHint('VPN Client', `無法建立模擬 tunnel：${test.reason}`);
+                entry.config.vpn = { peerId: peer.id, peerName: peer.device.name, connected: true, connectedAt: Date.now(), path: test.path };
+                showHint('VPN Client', `模擬 VPN tunnel 已連線至 ${peer.device.name}。`);
+            }
+            document.getElementById(modalId)?.remove();
+            openDeviceUtility(deviceId, 'vpn');
+        }
+
+        function saveDeviceText(deviceId, modalId) {
+            const entry = simulatorState.activeDevices.find(device => device.id === deviceId);
+            if (!entry) return;
+            entry.config = entry.config || {};
+            entry.config.textEditorContent = document.getElementById(`${modalId}_text`)?.value || '';
+            const status = document.getElementById(`${modalId}_saved`);
+            if (status) status.textContent = `Saved locally · ${new Date().toLocaleTimeString()}`;
         }
 
         function renderDesktopIPConfig(deviceId) {
@@ -7896,7 +9352,8 @@ Router&gt;
             const ipv6 = current?.ipv6?.[0] || entry.config.interfaces?.[interfaceName]?.ipv6Addresses?.[0] || '';
             const dns = entry.config.dns || entry.config.dnsServers?.[0] || '';
             const mode = entry.config.networkMode || 'static';
-            panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-bottom:.75rem"><h3 style="margin:0;color:var(--interface-blue)"><i class="fas fa-network-wired"></i> IP Configuration</h3><button class="action-btn" onclick="switchDeviceDetailTab('desktop')">返回桌面</button></div><div class="config-section"><label class="form-label">網路介面<select id="desktopInterface" class="control-select">${interfaces.map(name => `<option value="${escapeHtml(name)}" ${name === interfaceName ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="form-label">IPv4 設定<select id="desktopAddressMode" class="control-select" onchange="toggleDesktopIPv4Fields()"><option value="static" ${mode === 'static' ? 'selected' : ''}>Static（靜態）</option><option value="dhcp" ${mode === 'dhcp' ? 'selected' : ''}>DHCP</option></select></label><div id="desktopIPv4Fields" ${mode === 'dhcp' ? 'hidden' : ''}><label class="form-label">IPv4 Address<input id="desktopIPv4" class="control-input" value="${escapeHtml(address.split('/')[0])}" placeholder="192.168.1.10" inputmode="decimal"></label><label class="form-label">Subnet Mask<input id="desktopMask" class="control-input" value="${prefix === null ? '255.255.255.0' : prefixToMask(prefix)}" placeholder="255.255.255.0" inputmode="decimal"></label><label class="form-label">Default Gateway<input id="desktopGateway" class="control-input" value="${escapeHtml(entry.device.gateway || entry.config.gateway || '')}" placeholder="192.168.1.1" inputmode="decimal"></label><label class="form-label">DNS Server<input id="desktopDns" class="control-input" value="${escapeHtml(dns)}" placeholder="192.168.1.2" inputmode="decimal"></label></div><label class="form-label">IPv6 Address<input id="desktopIPv6" class="control-input" value="${escapeHtml(ipv6)}" placeholder="2001:db8:1::10/64"></label><div style="font-size:.78rem;color:var(--cyber-gray);margin:.3rem 0 1rem">MAC Address：<strong style="color:var(--hologram-text);font-family:var(--font-mono)">${formatCiscoMac(getDeviceMac(entry))}</strong></div><button class="action-btn primary" onclick="applyDesktopNetworkConfig('${entry.id}')"><i class="fas fa-check"></i> 套用設定</button></div>`;
+            const returnTab = SPECIALIZED_DEVICE_WORKSPACES[entry.device.type] ? 'workspace' : 'desktop';
+            panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-bottom:.75rem"><h3 style="margin:0;color:var(--interface-blue)"><i class="fas fa-network-wired"></i> IP Configuration</h3><button class="action-btn" onclick="switchDeviceDetailTab('${returnTab}')">返回工作區</button></div><div class="config-section"><label class="form-label">網路介面<select id="desktopInterface" class="control-select">${interfaces.map(name => `<option value="${escapeHtml(name)}" ${name === interfaceName ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="form-label">IPv4 設定<select id="desktopAddressMode" class="control-select" onchange="toggleDesktopIPv4Fields()"><option value="static" ${mode === 'static' ? 'selected' : ''}>Static（靜態）</option><option value="dhcp" ${mode === 'dhcp' ? 'selected' : ''}>DHCP</option></select></label><div id="desktopIPv4Fields" ${mode === 'dhcp' ? 'hidden' : ''}><label class="form-label">IPv4 Address<input id="desktopIPv4" class="control-input" value="${escapeHtml(address.split('/')[0])}" placeholder="192.168.1.10" inputmode="decimal"></label><label class="form-label">Subnet Mask<input id="desktopMask" class="control-input" value="${prefix === null ? '255.255.255.0' : prefixToMask(prefix)}" placeholder="255.255.255.0" inputmode="decimal"></label><label class="form-label">Default Gateway<input id="desktopGateway" class="control-input" value="${escapeHtml(entry.device.gateway || entry.config.gateway || '')}" placeholder="192.168.1.1" inputmode="decimal"></label><label class="form-label">DNS Server<input id="desktopDns" class="control-input" value="${escapeHtml(dns)}" placeholder="192.168.1.2" inputmode="decimal"></label></div><label class="form-label">IPv6 Address<input id="desktopIPv6" class="control-input" value="${escapeHtml(ipv6)}" placeholder="2001:db8:1::10/64"></label><div style="font-size:.78rem;color:var(--cyber-gray);margin:.3rem 0 1rem">MAC Address：<strong style="color:var(--hologram-text);font-family:var(--font-mono)">${formatCiscoMac(getDeviceMac(entry))}</strong></div><button class="action-btn primary" onclick="applyDesktopNetworkConfig('${entry.id}')"><i class="fas fa-check"></i> 套用設定</button></div>`;
             document.getElementById('desktopInterface')?.addEventListener('change', event => setDesktopInterface(deviceId, event.target.value));
         }
 
@@ -8153,7 +9610,11 @@ Router&gt;
         }
 
         function hideDeviceDetails() {
-            document.getElementById('deviceDetailsModal').style.display = 'none';
+            const modal = document.getElementById('deviceDetailsModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+            const content = document.getElementById('deviceDetailsContent');
+            delete content?.dataset.deviceId;
         }
 
         // 快捷操作
@@ -8320,13 +9781,9 @@ Router&gt;
         function showMacAddressTable(nodeId) {
             const entry = simulatorState.activeDevices.find(device => device.id === nodeId);
             if (!entry) return;
-            const rows = entry.connections.map((connectionId, index) => {
-                const connection = simulatorState.connections.find(item => item.id === connectionId);
-                const peerId = connection && (connection.from === nodeId ? connection.to : connection.from);
-                const peer = simulatorState.activeDevices.find(device => device.id === peerId);
-                const mac = `02:00:${(index + 1).toString(16).padStart(2, '0')}:${nodeId.slice(-4, -2)}:${nodeId.slice(-2)}:${(index + 10).toString(16).padStart(2, '0')}`;
-                return `<tr><td>${escapeHtml(mac)}</td><td>Gi0/${index}</td><td>${escapeHtml(peer?.device.name || '未知設備')}</td><td>${escapeHtml(connection?.status || 'unknown')}</td></tr>`;
-            }).join('');
+            updateNetworkTables();
+            const learned = simulatorState.networkTables.mac[nodeId] || {};
+            const rows = Object.entries(learned).map(([mac, record]) => `<tr><td>${escapeHtml(formatCiscoMac(mac))}</td><td>${escapeHtml(record.port || 'unknown')}</td><td>${escapeHtml(record.device || 'unknown')}</td><td>${escapeHtml(record.status || 'unknown')}</td></tr>`).join('');
             const html = `<div class="modal-overlay" id="macTableModal" onclick="if(event.target===this)this.remove()"><div class="modal-content" style="max-width:650px"><div class="modal-header"><h3><i class="fas fa-table"></i> ${escapeHtml(entry.device.name)} MAC 位址表</h3><button class="close-btn" onclick="this.closest('.modal-overlay').remove()">×</button></div><div class="modal-body"><table class="packet-table"><thead><tr><th>MAC Address</th><th>Port</th><th>Connected Device</th><th>Status</th></tr></thead><tbody>${rows || '<tr><td colspan="4">目前沒有連線記錄</td></tr>'}</tbody></table></div></div></div>`;
             document.body.insertAdjacentHTML('beforeend', html);
         }
@@ -8613,7 +10070,7 @@ Router&gt;
         function appendCLIOutput(prompt, command, response, options = {}) {
             const output = document.getElementById('cliOutput');
             if (!output) return;
-            const isError = options.error || /^(?:%|Error \.\.\.)/.test(response || '');
+            const isError = options.error || /^(?:%(?!LINK-|LINEPROTO-)|Error \.\.\.)/.test(response || '');
             if (command && !options.hideCommand) {
                 const commandLine = document.createElement('div');
                 commandLine.className = `cli-result ${isError ? 'cli-error' : 'cli-success'}`;
@@ -8666,7 +10123,7 @@ Router&gt;
             { words: ['exit'], mode: 'any' },
             { words: ['exit-address-family'], mode: 'address-family' },
             { words: ['end'], mode: 'any' },
-            { words: ['write', 'memory'], mode: 'exec', aliases: [['wr', 'mem']] },
+            { words: ['write', 'memory'], mode: 'exec', aliases: ['wr', ['wr', 'mem']] },
             { words: ['copy', 'running-config', 'startup-config'], mode: 'exec' },
             { words: ['show', 'ip', 'interface', 'brief'], mode: 'exec', aliases: [['sh', 'ip', 'int', 'br']] },
             { words: ['show', 'interfaces', 'description'], mode: 'exec' },
@@ -8881,6 +10338,7 @@ Router&gt;
         }
 
         function normalizeCLIInput(command) {
+            if (/^wr\s*$/i.test(command.trim())) return 'write memory';
             const aliases = {
                 intvlan: 'interface vlan',
                 interfaces: 'interface',
@@ -9526,7 +10984,7 @@ Router&gt;
 
             if (state.mode === CLI_MODES.VLAN_CONFIG.key && lower.startsWith('name ')) {
                 const vlanName = parts.slice(1).join(' ').trim();
-                if (!/^[\w.-]{1,32}$/.test(vlanName)) return '% VLAN name must be 1-32 characters (letters, digits, dot, underscore, hyphen)';
+                if (!/^[\w .-]{1,32}$/.test(vlanName)) return '% VLAN name must be 1-32 characters (letters, digits, spaces, dot, underscore, hyphen)';
                 config.vlans[state.context].name = vlanName;
                 if (config.vtp?.mode === 'server') {
                     config.vtp.revision = (config.vtp.revision || 0) + 1;
@@ -9909,7 +11367,7 @@ Router&gt;
                 }
                 if (/^vlan\d+$/i.test(cliInterface)) selected.device.interfaces[cliInterface] = selected.device.interfaces[cliInterface] || { status: 'up' };
                 else if (subinterfaceParent) selected.device.interfaces[cliInterface] = selected.device.interfaces[cliInterface] || { status: 'up' };
-                selected.config.interfaces[cliInterface] = selected.config.interfaces[cliInterface] || {};
+                if (!isRange) selected.config.interfaces[cliInterface] = selected.config.interfaces[cliInterface] || {};
                 const mode = isRange ? CLI_MODES.INTERFACE_RANGE_CONFIG.key : cliInterface.includes('.') ? CLI_MODES.SUBINTERFACE_CONFIG.key : CLI_MODES.INTERFACE_CONFIG.key;
                 setCLIState(mode, cliInterface);
                 updateCLIPrompt();
@@ -10513,12 +11971,33 @@ Version 15.4(3)M - SIMULATION
 ROM: System Bootstrap
 ${cliHostname} uptime is 0 days, 0 hours, 15 minutes`;
             } else if (cmdLower === '?' || cmdLower === 'help') {
-                response = `enable    - Enter privileged EXEC mode
-exit      - Exit the CLI
-ping      - Send echo messages
-show      - Show running system information
-show ip ospf neighbor - Display OSPF adjacencies
-show ip bgp summary  - Display BGP peers`;
+                response = `EXEC / shortcuts
+en | enable                 Enter privileged mode
+conf t                      Configure terminal (privileged mode)
+wr | wr mem | copy run start Save running configuration
+sh run | sh ip int br       Show configuration / interface summary
+show interfaces status     Show live port/link/VLAN state
+show vlan br                Show VLANs and access ports
+ping IPv4                   Simulated ICMP connectivity test
+Tab                         Complete IOS command; ? / help shows this guide
+
+Interface and VLAN workflow
+interface range fa0/3-9, fa0/11-23
+switchport mode access
+switchport access vlan 999
+vlan 999
+ name BLACKHOLE
+show vlan brief
+
+Address workflow
+interface gi0/0
+ip address 192.168.1.1 255.255.255.0
+ipv6 address 2001:db8:1::1/64
+no shutdown
+show ip interface brief
+show ipv6 interface brief
+
+Commands are simulated against the selected device and its topology; unsupported commands return an IOS-style error. This is not a full Cisco IOS implementation.`;
             } else if (cmdLower.startsWith('ping ')) {
                 const target = resolvedCommand.split(' ')[1];
                 const targetEntry = simulatorState.activeDevices.find(entry => deviceAddresses(entry).some(address => address.split('/')[0] === target));
@@ -10536,7 +12015,7 @@ Success rate is ${successes * 20} percent (${successes}/5)${successes ? ', round
             } else if (cmdLower !== '') {
                 response = normalizeCLIError(`Unknown command: "${cmd}"`);
             }
-            const error = /^%|^Error \.\.\./.test(response || '');
+            const error = /^(?:%(?!LINK-|LINEPROTO-)|Error \.\.\.)/.test(response || '');
             if (error) response = normalizeCLIError(response);
             if (!response && cmd) response = 'OK';
             appendCLIOutput(prompt, cmd, response, { maskCommand, error });
@@ -11033,18 +12512,15 @@ Success rate is ${successes * 20} percent (${successes}/5)${successes ? ', round
                 '5g': '📡 5G 網絡 - 核心網與邊緣計算'
             };
             document.getElementById('simulatorMode').textContent = titles[mode] || '模擬器';
-            const wirelessVisible = mode === 'wireless' || mode === 'devices';
+            const wirelessVisible = ['wireless', 'devices', 'iot', '5g'].includes(mode);
             ['wirelessOverlaySvg', 'wirelessHeatmapSvg'].forEach(id => {
                 const layer = document.getElementById(id);
                 if (layer) layer.style.display = wirelessVisible ? 'block' : 'none';
             });
             if (wirelessVisible) scheduleWirelessRender();
 
-            // 重新渲染設備庫
-            renderDeviceLibrary(mode);
-
-            // 更新設備計數
-            updateDeviceCount();
+            // Mode changes publish to the subscribed view renderer.
+            publishSimulatorStateChange('mode:change', { mode });
 
             // refresh existing connections to apply mode-specific styles
             try { updateAllConnections(); } catch (e) { /* ignore */ }
@@ -11818,23 +13294,23 @@ Success rate is ${successes * 20} percent (${successes}/5)${successes ? ', round
         // ============ 新增模式：雲網絡、無線、SD-WAN、5G ============
         const newDeviceLibraries = {
             cloud: [
-                { name: 'AWS VPC', icon: 'fas fa-cloud', ip: '10.0.0.0/16', type: 'aws' },
-                { name: 'Azure VNet', icon: 'fas fa-cloud', ip: '172.16.0.0/16', type: 'azure' },
-                { name: 'Google Cloud', icon: 'fas fa-cloud', ip: '10.128.0.0/20', type: 'gcp' },
-                { name: 'VPN Gateway', icon: 'fas fa-lock', ip: '192.168.100.1/24', type: 'vpn' }
+                { id: 'aws-vpc', name: 'AWS VPC', icon: 'fa-cloud', ip: '10.0.0.1/16', type: 'aws', ports: 4, model: 'Amazon VPC' },
+                { id: 'azure-vnet', name: 'Azure VNet', icon: 'fa-cloud', ip: '172.16.0.1/16', type: 'azure', ports: 4, model: 'Azure Virtual Network' },
+                { id: 'gcp-vpc', name: 'Google Cloud', icon: 'fa-cloud', ip: '10.128.0.1/20', type: 'gcp', ports: 4, model: 'Google VPC Network' },
+                { id: 'cloud-vpn-gateway', name: 'VPN Gateway', icon: 'fa-lock', ip: '192.168.100.1/24', type: 'vpn', ports: 2, model: 'Cloud VPN Gateway' }
             ],
             wireless: [],
             sdwan: [
-                { name: 'SD-WAN Hub', icon: 'fas fa-project-diagram', ip: '10.0.0.1/24', type: 'sdwan-hub' },
-                { name: 'MPLS Link', icon: 'fas fa-link', ip: '10.0.1.1/24', type: 'mpls' },
-                { name: 'Internet Link', icon: 'fas fa-globe', ip: '10.0.2.1/24', type: 'internet' },
-                { name: 'Branch', icon: 'fas fa-building', ip: '10.0.3.1/24', type: 'branch' }
+                { id: 'sdwan-hub', name: 'SD-WAN Hub', icon: 'fa-project-diagram', ip: '10.0.0.1/24', type: 'sdwan-hub', ports: 4, model: 'SD-WAN Controller' },
+                { id: 'sdwan-mpls', name: 'MPLS Link', icon: 'fa-link', ip: '10.0.1.1/24', type: 'mpls', ports: 2, model: 'MPLS Circuit' },
+                { id: 'sdwan-internet', name: 'Internet Link', icon: 'fa-globe', ip: '10.0.2.1/24', type: 'internet', ports: 2, model: 'Internet Circuit' },
+                { id: 'sdwan-branch', name: 'Branch', icon: 'fa-building', ip: '10.0.3.1/24', type: 'branch', ports: 2, model: 'Branch Edge' }
             ],
             '5g': [
-                { name: '5G Base Station', icon: 'fas fa-broadcast-tower', ip: '10.0.0.1/24', type: '5g-bs' },
-                { name: 'UPF', icon: 'fas fa-server', ip: '10.0.0.2/24', type: 'upf' },
-                { name: 'Edge Server', icon: 'fas fa-database', ip: '10.0.0.3/24', type: 'edge' },
-                { name: '5G Device', icon: 'fas fa-mobile-alt', ip: '10.0.0.100/24', type: '5g-device' }
+                { id: 'gnodeb', name: '5G Base Station', icon: 'fa-tower-broadcast', ip: '10.50.0.1/24', type: '5g-bs', ports: 4, model: 'gNodeB' },
+                { id: 'upf', name: 'UPF', icon: 'fa-server', ip: '10.50.0.2/24', type: 'upf', ports: 8, model: 'User Plane Function' },
+                { id: 'edge-server', name: 'Edge Server', icon: 'fa-database', ip: '10.50.0.3/24', type: 'edge', ports: 2, model: 'MEC Edge Compute' },
+                { id: 'ue-1', name: '5G Device', icon: 'fa-mobile-alt', ip: '10.50.0.100/24', type: '5g-device', ports: 1, model: '5G UE' }
             ]
         };
 
@@ -13359,5 +14835,34 @@ Success rate is ${successes * 20} percent (${successes}/5)${successes ? ', round
             panel.appendChild(button);
         }
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupFeatureLab); else setupFeatureLab();
+    </script>
+    <script>
+        // Pointer-driven refraction is intentionally limited to the landing cards.
+        (() => {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+            document.querySelectorAll('.cyber-card').forEach(card => {
+                let frame = 0;
+                card.addEventListener('pointermove', event => {
+                    if (frame) cancelAnimationFrame(frame);
+                    frame = requestAnimationFrame(() => {
+                        const bounds = card.getBoundingClientRect();
+                        const x = (event.clientX - bounds.left) / bounds.width;
+                        const y = (event.clientY - bounds.top) / bounds.height;
+                        card.style.setProperty('--pointer-x', `${(x * 100).toFixed(1)}%`);
+                        card.style.setProperty('--pointer-y', `${(y * 100).toFixed(1)}%`);
+                        card.style.setProperty('--tilt-y', `${((x - 0.5) * 5).toFixed(2)}deg`);
+                        card.style.setProperty('--tilt-x', `${((0.5 - y) * 5).toFixed(2)}deg`);
+                        frame = 0;
+                    });
+                });
+                card.addEventListener('pointerleave', () => {
+                    if (frame) cancelAnimationFrame(frame);
+                    card.style.setProperty('--tilt-x', '0deg');
+                    card.style.setProperty('--tilt-y', '0deg');
+                    card.style.setProperty('--pointer-x', '50%');
+                    card.style.setProperty('--pointer-y', '10%');
+                });
+            });
+        })();
     </script>
 </body></html>
